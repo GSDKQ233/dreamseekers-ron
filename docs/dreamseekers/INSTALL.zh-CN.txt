@@ -1,0 +1,69 @@
+寻梦者 API65 安装与更新指南
+
+本指南适用于 API65 repair2 修复候选；安装前先看 REPAIR2.zh-CN.md 的实测范围。寻梦者是原版 PasterDream 与 Reign of Nether 的独立 RTS 兼容附属，需要同时安装配对核心及指定前置。
+
+一、安装文件
+
+如交付包含经核验的二进制，使用同一次 repair2 配对中的两个 JAR；仅有源码时须按根 README 自行构建：
+- reignofnether-1.5.0b-ore-mines.2-dreamseekers-api.65-repair2.jar
+- dreamseekers-0.65.0-repair2.jar
+
+两个文件必须成对使用。客户端与服务端须采用相同配对；即使都标为 API65，也不能将 repair2、repair1、text-refresh 与 audit-fixes 交叉混装，更不能混用 API64 等其他版本。
+源码 ZIP 供阅读和构建使用，不能放入 mods 目录。
+
+二、运行环境与前置
+
+Minecraft 1.20.1
+Forge 47.4.0
+Java 17
+
+另行安装以下 Forge 版本前置：
+- PasterDream-forge1.20.1-beta0.4.2.jar
+  必须是原版 PasterDream，内部显示版本为 0.3.5.7；PasterDream: Reborn 不是替代品。
+- geckolib-forge-1.20.1-4.8.2.jar
+- curios-forge-5.14.1+1.20.1.jar
+- player-animation-lib-forge-1.0.2-rc1+1.20.jar
+
+配对发布包不包含这些第三方前置，请从各自原作者的发布渠道获取。源码中的 addons/dreamseekers/dependencies.lock.json 记录了对应来源、精确文件名和 SHA256。不要仅凭相同模组 ID 或更高版本号替换前置；未声明支持任意后续版本。
+
+三、首次安装
+
+1. 准备独立的 Minecraft 1.20.1 / Forge 47.4.0 游戏实例，并确认启动器使用 Java 17。
+2. 退出游戏与服务端，将配对的两个 JAR 及上述四个前置放入实例的 mods 目录。专用服务端也须安装相同配对与前置。
+3. 对照本次发布包随附的 SHA256 清单核对两个模组文件，确认没有旧版或重复 JAR。
+4. 启动实例，在模组列表中核对 Reign of Nether、Dreamseekers 与各项前置的版本。
+5. 首次使用建议创建独立世界，确认自己的模组组合可正常进入游戏、选择寻梦者阵营并进行基本建造与训练，再用于计划长期保留的世界。
+
+四、已有实例更新
+
+1. 正常停服并退出全部客户端，完整备份世界目录、mods 和 config。保留可直接恢复的一整套备份。
+2. 只移除旧的 reignofnether 与 dreamseekers JAR；不要删除前置、配置或存档。
+3. 同时放入同一套 repair2 的两个 JAR，确保每个模组只保留一个版本。
+4. 同步更新所有客户端与服务端，并核对本次 SHA256 清单。
+5. 先用备份副本或独立世界检查当前模组组合、建筑与单位状态。确认后再更新正式使用的世界；不要直接以唯一存档试装。
+
+从 repair1、audit-fixes 或 text-refresh 升到 repair2 时，公共与客户端配置继续使用原有 audit-fixes 后缀；不会另建一套默认配置。
+
+正常停服时的持久化与队列处理遵循各系统当前规则，不代表任意旧版队列或缺失数据都能自动迁移。活动施法不保存，相关计时不按停服时长推进，也不会补造历史统计或原本缺失的状态。
+
+五、文件校验与常见问题
+
+Windows PowerShell 可使用：
+Get-FileHash -Algorithm SHA256 .\mods\reignofnether-1.5.0b-ore-mines.2-dreamseekers-api.65-repair2.jar
+Get-FileHash -Algorithm SHA256 .\mods\dreamseekers-0.65.0-repair2.jar
+
+Linux 可对对应文件使用 sha256sum；macOS 可使用 shasum -a 256。逐个对照本次发布包的校验清单，不要使用旧版说明中的散列值校验 repair2 文件。
+
+- 提示缺少依赖或版本不匹配：检查两个配对 JAR、四个前置、Forge 与 Minecraft 版本，并移除重复文件。
+- PasterDream 显示 0.3.5.7：这是指定 beta0.4.2 文件的内部版本，不是安装错误；仍应以文件及 SHA256 确认来源。
+- 服务器正常启动但客户端无法进入：先检查两端完整模组列表与版本，再查看各自日志；启动成功不等于联机已通过验证。
+- 需要回退：正常停服后恢复更新前的世界、mods 和 config 整套备份。不要在已被新版本写入的唯一存档上反复混装新旧 JAR。
+
+六、使用范围
+
+GUI、真实音频、真实玩家双客户端联机、村庄视觉生成、通用旧存档迁移及断电一致性尚未完成全面验收。战争迷雾不是完整的抗修改客户端地形保密方案。
+管理操作须符合服务端权限；教程动作仅在有效教程上下文中可用。普通玩家的正常大厅及获准的 Sandbox / Survival 流程不因此改为必须由管理员执行。
+
+玩法说明见同目录 FEATURES.zh-CN.md；验证来源及未覆盖场景见 VALIDATION.zh-CN.md。
+本次源码资料整理不改变运行版本，不重建或替换生产 JAR；历史迭代已精简至源码根目录 CHANGELOG.zh-CN.md。
+需要自行构建时，请阅读源码根目录 README.md。

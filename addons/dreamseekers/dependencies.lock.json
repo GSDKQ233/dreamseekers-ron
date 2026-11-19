@@ -1,0 +1,59 @@
+{
+  "minecraft": "1.20.1",
+  "forge": "47.4.0",
+  "dependencies": [
+    {
+      "mod": "pasterdream",
+      "version": "beta0.4.2",
+      "reportedModVersion": "0.3.5.7",
+      "filename": "PasterDream-forge1.20.1-beta0.4.2.jar",
+      "mavenArtifact": "pasterdream",
+      "mavenVersion": "beta0.4.2",
+      "page": "https://www.curseforge.com/minecraft/mc-mods/pasterdream/files/7461701",
+      "sha256": "95af124a69a7294eed64c4c29bc6ad8e28a424e6d9a269d0c73ca0d6b156f0e1"
+    },
+    {
+      "mod": "geckolib",
+      "version": "4.8.2",
+      "url": "https://cdn.modrinth.com/data/8BmcQJ2H/versions/aVW7Z5da/geckolib-forge-1.20.1-4.8.2.jar",
+      "page": "https://modrinth.com/mod/geckolib/version/aVW7Z5da",
+      "filename": "geckolib-forge-1.20.1-4.8.2.jar",
+      "sha256": "a2e4bcc986ce360f4e85d545a86b04c8c9350543ebd17069b6a44c0a8939ffdc",
+      "sha512_verified": true,
+      "dependencies": [],
+      "mavenArtifact": "geckolib",
+      "mavenVersion": "4.8.2"
+    },
+    {
+      "mod": "curios",
+      "version": "5.14.1+1.20.1",
+      "url": "https://cdn.modrinth.com/data/vvuO3ImH/versions/IPQlZkz1/curios-forge-5.14.1%2B1.20.1.jar",
+      "page": "https://modrinth.com/mod/curios/version/IPQlZkz1",
+      "filename": "curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+      "sha512_verified": true,
+      "dependencies": [],
+      "mavenArtifact": "curios",
+      "mavenVersion": "5.14.1"
+    },
+    {
+      "mod": "playeranimator",
+      "version": "1.0.2-rc1+1.20-forge",
+      "url": "https://cdn.modrinth.com/data/gedNE4y2/versions/xe2EVE6q/player-animation-lib-forge-1.0.2-rc1%2B1.20.jar",
+      "page": "https://modrinth.com/mod/playeranimator/version/xe2EVE6q",
+      "filename": "player-animation-lib-forge-1.0.2-rc1+1.20.jar",
+      "sha256": "90d9965cb9efdbda29fdc5610be3914cf7008bf5c392ff34f7ab25f96a852691",
+      "sha512_verified": true,
+      "dependencies": [
+        {
+          "version_id": null,
+          "project_id": "aRnIEV0F",
+          "file_name": null,
+          "dependency_type": "optional"
+        }
+      ],
+      "mavenArtifact": "player-animation-lib",
+      "mavenVersion": "1.0.2-rc1"
+    }
+  ]
+}

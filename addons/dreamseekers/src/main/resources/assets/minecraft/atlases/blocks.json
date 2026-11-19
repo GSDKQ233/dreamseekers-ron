@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "pasterdream:entities/meltdream_crystal_entity",
+      "sprite": "pasterdream:entities/meltdream_crystal_entity"
+    }
+  ]
+}

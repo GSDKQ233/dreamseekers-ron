@@ -1,0 +1,20 @@
+Dreamseekers compatibility addon
+
+Original integration code: GPL-3.0-only.
+RTS integration patterns are derived from Reign of Nether by SoLegendary,
+Goodbird and contributors, under GPLv3; see LICENSE-DREAMSEEKERS.txt.
+
+PasterDream is the original Minecraft mod by Aerolite_Dust / 异星之尘.
+Official project: https://www.curseforge.com/minecraft/mc-mods/pasterdream
+Tested original release: beta0.4.2, official file 7461701, Minecraft 1.20.1 Forge.
+PasterDream is All Rights Reserved. Its code/assets and dependencies are NOT
+redistributed in this addon. Install them separately from their official authors.
+PasterDream: Reborn is a different project and is not a supported substitute.
+
+Reign of Nether, PasterDream, GeckoLib, Curios and playerAnimator remain the work
+of their respective authors. This independent addon is not endorsed by them.
+
+The small firefly HUD symbol is new Dreamseekers vector artwork (GPL-3.0-only),
+not an extracted PasterDream texture. Its editable SVG is included with source.
+The in-world firefly and animated portrait use PasterDream's installed renderer,
+model, textures, wing animation and emissive layer at runtime, without copying.

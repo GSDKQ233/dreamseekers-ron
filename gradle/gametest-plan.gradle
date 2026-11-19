@@ -1,0 +1,219 @@
+// Evaluated by settings.gradle, before plugin resolution. Presence of a -P switch
+// has the same meaning as Project.hasProperty, including a switch with no value.
+// The large legacy addon profiles still own their original worlds/diagnostics;
+// no other selector may share their invocation or rewrite their namespace.
+def addonProbes = [
+    'dreamseekersFoundationFocused', 'dreamseekersWindProtocolFocused', 'dreamseekersWindProgressionFocused',
+    'dreamseekersWindTrainingFocused', 'dreamseekersShellFunctionsFocused', 'dreamseekersBranchesFocused',
+    'dreamseekersWindRestart', 'dreamseekersUnitReceiptRestart', 'dreamseekersUnitReceiptsFocused',
+    'dreamseekersShadowGolemStrikeBuildingTestPhase', 'dreamseekersShadowGolemStrikeFogFocused', 'dreamseekersShadowGolemStrikeFocused',
+    'dreamseekersShadowGolemStrikeTestPhase', 'dreamseekersLightFeatherAlertFocused', 'dreamseekersLightFeatherAlertTestPhase',
+    'dreamseekersAshEmberParticlesFocused', 'dreamseekersAshEmberLandingFocused', 'dreamseekersAshEmberLandingTestPhase',
+    'dreamseekersShadowHandGripFocused', 'dreamseekersShadowHandGripTestPhase', 'dreamseekersFriendlyDebtContractFocused',
+    'dreamseekersFriendlyDebtContractTestPhase', 'dreamseekersTerrorbeakDreadRoarFocused', 'dreamseekersTerrorbeakDreadRoarTestPhase',
+    'dreamseekersSquealSuppressionWaveFocused', 'dreamseekersSquealSuppressionWaveTestPhase', 'dreamseekersShadowCorrosionTouchFocused',
+    'dreamseekersShadowCorrosionTouchTestPhase', 'dreamseekersStoneHeavyShotFocused', 'dreamseekersStoneHeavyShotTestPhase',
+    'dreamseekersSnailShellFormationFocused', 'dreamseekersSnailShellFormationTestPhase', 'dreamseekersBeetleAdvanceFocused',
+    'dreamseekersBeetleAdvanceTestPhase', 'dreamseekersFireflyRushFocused', 'dreamseekersFireflyRushTestPhase',
+    'dreamseekersFoxSporeFocused', 'dreamseekersFoxSporeTestPhase', 'dreamseekersMotherNativeDiagnostic',
+    'dreamseekersBoneMarkFocused', 'dreamseekersBoneMarkTestPhase', 'dreamseekersWindDashFocused',
+    'dreamseekersWindDashTestPhase', 'dreamseekersFoxBlessingFocused', 'dreamseekersFoxBlessingTestPhase',
+    'dreamseekersJellyFlowFocused', 'dreamseekersJellyFlowTestPhase', 'dreamseekersGelSkillFocused',
+    'dreamseekersGelSkillTestPhase', 'dreamseekersRosterCompleteTest', 'dreamseekersAaroncosFocused',
+    'dreamseekersAaroncosBoundary', 'dreamseekersAaroncosTestPhase', 'dreamseekersWeepingFocused',
+    'dreamseekersWeepingTestPhase', 'dreamseekersGolemNativeProbe', 'dreamseekersGolemFocused',
+    'dreamseekersGolemBoundary', 'dreamseekersGolemTestPhase', 'dreamseekersCrazyTerrorbeakFocused',
+    'dreamseekersCrazyTerrorbeakTestPhase', 'dreamseekersAshBoundary', 'dreamseekersAshBoneWingFocused',
+    'dreamseekersAshBoneWingTestPhase', 'dreamseekersShadowHandFocused', 'dreamseekersShadowHandTestPhase',
+    'dreamseekersFriendlyGhostFocused', 'dreamseekersFriendlyGhostTestPhase', 'dreamseekersTerrorbeakFocused',
+    'dreamseekersTerrorbeakTestPhase', 'dreamseekersShadowSquealFocused', 'dreamseekersShadowSquealTestPhase',
+    'dreamseekersShadowGhostBoundary', 'dreamseekersShadowGhostFocused', 'dreamseekersShadowGhostTestPhase',
+    'dreamseekersMotherBoundary', 'dreamseekersMotherFocused', 'dreamseekersMotherTestPhase',
+    'dreamseekersStoneBoundary', 'dreamseekersStoneFocused', 'dreamseekersStoneTestPhase',
+    'dreamseekersLightHoldFocused', 'dreamseekersLightCompleteTest', 'dreamseekersSporeFocused',
+    'dreamseekersSporeTestPhase', 'dreamseekersWindKnightBoundary', 'dreamseekersWindKnightFocused',
+    'dreamseekersWindKnightTestPhase', 'dreamseekersBoneWingTest', 'dreamseekersBoneWingSpawnBoundary',
+    'dreamseekersBoneWingFocused', 'dreamseekersBoneWingTestPhase', 'dreamseekersTestBatch',
+    'dreamseekersMarkVisionFocused', 'dreamseekersJellyfishRallyLifecycle', 'dreamseekersJellyfishRallyBoundary',
+    'dreamseekersJellyfishFocused', 'dreamseekersJellyfishTest', 'dreamseekersJellyfishTestPhase',
+    'dreamseekersSlimeFocused', 'dreamseekersSlimeTest', 'dreamseekersSlimeTestPhase',
+    'dreamseekersFoxFocused', 'dreamseekersFoxTest', 'dreamseekersFoxTestPhase',
+    'dreamseekersScoutFocused', 'dreamseekersLightTest', 'dreamseekersScoutTestPhase',
+    'dreamseekersFireflyWorkTest', 'dreamseekersFireflyTestPhase', 'dreamseekersTestPhase',
+    'dreamseekersScaffoldTestPhase',
+]
+
+def suites = [
+    formation_commands: ['api58_formation_commands', false],
+    state_lifecycle: ['audit_api58_state_lifecycle', true],
+    tower_observation_lifecycle: ['api57_tower_observation_lifecycle', true],
+    command_feedback: ['reignofnether_command_feedback', false],
+    native_entry_noop: ['reignofnether_native_entry_noop', false],
+    friendly_debt_restart: ['dreamseekers_friendly_debt_contract_skill_restart', true, 'dreamseekers.friendlyDebtContract.test.phase'],
+    gel_skill: ['dreamseekers_gel_skill', true],
+    jelly_flow: ['dreamseekers_jelly_flow', true],
+    fox_blessing: ['dreamseekers_fox_blessing', true],
+    light_amplification: ['dreamseekers_light_amplification', true],
+    luminous_research: ['dreamseekers_luminous_research', true],
+    luminous_restart: ['dreamseekers_luminous_restart', true, 'dreamseekers.luminous.restart.phase'],
+    advanced_harmony_cadence: ['dreamseekers_advanced_harmony_cadence', true],
+    construction_price_modes: ['dreamseekers_construction_price_modes', true],
+    advanced_progression_restart: ['dreamseekers_advanced_restart', true, 'dreamseekers.advanced.restart.phase'],
+    advanced_research: ['dreamseekers_advanced_research', true],
+    advanced_range_light: ['dreamseekers_advanced_range_light', true],
+    advanced_light_spore: ['dreamseekers_advanced_light_spore', true],
+    advanced_mother_hands: ['dreamseekers_advanced_mother_hands', true],
+    construction_prices: ['dreamseekers_construction_prices', true],
+    construction_price_restart: ['dreamseekers_construction_price_restart', true, 'dreamseekers.construction.price.restart.phase'],
+    building_abilities: ['dreamseekers_building_abilities', true],
+    building_support_lifecycle: ['dreamseekers_building_support_lifecycle', true],
+    building_observation: ['dreamseekers_building_observation', true],
+    building_abilities_restart: ['dreamseekers_building_abilities_restart', true, 'dreamseekers.building_abilities.restart.phase'],
+    building_boundary: ['dreamseekers_building_boundary', true],
+    building_care_diagnostic: ['dreamseekers_building_care_diagnostic', true],
+    resonance: ['dreamseekers_resonance', true],
+    resonance_fog: ['dreamseekers_resonance_fog', true],
+    resonance_restart: ['dreamseekers_resonance_restart', true, 'dreamseekers.resonance.restart.phase'],
+    neutral_contract: ['dreamseekers_neutral_contract', true],
+    contract_ready: ['dreamseekers_contract_ready', true],
+    neutral_contract_fog: ['dreamseekers_neutral_contract_fog', true],
+    encounter_editor: ['dreamseekers_encounter_editor', true],
+    encounter_editor_restart: ['dreamseekers_encounter_editor_restart', true, 'dreamseekers.encounterEditor.phase'],
+    neutral_contract_restart: ['dreamseekers_neutral_contract_restart', true, 'dreamseekers.neutralContract.phase'],
+    old_aaroncos: ['dreamseekers_aaroncos_focused', true],
+    old_crazy: ['dreamseekers_crazy_terrorbeak_focused', true],
+    old_terrorbeak: ['dreamseekers_terrorbeak_focused', true],
+    dread_roar: ['dreamseekers_terrorbeak_dread_roar', true],
+    old_aaroncos_restart: ['dreamseekers_aaroncos_restart', true, 'dreamseekers.aaroncos.test.phase'],
+    old_crazy_restart: ['dreamseekers_crazy_terrorbeak_restart', true, 'dreamseekers.crazy_terrorbeak.test.phase'],
+    old_terrorbeak_restart: ['dreamseekers_terrorbeak_restart', true, 'dreamseekers.terrorbeak.test.phase'],
+    terrorbeak_upgrade: ['dreamseekers_terrorbeak_upgrade', true],
+    terrorbeak_upgrade_restart: ['dreamseekers_terrorbeak_upgrade_restart', true, 'dreamseekers.terrorbeakUpgrade.phase'],
+    hands_training: ['dreamseekers_hands_training', true],
+    hands_training_restart: ['dreamseekers_hands_training_restart', true, 'dreamseekers.hands.training.restart.phase'],
+    aaroncos_skills: ['dreamseekers_aaroncos_skills', true],
+    old_mother: ['dreamseekers_mother_focused', true],
+    mother_boundary: ['dreamseekers_mother_boundary', true],
+    old_mother_restart: ['dreamseekers_mother_restart', true, 'dreamseekers.beetlemother.test.phase'],
+    old_spore: ['dreamseekers_spore_focused', true],
+    strengthening_cadence: ['dreamseekers_strengthening_cadence', true],
+    strengthening_economy: ['dreamseekers_strengthening_economy', true],
+    strengthening: ['dreamseekers_strengthening', true],
+    strengthening_migration: ['dreamseekers_strengthening_migration', true],
+    strengthening_restart: ['dreamseekers_strengthening_restart', true, 'dreamseekers.strengthening.restart.phase'],
+    aaroncos_skills_fog: ['dreamseekers_aaroncos_fog', true],
+    aaroncos_skills_restart: ['dreamseekers_aaroncos_skills_restart', true, 'dreamseekers.aaroncos.phase'],
+    specialist: ['dreamseekers_specialist', true],
+    specialist_restart: ['dreamseekers_specialist_restart', true, 'dreamseekers.specialist.restart.phase'],
+    tower_management: ['dreamseekers_tower_management', true],
+    stone_siege: ['dreamseekers_stone_siege', true],
+    bounded_summons: ['dreamseekers_summons', true],
+    summons_restart: ['dreamseekers_summons_restart', true, 'dreamseekers.summons.phase'],
+    ecology: ['dreamseekers_ecology', true],
+    ecology_restart: ['dreamseekers_ecology_restart', true, 'dreamseekers.ecology.restart.phase'],
+    shell_functions: ['dreamseekers_shell_functions', true],
+    wind_protocol: ['dreamseekers_wind_protocol', true],
+    wind_progression: ['dreamseekers_wind_progression', true],
+    wind_training: ['dreamseekers_wind_training', true],
+    unit_receipts: ['dreamseekers_unit_receipts', true],
+    branches: ['dreamseekers_branches', true],
+    registry_concurrency: ['reignofnether_registry_concurrency', false],
+    workpost_timeout: ['reignofnether_mine_workpost_timeout', false],
+    client_fixes: ['dreamseekers_client_fixes', true],
+    fog_snapshot_lifecycle: ['reignofnether_fog_snapshot_lifecycle', false],
+    neutral_fog_lifecycle: ['reignofnether_neutral_fog_lifecycle', false],
+    survival_sequence: ['reignofnether_survival_sequence', false],
+    pending_construction: ['reignofnether_pending_construction', false],
+    pending_construction_restart: ['reignofnether_pending_construction', false, 'building.pending.restart.phase'],
+    audit_fixes: ['dreamseekers_audit_fixes', true],
+    audit_capture_restart: ['dreamseekers_audit_capture_restart', true, 'dreamseekers.resource.audit.restart.phase'],
+    foundation: ['reignofnether_resource_economy', false],
+    bone_mark: ['dreamseekers_bone_mark', true],
+    heavy: ['dreamseekers_stone_heavy_shot', true],
+    wave: ['dreamseekers_squeal_suppression_wave', true],
+    foundation_restart: ['reignofnether_resource_economy_restart', false, 'resource.economy.restart.phase'],
+    kill: ['reignofnether_kill_economy', false],
+    kill_restart: ['reignofnether_kill_restart', false, 'resource.kill.restart.phase'],
+    native_lifecycle: ['reignofnether_native_kill_lifecycle', false],
+    native_kill: ['reignofnether_native_kill_c', false],
+    native_explosion: ['reignofnether_native_explosion', false],
+    native_tnt: ['reignofnether_native_tnt_economy', false],
+    native_spells: ['reignofnether_native_spell_carriers', false],
+    enhanced_fang: ['dreamseekers_kill_fang', true],
+    skill_kills: ['dreamseekers_economic_skill_kills', true],
+    research: ['reignofnether_research_economy', false],
+    research_restart: ['reignofnether_research_restart', false, 'resource.research.restart.phase'],
+    workposts: ['reignofnether_mine_workposts', false],
+    passive: ['dreamseekers_passive_c', true],
+    dream_research: ['dreamseekers_research_economy', true],
+    tree: ['dreamseekers_tree_e', true],
+    tree_emerald: ['dreamseekers_tree_emerald', true],
+    tree_restart: ['dreamseekers_tree_restart', true, 'dreamseekers.tree.restart.phase']
+]
+
+// Direct, required @GameTest methods in the API65 namespaces. These expectations
+// are independent of the number Forge actually reports from the launched JVM.
+def api65Counts = [
+    api65_admin_buildings: 4, api65_auth: 7, api65_auth_codec: 1, api65_auth_extended: 13,
+    api65_auth_final: 4, api65_auth_lifecycle: 4, api65_auth_lobby: 1, api65_auth_modesettlement: 2,
+    api65_auth_sync: 2, api65_death: 5, api65_economy: 10, api65_item_dimension: 1,
+    api65_snapshot_request: 1, api65_survival: 3, api65_unit_dimensions: 3, api65_unit_utils: 5,
+    api65_units: 24, api65_world: 16, api65_world_table: 2, api65_addon: 7, api65_addon_restart: 1,
+    api65_editor_worlds: 2, api65_repair_play: 4, api65_repair2_cargo: 1, api65_repair2_survival: 1, api65_repair2_training: 3, api65_repair2_lobby: 2, api65_repair2_hero: 1, api65_repair2_beacon: 2
+]
+api65Counts.each { namespace, count ->
+    def phased = [
+        api65_addon_restart: 'api65.addon.restart.phase',
+        api65_repair2_cargo: 'api65.repair2.cargo.phase',
+        api65_repair2_survival: 'api65.repair2.survival.phase'
+    ][namespace]
+    suites[namespace] = phased != null ? [namespace, namespace != 'api65_repair2_survival', phased] : [namespace, namespace in ['api65_addon', 'api65_repair2_training', 'api65_repair2_beacon']]
+}
+
+def resolve = { Closure prop ->
+    def addon = prop('dreamseekers') != null
+    def module = addon ? 'addon' : 'core'
+    // Preserve established paths for legacy prepare/verify baselines.
+    def coreProbes = [
+        resourceEconomyTest: ['reignofnether_resource_economy', "run-resource-economy-${module}-v2"],
+        resourceEconomyRestartPhase: ['reignofnether_resource_economy_restart', "run-resource-economy-${module}-restart-v2", 'resource.economy.restart.phase'],
+        killEconomyTest: ['reignofnether_kill_economy', "run-kill-economy-${module}-v8"],
+        killValueRestartPhase: ['reignofnether_kill_restart', addon ? 'run-kill-economy-addon-restart-v8' : 'run-kill-economy-restart-v8', 'resource.kill.restart.phase'],
+        oreRestartPhase: ['reignofnether', addon ? 'run-dreamseekers-gametest' : 'run-gametest', 'ore.mine.restart.phase']
+    ]
+    def selected = (['resourceTechSuite'] + coreProbes.keySet() + addonProbes).findAll { prop(it) != null }
+    if (selected.size() > 1)
+        throw new GradleException('Choose exactly one GameTest selector; conflicting properties: ' + selected.join(', '))
+    def selector = selected ? selected[0] : null
+    def suite = prop('resourceTechSuite')
+    def phase = prop('resourceTechPhase')
+    def run = prop('resourceTechRun')
+    if (suite == null && (phase != null || run != null))
+        throw new GradleException('resourceTechPhase and resourceTechRun require -PresourceTechSuite=<suite>')
+    if (selector == 'resourceTechSuite') {
+        def spec = suites[suite]
+        if (spec == null) throw new GradleException("Unknown resourceTechSuite: ${suite}")
+        if (spec[1] && !addon) throw new GradleException("${suite} requires -Pdreamseekers")
+        def suffix = run == null ? 'integrated-v1' : run
+        if (!(suffix ==~ /[A-Za-z0-9_-]{1,96}/)) throw new GradleException('Invalid resourceTechRun suffix')
+        if (spec.size() == 3) {
+            def phases = ['prepare', 'verify']
+            if (suite in ['research_restart', 'api65_repair2_cargo', 'api65_repair2_survival']) phases += 'verify_settled'
+            if (suite == 'api65_repair2_survival') phases += 'verify_final'
+            if (!(phase in phases)) throw new GradleException("${suite} requires -PresourceTechPhase=" + phases.join('|'))
+        } else if (phase != null) throw new GradleException("${suite} does not take resourceTechPhase")
+        return [suite: suite, module: module, namespace: spec[0], directory: "run-resource-tech-${suite}-${module}-${suffix}",
+                phaseKey: spec.size() == 3 ? spec[2] : null, phase: phase, expected: api65Counts[suite]]
+    }
+    if (selector in coreProbes.keySet()) {
+        def spec = coreProbes[selector]
+        def value = spec.size() == 3 ? prop(selector) : null
+        if (spec.size() == 3 && !(value in ['prepare', 'verify'])) throw new GradleException("${selector} must be prepare or verify")
+        return [suite: selector, module: module, namespace: spec[0], directory: spec[1],
+                phaseKey: spec.size() == 3 ? spec[2] : null, phase: value]
+    }
+    if (!addon && selector != null) throw new GradleException("${selector} requires -Pdreamseekers")
+    if (addon) return [module: module, legacyAddon: true, suite: selector ?: 'default']
+    return [suite: 'default', module: module, namespace: 'reignofnether', directory: 'run-gametest']
+}
+gradle.ext.dreamseekersGameTestPlan = resolve { key -> providers.gradleProperty(key).orNull }

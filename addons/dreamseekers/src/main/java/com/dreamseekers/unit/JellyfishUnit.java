@@ -1,0 +1,143 @@
+// SPDX-License-Identifier: GPL-3.0-only
+package com.dreamseekers.unit;
+
+import com.dreamseekers.DreamseekersMod;
+import com.dreamseekers.jellyfish.JellyfishBalance;
+import com.dreamseekers.unit.flight.LowAltitudeFlyingNavigation;
+import com.solegendary.reignofnether.ability.Abilities;
+import com.solegendary.reignofnether.alliance.AlliancesClient;
+import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
+import com.solegendary.reignofnether.registrars.AttributeRegistrar;
+import com.solegendary.reignofnether.resources.ResourceCost;
+import com.solegendary.reignofnether.unit.goals.UsePortalGoal;
+import com.solegendary.reignofnether.unit.interfaces.Unit;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.pasterdream.entity.JellyfishEntity;
+import javax.annotation.Nullable;
+
+/**
+ * Paid noncombat support foundation on the original jellyfish model and FlyingMoveControl.
+ * Only this new addon entity has RTS goals; wild PasterDream jellyfish stay unchanged.
+ * Native random floating impulses are isolated by JellyfishImpulseMixin. Jelly Flow is authoritative support, not an attack.
+ */
+public final class JellyfishUnit extends JellyfishEntity implements DreamNoncombatUnit {
+    public static final ResourceCost COST = JellyfishBalance.COST;
+    private static final EntityDataAccessor<String> OWNER = SynchedEntityData.defineId(JellyfishUnit.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> SCENARIO = SynchedEntityData.defineId(JellyfishUnit.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> DEATH_COMMAND = SynchedEntityData.defineId(JellyfishUnit.class, EntityDataSerializers.STRING);
+    private static final RtsSyncedData SYNC = new RtsSyncedData(OWNER, SCENARIO, DEATH_COMMAND);
+    private RtsUnitState state;
+
+    @SuppressWarnings("unchecked")
+    public JellyfishUnit(EntityType<? extends JellyfishEntity> type, Level level) {
+        super((EntityType<JellyfishEntity>) type, level);
+        rts();
+        updateAbilityButtons();
+        setPersistenceRequired();
+        setNoGravity(true);
+        setCanPickUpLoot(false);
+        xpReward = 0;
+    }
+    @Override public RtsUnitState rts() {
+        if (state == null) state = new RtsUnitState(this, false, true, true);
+        return state;
+    }
+    @Override public RtsSyncedData rtsSynced() { return SYNC; }
+    @Override protected void defineSynchedData() { super.defineSynchedData(); SYNC.define(entityData); }
+    @Override protected void registerGoals() { rts().register(goalSelector, targetSelector); }
+    @Override protected PathNavigation createNavigation(Level level) { return new LowAltitudeFlyingNavigation(this, level); }
+    @Override public ResourceCost getCost() { return COST; }
+    @Override public ResourceLocation getHudIcon() { return DreamseekersMod.JELLYFISH_ICON; }
+    @Override public AABB getInflatedSelectionBox() { return getBoundingBox().inflate(.15); }
+    @Override public EntityDimensions getDimensions(Pose pose) { return getType().getDimensions(); }
+    @Override public void updateAbilityButtons() {
+        rts().abilities = new Abilities();
+        rts().abilities.add(com.dreamseekers.skill.UnitSkillAbility.JELLY_FLOW);
+    }
+    // This support foundation has no economy, building, garrison or portal duties.
+    @Override public boolean canUsePortal() { return false; }
+    @Override public UsePortalGoal getUsePortalGoal() { return null; }
+    private boolean canFollow(@Nullable LivingEntity target) {
+        if (target == null || !target.isAlive() || target.level() != level() || !(target instanceof Unit unit)
+                || getOwnerName().isBlank() || unit.getOwnerName().isBlank()) return false;
+        return getOwnerName().equals(unit.getOwnerName()) || (level().isClientSide()
+                ? AlliancesClient.isAllied(getOwnerName(), unit.getOwnerName())
+                : AlliancesServerEvents.isAllied(getOwnerName(), unit.getOwnerName()));
+    }
+    /** Core noncombat ATTACK falls back to FOLLOW; never let that track an enemy through fog. */
+    @Override public void setFollowTarget(@Nullable LivingEntity target) { rts().follow = canFollow(target) ? target : null; }
+    @Override public LivingEntity getTarget() { return null; }
+    @Override public void setTarget(@Nullable LivingEntity target) { super.setTarget(null); }
+    @Override public boolean doHurtTarget(Entity target) { return false; }
+    @Override public boolean removeWhenFarAway(double distance) { return false; }
+    @Override protected void customServerAiStep() { }
+    @Override protected void pickUpItem(ItemEntity item) { }
+    @Override protected boolean shouldDropLoot() { return false; }
+    @Override protected void dropCustomDeathLoot(DamageSource source, int looting, boolean recentlyHit) { }
+    @Override public InteractionResult mobInteract(Player player, InteractionHand hand) { return InteractionResult.PASS; }
+    @Override public boolean isFood(ItemStack stack) { return false; }
+    @Override public int getExperienceReward() { return 0; }
+    @Override public void setInLoveTime(int ticks) { super.setInLoveTime(0); }
+    @Override public boolean canMate(Animal other) { return false; }
+    @Override public boolean canFallInLove() { return false; }
+    @Override public void setInLove(@Nullable Player player) { resetLove(); }
+    @Override public void spawnChildFromBreeding(ServerLevel level, Animal other) { resetLove(); }
+    @Override public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob other) { return null; }
+    @Override public boolean canBeLeashed(Player player) { return false; }
+
+    @Override public void tick() {
+        setCanPickUpLoot(false);
+        super.tick();
+        if (getFollowTarget() != null && !canFollow(getFollowTarget())) {
+            rts().follow = null;
+            getMoveGoal().stopMoving();
+        }
+        if (isAlive()) Unit.tick(this);
+        rts().skills().tick();
+    }
+    @Override public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        writeRtsData(tag);
+    }
+    @Override public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        readRtsData(tag);
+        setNoAi(false);
+        setAge(0);
+        resetLove();
+        setPersistenceRequired();
+        setNoGravity(true);
+        setCanPickUpLoot(false);
+    }
+    public static AttributeSupplier.Builder createAttributes() {
+        return Unit.createDefaultAttributes()
+                .add(Attributes.MAX_HEALTH, JellyfishBalance.MAX_HEALTH)
+                .add(Attributes.MOVEMENT_SPEED, JellyfishBalance.SPEED)
+                .add(Attributes.FLYING_SPEED, JellyfishBalance.SPEED)
+                .add(AttributeRegistrar.SIGHT_RANGE.get(), JellyfishBalance.SIGHT)
+                .add(AttributeRegistrar.AGGRO_RANGE.get(), 0);
+    }
+}

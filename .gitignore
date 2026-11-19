@@ -1,0 +1,319 @@
+### IntelliJ IDEA ###
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+*.ipr
+*.iws
+*.iml
+.idea
+run
+run/
+
+# gradle
+build
+.gradle
+build.gradle
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store*.launch
+
+# Local ore-mine validation worlds, caches and generated preview output.
+/run-gametest/
+/tools/__pycache__/
+/docs/ore_mines_v2/previews/
+
+# Optional Dreamseekers local dependency cache and disposable validation worlds.
+/.dreamseekers-deps/
+/run-dreamseekers-gametest/
+/run-dreamseekers-client/
+/run-dreamseekers-scaffold-restart/
+# The standalone addon build definition is source, not a local generated script.
+!/addons/dreamseekers/build.gradle
+/addons/dreamseekers/tools/__pycache__/
+# Generated geometry previews are delivered separately; source renderer stays tracked.
+/docs/dreamseekers/previews/
+# Disposable isolated real-flight work and two-JVM validation worlds.
+/run-dreamseekers-firefly-work/
+/run-dreamseekers-firefly-restart/
+
+# Local Forge/Mixin tooling logs are not source.
+/logs/
+# Disposable first-light scout aggregate, focused and genuine process-restart probes.
+/run-dreamseekers-light-scout/
+/run-dreamseekers-scout-focused/
+/run-dreamseekers-scout-restart/
+
+# Isolated golden-fox foundation probes (no worlds/accepted EULA in source artifacts)
+/run-dreamseekers-fox-focused/
+/run-dreamseekers-light-fox/
+/run-dreamseekers-fox-restart/
+
+# Disposable sequential-unit probes; no EULA/world/dependencies in source.
+/run-dreamseekers-slime-focused/
+/run-dreamseekers-slime-aggregate/
+/run-dreamseekers-slime-restart/
+
+# Isolated jellyfish runtime and ordinary two-JVM probes.
+/run-dreamseekers-jellyfish-focused/
+/run-dreamseekers-jellyfish-aggregate/
+/run-dreamseekers-jellyfish-restart/
+
+run-dreamseekers-jellyfish-rally-boundary/
+/run-dreamseekers-jellyfish-rally-lifecycle/
+
+run-dreamseekers-mark-vision-focused/
+
+/run-dreamseekers-split-*/
+
+/run-dreamseekers-bone-wing-focused/
+/run-dreamseekers-bone-wing-restart/
+
+/run-dreamseekers-bone-wing-spawn-boundary/
+
+/run-dreamseekers-bone-wing-aggregate/
+/run-dreamseekers-wind-knight-focused/
+/run-dreamseekers-wind-knight-restart/
+/run-dreamseekers-wind-knight-boundary/
+
+/run-dreamseekers-spore-focused/
+/run-dreamseekers-spore-restart/
+
+/run-dreamseekers-light-hold-focused/
+/run-dreamseekers-light-complete/
+
+run-dreamseekers-stone-focused/
+run-dreamseekers-stone-restart/
+
+/run-dreamseekers-stone-boundary/
+
+/run-dreamseekers-mother-focused/
+/run-dreamseekers-mother-boundary/
+/run-dreamseekers-mother-restart/
+
+/run-dreamseekers-shadow-ghost-focused/
+/run-dreamseekers-shadow-ghost-restart/
+
+/run-dreamseekers-shadow-ghost-boundary/
+
+/run-dreamseekers-shadow-squeal-focused/
+/run-dreamseekers-shadow-squeal-restart/
+
+/run-dreamseekers-terrorbeak-focused/
+/run-dreamseekers-terrorbeak-restart/
+
+/run-dreamseekers-friendly-ghost-focused/
+/run-dreamseekers-friendly-ghost-restart/
+
+/run-dreamseekers-shadow-hand-focused/
+/run-dreamseekers-shadow-hand-restart/
+
+/run-dreamseekers-ash-bone-wing-focused/
+/run-dreamseekers-ash-bone-wing-restart/
+
+/run-dreamseekers-ash-boundary/
+
+/run-dreamseekers-crazy-terrorbeak-focused/
+/run-dreamseekers-crazy-terrorbeak-restart/
+
+/run-dreamseekers-shadow-golem-focused/
+/run-dreamseekers-shadow-golem-boundary/
+/run-dreamseekers-shadow-golem-restart/
+
+/run-dreamseekers-shadow-golem-native-probe/
+
+/run-dreamseekers-weeping-squeal-focused/
+/run-dreamseekers-weeping-squeal-restart/
+
+/run-dreamseekers-aaroncos-focused/
+/run-dreamseekers-aaroncos-boundary/
+/run-dreamseekers-aaroncos-restart/
+
+/run-dreamseekers-roster-complete/
+
+/run-dreamseekers-gel-skill-focused/
+/run-dreamseekers-gel-skill-restart/
+
+/run-dreamseekers-jelly-flow-focused/
+/run-dreamseekers-jelly-flow-restart/
+
+/run-dreamseekers-fox-blessing-focused/
+/run-dreamseekers-fox-blessing-restart/
+
+/run-dreamseekers-wind-dash-focused/
+/run-dreamseekers-wind-dash-restart/
+
+/run-dreamseekers-bone-mark-focused/
+/run-dreamseekers-bone-mark-restart/
+/run-dreamseekers-mother-native-diagnostic/
+/run-dreamseekers-fox-spore-focused/
+/run-dreamseekers-fox-spore-restart/
+/run-dreamseekers-firefly-rush-focused/
+/run-dreamseekers-firefly-rush-restart/
+
+/run-dreamseekers-split-dreamseekers_firefly-rush-regression/
+
+/run-dreamseekers-beetle-advance-focused/
+/run-dreamseekers-beetle-advance-restart/
+/run-dreamseekers-split-dreamseekers_runtime-beetle-regression/
+/run-dreamseekers-split-dreamseekers_unit_isolation-beetle-regression/
+/run-dreamseekers-foundation-restart-beetle-regression/
+
+/run-dreamseekers-snail-shell-formation-focused/
+/run-dreamseekers-snail-shell-formation-restart/
+/run-dreamseekers-split-dreamseekers_runtime-snail-regression/
+/run-dreamseekers-split-dreamseekers_unit_isolation-snail-regression/
+/run-dreamseekers-foundation-restart-snail-regression/
+
+run-dreamseekers-split-dreamseekers_runtime-snail-same-seed-diagnostic/
+
+run-dreamseekers-split-dreamseekers_runtime-snail-same-seed-protected/
+
+/run-dreamseekers-stone-heavy-shot-focused/
+/run-dreamseekers-stone-heavy-shot-restart/
+
+/run-dreamseekers-stone-restart-heavy-regression/
+
+/run-dreamseekers-stone-heavy-shot-restart-loaded-ai-isolation/
+
+/run-dreamseekers-shadow-corrosion-touch-focused/
+/run-dreamseekers-shadow-corrosion-touch-restart/
+
+/run-dreamseekers-shadow-ghost-restart-corrosion-regression/
+
+# Squeal suppression isolated verification worlds (never delivery inputs)
+/run-dreamseekers-squeal-suppression-wave-focused/
+/run-dreamseekers-squeal-suppression-wave-restart/
+/run-dreamseekers-shadow-squeal-restart-suppression-regression/
+
+# Terrorbeak Dread Roar isolated local verification runtimes
+run-dreamseekers-terrorbeak-dread-roar-*/
+run-dreamseekers-terrorbeak-restart-dread-regression/
+
+# Local Friendly Debt verification worlds/logs; evidence is copied under docs.
+/run-dreamseekers-friendly-debt-contract-*/
+/run-dreamseekers-friendly-ghost-restart-debt-regression/
+
+# Shadow Hand Grip isolated local verification runtimes
+/run-dreamseekers-shadow-hand-grip-*/
+/run-dreamseekers-shadow-hand-restart-grip-regression/
+
+# Original failed-world archive remains local and in the versioned stage-evidence ZIP; never bundle archive bytes into source Git history.
+/docs/dreamseekers/verification-shadow-hand-grip-20261025/failed-worlds/grip-focused4-1-original-world.tar.gz
+
+# Ash Ember isolated runtimes and separately versioned failed-world evidence archives
+/run-dreamseekers-ash-ember-landing-*/
+/run-dreamseekers-ash-ember-particles-*/
+/run-dreamseekers-ash-bone-wing-restart-ember-regression/
+/docs/dreamseekers/verification-ash-ember-landing-20261025/failed-worlds/*.zip
+
+# Light Feather Alert isolated test runtimes, never source delivery inputs
+/run-dreamseekers-light-feather-alert-*/
+/run-dreamseekers-scout-restart-feather-regression/
+
+# Immutable original runtime binary evidence is persisted in separate stage-evidence ZIP
+/docs/dreamseekers/verification-light-feather-alert-20261025/failed-worlds/*.zip
+/docs/dreamseekers/verification-light-feather-alert-20261025/*-actual-mixin-transform/*.class
+
+# Isolated original Golem focused diagnostics; keep worlds out of source checkpoints.
+/run-dreamseekers-shadow-golem-focused-*/
+
+# Final Shadow Golem matrix runtime families: source checkpoints exclude local config/world/log/manifest bytes.
+# Preserve these directories and archive actual runtime evidence separately; this does not delete files.
+/run-dreamseekers-ash-ember-landing-focused/
+/run-dreamseekers-ash-ember-landing-focused-*/
+/run-dreamseekers-ash-ember-particles-focused/
+/run-dreamseekers-ash-ember-particles-focused-*/
+/run-dreamseekers-beetle-advance-focused/
+/run-dreamseekers-beetle-advance-focused-*/
+/run-dreamseekers-bone-mark-focused/
+/run-dreamseekers-bone-mark-focused-*/
+/run-dreamseekers-firefly-rush-focused/
+/run-dreamseekers-firefly-rush-focused-*/
+/run-dreamseekers-fox-blessing-focused/
+/run-dreamseekers-fox-blessing-focused-*/
+/run-dreamseekers-fox-spore-focused/
+/run-dreamseekers-fox-spore-focused-*/
+/run-dreamseekers-friendly-debt-contract-focused/
+/run-dreamseekers-friendly-debt-contract-focused-*/
+/run-dreamseekers-gel-skill-focused/
+/run-dreamseekers-gel-skill-focused-*/
+/run-dreamseekers-jelly-flow-focused/
+/run-dreamseekers-jelly-flow-focused-*/
+/run-dreamseekers-light-feather-alert-focused/
+/run-dreamseekers-light-feather-alert-focused-*/
+/run-dreamseekers-shadow-corrosion-touch-focused/
+/run-dreamseekers-shadow-corrosion-touch-focused-*/
+/run-dreamseekers-shadow-golem-focused/
+/run-dreamseekers-shadow-golem-focused-*/
+/run-dreamseekers-shadow-golem-restart-strike-regression/
+/run-dreamseekers-shadow-golem-restart-strike-regression-*/
+/run-dreamseekers-shadow-golem-strike-building-restart/
+/run-dreamseekers-shadow-golem-strike-building-restart-*/
+/run-dreamseekers-shadow-golem-strike-focused/
+/run-dreamseekers-shadow-golem-strike-focused-*/
+/run-dreamseekers-shadow-golem-strike-fog-focused/
+/run-dreamseekers-shadow-golem-strike-fog-focused-*/
+/run-dreamseekers-shadow-golem-strike-restart/
+/run-dreamseekers-shadow-golem-strike-restart-*/
+/run-dreamseekers-shadow-hand-grip-focused/
+/run-dreamseekers-shadow-hand-grip-focused-*/
+/run-dreamseekers-snail-shell-formation-focused/
+/run-dreamseekers-snail-shell-formation-focused-*/
+/run-dreamseekers-squeal-suppression-wave-focused/
+/run-dreamseekers-squeal-suppression-wave-focused-*/
+/run-dreamseekers-stone-heavy-shot-focused/
+/run-dreamseekers-stone-heavy-shot-focused-*/
+/run-dreamseekers-terrorbeak-dread-roar-focused/
+/run-dreamseekers-terrorbeak-dread-roar-focused-*/
+/run-dreamseekers-wind-dash-focused/
+/run-dreamseekers-wind-dash-focused-*/
+
+# Exact stage generated binary evidence stays in independently persisted canonical evidence ZIP.
+/docs/dreamseekers/verification-shadow-golem-strike-20261025/*-actual-mixin-transform/*.class
+/docs/dreamseekers/verification-shadow-golem-strike-20261025/*-prepare-snapshot/*.nbt
+/docs/dreamseekers/verification-shadow-golem-strike-20261025/*-prepare-snapshot/world/
+/docs/dreamseekers/verification-shadow-golem-strike-20261025/*junit/binary/
+# Isolated resource-economy GameTest runtime worlds; evidence is separately archived.
+/run-resource-economy-*/
+/run-kill-economy-*/
+
+# Explicit integrated economy and opt-in local visual QA runtime worlds.
+/run-resource-tech-*/
+/run-dreamseekers-visual-fixture/
+
+# API44 isolated unit-receipt runtime worlds; never source/artifact inputs.
+/run-dreamseekers-unit-receipts-focused*/
+/run-dreamseekers-unit-receipt-restart/
+
+/run-dreamseekers-wind-progression-focused/
+/run-dreamseekers-wind-training-focused/
+/run-dreamseekers-shell-functions-focused/
+/run-dreamseekers-branches-focused/
+/run-dreamseekers-wind-restart/
+
+/run-dreamseekers-wind-protocol-focused/
+
+# API44 native construction regression runtime, never source inputs.
+/run-dreamseekers-foundation-focused-api44*/

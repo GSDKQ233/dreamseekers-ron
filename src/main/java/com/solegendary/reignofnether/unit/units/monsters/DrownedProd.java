@@ -1,0 +1,98 @@
+package com.solegendary.reignofnether.unit.units.monsters;
+
+import com.solegendary.reignofnether.ReignOfNether;
+import com.solegendary.reignofnether.building.buildings.placements.CustomBuildingPlacement;
+import com.solegendary.reignofnether.building.buildings.placements.GraveyardPlacement;
+import com.solegendary.reignofnether.building.buildings.placements.ProductionPlacement;
+import com.solegendary.reignofnether.building.production.*;
+import com.solegendary.reignofnether.hud.buttons.UnitSpawnButton;
+import com.solegendary.reignofnether.keybinds.Keybinding;
+import com.solegendary.reignofnether.registrars.EntityRegistrar;
+import com.solegendary.reignofnether.research.ResearchClient;
+import com.solegendary.reignofnether.resources.ResourceCost;
+import com.solegendary.reignofnether.resources.ResourceCosts;
+import com.solegendary.reignofnether.util.LanguageUtil;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.level.Level;
+
+import java.util.List;
+
+import static com.solegendary.reignofnether.util.MiscUtil.fcs;
+
+public class DrownedProd extends GraveyardUnitProductionItem implements IUnitProductionItem {
+
+    public final static String itemName = "Drowned";
+    public final static ResourceCost cost = ResourceCosts.DROWNED;
+
+    public DrownedProd() {
+        super(cost);
+        this.onComplete = (Level level, ProductionPlacement placement) -> {
+            if (!level.isClientSide()) {
+                if (placement instanceof GraveyardPlacement gy && placement.getUpgradeLevel() > 0) {
+                    gy.createSkull(EntityRegistrar.DROWNED_UNIT.get());
+                } else {
+                    placement.produceUnit((ServerLevel) level, EntityRegistrar.DROWNED_UNIT.get(), placement.ownerName, true);
+                }
+            }
+        };
+    }
+
+    public String getItemName() {
+        return DrownedProd.itemName;
+    }
+
+    public UnitSpawnButton getPlaceButton() {
+        return new UnitSpawnButton(
+                DrownedProd.itemName,
+                ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "textures/mobheads/drowned.png"),
+                List.of(
+                        Component.translatable("entity.reignofnether.drowned_unit").withStyle(Style.EMPTY.withBold(true)).getVisualOrderText(),
+                        FormattedCharSequence.EMPTY,
+                        Component.translatable("entity.reignofnether.drowned_unit.tooltip1").getVisualOrderText(),
+                        Component.translatable("entity.reignofnether.drowned_unit.tooltip2").getVisualOrderText(),
+                        FormattedCharSequence.EMPTY,
+                        Component.translatable("entity.reignofnether.drowned_unit.tooltip3").getVisualOrderText(),
+                        FormattedCharSequence.EMPTY,
+                        Component.translatable("entity.reignofnether.drowned_unit.tooltip4").getVisualOrderText()
+                )
+        );
+    }
+
+    public StartProductionButton getStartButton(ProductionPlacement prodBuilding, Keybinding hotkey) {
+        return new StartProductionButton(
+            DrownedProd.itemName,
+            ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "textures/mobheads/drowned.png"),
+            hotkey,
+            () -> false,
+            () -> ResearchClient.hasResearch(ProductionItems.RESEARCH_DROWNED) || prodBuilding instanceof CustomBuildingPlacement,
+            List.of(
+                Component.translatable("entity.reignofnether.drowned_unit").withStyle(Style.EMPTY.withBold(true)).getVisualOrderText(),
+                ResourceCosts.getFormattedCost(cost),
+                ResourceCosts.getFormattedPopAndTime(cost),
+                FormattedCharSequence.EMPTY,
+                Component.translatable("entity.reignofnether.drowned_unit.tooltip1").getVisualOrderText(),
+                Component.translatable("entity.reignofnether.drowned_unit.tooltip2").getVisualOrderText(),
+                FormattedCharSequence.EMPTY,
+                Component.translatable("entity.reignofnether.drowned_unit.tooltip3").getVisualOrderText(),
+                FormattedCharSequence.EMPTY,
+                Component.translatable("entity.reignofnether.drowned_unit.tooltip4").getVisualOrderText()
+            ),
+            this
+        );
+    }
+
+    public StopProductionButton getCancelButton(ProductionPlacement prodBuilding, boolean first) {
+        return new StopProductionButton(
+            DrownedProd.itemName,
+            ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "textures/mobheads/drowned.png"),
+            prodBuilding,
+            this,
+            first
+        );
+    }
+}

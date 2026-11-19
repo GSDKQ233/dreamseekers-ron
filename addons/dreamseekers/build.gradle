@@ -1,0 +1,894 @@
+// Applied from the RoN checkout only with -Pdreamseekers.
+// All third-party content stays in user-provided, locally cached dependencies.
+// Nothing from those dependencies is copied or shaded into the addon JAR.
+ext.dreamseekersVersion = '0.65.0-repair2'
+
+def dependencyRepository = project.findProperty('dreamseekersDependencyRepo') ?: new File(rootDir, '.dreamseekers-deps/maven').toString()
+// Keep the raw local repository ahead of remote repositories. Do not use
+// exclusiveContent: ForgeGradle's generated remapping repository must also be
+// allowed to serve the same group with its mapped-version suffix.
+def localDependencyRepository = repositories.maven {
+    name = 'dreamseekersVerifiedLocalDependencies'
+    url = uri(dependencyRepository)
+    content { includeGroup 'local.dreamseekers.dependencies' }
+}
+repositories.remove(localDependencyRepository)
+repositories.addFirst(localDependencyRepository)
+
+sourceSets {
+    dreamseekers {
+        java.srcDir 'addons/dreamseekers/src/main/java'
+        resources.srcDir 'addons/dreamseekers/src/main/resources'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+    dreamseekersGametest {
+        java.srcDir 'addons/dreamseekers/src/gametest/java'
+        resources.srcDir 'addons/dreamseekers/src/gametest/resources'
+        // Test helper stays in the core module; never split a core package into the addon.
+        compileClasspath += sourceSets.gametest.output
+        compileClasspath += sourceSets.main.output + sourceSets.dreamseekers.output + sourceSets.dreamseekers.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.dreamseekers.output + sourceSets.dreamseekers.runtimeClasspath
+    }
+    test {
+        java.srcDir 'addons/dreamseekers/src/test/java'
+        compileClasspath += sourceSets.dreamseekers.output
+        runtimeClasspath += sourceSets.dreamseekers.runtimeClasspath
+    }
+}
+
+configurations {
+    dreamseekersImplementation.extendsFrom implementation
+    dreamseekersAnnotationProcessor.extendsFrom annotationProcessor
+    dreamseekersGametestImplementation.extendsFrom dreamseekersImplementation
+}
+
+// Mixin's generated refmap is a release input. A classpath-only incremental
+// recompile can discard it without rerunning the addon annotation processor.
+// Keep this local to the addon; do not change core compilation or dependencies.
+tasks.named('compileDreamseekersJava', JavaCompile).configure {
+    options.incremental = false
+}
+
+dependencies {
+    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:pasterdream:beta0.4.2')
+    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:geckolib:4.8.2')
+    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:curios:5.14.1')
+    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:player-animation-lib:1.0.2-rc1')
+}
+
+mixin {
+    add sourceSets.dreamseekers, 'dreamseekers.refmap.json'
+}
+
+// Optional stage-local fresh worlds for exactly the approved final prior-skill profiles.
+def shadowGolemFinalPriorFlags = ['dreamseekersAshEmberLandingFocused', 'dreamseekersAshEmberParticlesFocused', 'dreamseekersShadowHandGripFocused', 'dreamseekersFriendlyDebtContractFocused', 'dreamseekersTerrorbeakDreadRoarFocused', 'dreamseekersSquealSuppressionWaveFocused', 'dreamseekersShadowCorrosionTouchFocused', 'dreamseekersStoneHeavyShotFocused', 'dreamseekersSnailShellFormationFocused', 'dreamseekersBeetleAdvanceFocused', 'dreamseekersFireflyRushFocused', 'dreamseekersFoxSporeFocused', 'dreamseekersBoneMarkFocused', 'dreamseekersWindDashFocused', 'dreamseekersFoxBlessingFocused', 'dreamseekersJellyFlowFocused', 'dreamseekersGelSkillFocused']
+def shadowGolemFinalPriorRun = project.findProperty('dreamseekersShadowGolemFinalPriorRun')?.toString()
+if (shadowGolemFinalPriorRun != null) {
+    if (!(shadowGolemFinalPriorRun ==~ /[A-Za-z0-9_-]{1,96}/)) throw new GradleException('Invalid final prior run suffix')
+    if (shadowGolemFinalPriorFlags.count { project.hasProperty(it) } != 1)
+        throw new GradleException('Final prior suffix requires exactly one approved prior profile')
+}
+
+// Only the selected legacy addon profile may set these launch properties. For
+// canonical and legacy core selectors, the settings plan is applied by the root.
+if (gradle.ext.dreamseekersGameTestPlan.legacyAddon) {
+    minecraft.runs.gameTestServer {
+        workingDirectory project.file('run-dreamseekers-gametest')
+        if (project.hasProperty('dreamseekersFoundationFocused')) {
+            def foundationRun = project.findProperty('dreamseekersFoundationRun')?.toString()
+            if (foundationRun != null && !(foundationRun ==~ /[A-Za-z0-9_-]{1,64}/)) throw new GradleException('Invalid foundation run suffix')
+            workingDirectory project.file('run-dreamseekers-foundation-focused-api44' + (foundationRun == null ? '' : '-' + foundationRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_foundation'
+        } else if (project.hasProperty('dreamseekersWindProtocolFocused')) {
+            workingDirectory project.file('run-dreamseekers-wind-protocol-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_protocol'
+        } else if (project.hasProperty('dreamseekersWindProgressionFocused')) {
+            workingDirectory project.file('run-dreamseekers-wind-progression-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_progression'
+        } else if (project.hasProperty('dreamseekersWindTrainingFocused')) {
+            workingDirectory project.file('run-dreamseekers-wind-training-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_training'
+        } else if (project.hasProperty('dreamseekersShellFunctionsFocused')) {
+            workingDirectory project.file('run-dreamseekers-shell-functions-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shell_functions'
+        } else if (project.hasProperty('dreamseekersBranchesFocused')) {
+            workingDirectory project.file('run-dreamseekers-branches-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_branches'
+        } else if (project.hasProperty('dreamseekersWindRestart')) {
+            def phase=project.property('dreamseekersWindRestart').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Wind restart phase')
+            workingDirectory project.file('run-dreamseekers-wind-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_restart'
+            property 'dreamseekers.wind.restart.phase', phase
+        } else if (project.hasProperty('dreamseekersUnitReceiptRestart')) {
+            def phase=project.property('dreamseekersUnitReceiptRestart').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid unit receipt restart phase')
+            workingDirectory project.file('run-dreamseekers-unit-receipt-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_unit_receipt_restart'
+            property 'dreamseekers.unit.receipt.restart.phase', phase
+        } else if (project.hasProperty('dreamseekersUnitReceiptsFocused')) {
+            def receiptRun=project.findProperty('dreamseekersUnitReceiptsRun')?.toString()
+            if (receiptRun != null && !(receiptRun ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid unit receipt run suffix')
+            workingDirectory project.file('run-dreamseekers-unit-receipts-focused' + (receiptRun == null ? '' : '-' + receiptRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_unit_receipts'
+        } else if (project.hasProperty('dreamseekersShadowGolemStrikeFocused')) {
+            def focusedRun=project.findProperty('dreamseekersShadowGolemStrikeFocusedRun')?.toString()
+            if (focusedRun != null && !(focusedRun ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid Shadow Golem Strike focused run suffix')
+            workingDirectory project.file('run-dreamseekers-shadow-golem-strike-focused' + (focusedRun == null ? '' : '-' + focusedRun))
+            property 'mixin.debug.export', 'true'
+            property 'mixin.debug.export.filter', 'net.minecraft.world.entity.LivingEntity'
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_golem_strike_skill'
+        } else if (project.hasProperty('dreamseekersShadowGolemStrikeFogFocused')) {
+            def focusedRun=project.findProperty('dreamseekersShadowGolemStrikeFogFocusedRun')?.toString()
+            if (focusedRun != null && !(focusedRun ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid Shadow Golem Strike fog focused run suffix')
+            workingDirectory project.file('run-dreamseekers-shadow-golem-strike-fog-focused' + (focusedRun == null ? '' : '-' + focusedRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_golem_strike_fog'
+        } else if (project.hasProperty('dreamseekersShadowGolemStrikeBuildingTestPhase')) {
+            def phase=project.property('dreamseekersShadowGolemStrikeBuildingTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Shadow Golem Strike building restart phase')
+            def restartRun=project.findProperty('dreamseekersShadowGolemStrikeBuildingRestartRun')?.toString()
+            if (restartRun != null && !(restartRun ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid Shadow Golem Strike building restart suffix')
+            workingDirectory project.file('run-dreamseekers-shadow-golem-strike-building-restart' + (restartRun == null ? '' : '-' + restartRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_golem_strike_building_restart'
+            property 'dreamseekers.shadowGolemStrikeBuilding.test.phase', phase
+        } else if (project.hasProperty('dreamseekersShadowGolemStrikeTestPhase')) {
+            def phase=project.property('dreamseekersShadowGolemStrikeTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Shadow Golem Strike restart phase')
+            def restartRun=project.findProperty('dreamseekersShadowGolemStrikeRestartRun')?.toString()
+            if (restartRun != null && !(restartRun ==~ /[A-Za-z0-9_-]{1,96}/)) throw new GradleException('Invalid Shadow Golem Strike restart suffix')
+            workingDirectory project.file('run-dreamseekers-shadow-golem-strike-restart' + (restartRun == null ? '' : '-' + restartRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_golem_strike_skill_restart'
+            property 'dreamseekers.shadowGolemStrike.test.phase', phase
+        } else if (project.hasProperty('dreamseekersLightFeatherAlertFocused')) {
+            def focusedRun=project.findProperty('dreamseekersLightFeatherAlertFocusedRun')?.toString()
+            if (focusedRun != null && !(focusedRun ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid Light Feather Alert focused run suffix')
+            workingDirectory project.file('run-dreamseekers-light-feather-alert-focused' + (focusedRun == null ? '' : '-' + focusedRun))
+            property 'mixin.debug.export', 'true'
+            property 'mixin.debug.export.filter', 'net.minecraft.world.entity.LivingEntity'
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_light_feather_alert_skill'
+        } else if (project.hasProperty('dreamseekersLightFeatherAlertTestPhase')) {
+            def phase=project.property('dreamseekersLightFeatherAlertTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Light Feather Alert restart phase')
+            workingDirectory project.file('run-dreamseekers-light-feather-alert-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_light_feather_alert_skill_restart'
+            property 'dreamseekers.lightFeatherAlert.test.phase', phase
+        } else if (project.hasProperty('dreamseekersAshEmberParticlesFocused')) {
+            workingDirectory project.file('run-dreamseekers-ash-ember-particles-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_ash_ember_particles_skill'
+        } else if (project.hasProperty('dreamseekersAshEmberLandingFocused')) {
+            workingDirectory project.file('run-dreamseekers-ash-ember-landing-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_ash_ember_landing_skill'
+        } else if (project.hasProperty('dreamseekersAshEmberLandingTestPhase')) {
+            def phase=project.property('dreamseekersAshEmberLandingTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Ash Ember Landing restart phase')
+            workingDirectory project.file('run-dreamseekers-ash-ember-landing-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_ash_ember_landing_skill_restart'
+            property 'dreamseekers.ashEmberLanding.test.phase', phase
+        } else if (project.hasProperty('dreamseekersShadowHandGripFocused')) {
+            workingDirectory project.file('run-dreamseekers-shadow-hand-grip-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_hand_grip_skill'
+        } else if (project.hasProperty('dreamseekersShadowHandGripTestPhase')) {
+            def phase=project.property('dreamseekersShadowHandGripTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Shadow Hand Grip restart phase')
+            workingDirectory project.file('run-dreamseekers-shadow-hand-grip-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_hand_grip_skill_restart'
+            property 'dreamseekers.shadowHandGrip.test.phase', phase
+        } else if (project.hasProperty('dreamseekersFriendlyDebtContractFocused')) {
+            workingDirectory project.file('run-dreamseekers-friendly-debt-contract-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_friendly_debt_contract_skill'
+        } else if (project.hasProperty('dreamseekersFriendlyDebtContractTestPhase')) {
+            def phase=project.property('dreamseekersFriendlyDebtContractTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Friendly Debt Contract restart phase')
+            workingDirectory project.file('run-dreamseekers-friendly-debt-contract-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_friendly_debt_contract_skill_restart'
+            property 'dreamseekers.friendlyDebtContract.test.phase', phase
+        } else if (project.hasProperty('dreamseekersTerrorbeakDreadRoarFocused')) {
+            workingDirectory project.file('run-dreamseekers-terrorbeak-dread-roar-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_terrorbeak_dread_roar'
+        } else if (project.hasProperty('dreamseekersTerrorbeakDreadRoarTestPhase')) {
+            def phase=project.property('dreamseekersTerrorbeakDreadRoarTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Terrorbeak Dread Roar restart phase')
+            workingDirectory project.file('run-dreamseekers-terrorbeak-dread-roar-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_terrorbeak_dread_roar_restart'
+            property 'dreamseekers.terrorbeakDreadRoar.test.phase', phase
+        } else if (project.hasProperty('dreamseekersSquealSuppressionWaveFocused')) {
+            workingDirectory project.file('run-dreamseekers-squeal-suppression-wave-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_squeal_suppression_wave'
+        } else if (project.hasProperty('dreamseekersSquealSuppressionWaveTestPhase')) {
+            def phase=project.property('dreamseekersSquealSuppressionWaveTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid squeal suppression wave restart phase')
+            workingDirectory project.file('run-dreamseekers-squeal-suppression-wave-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_squeal_suppression_wave_restart'
+            property 'dreamseekers.squealSuppressionWave.test.phase', phase
+        } else if (project.hasProperty('dreamseekersShadowCorrosionTouchFocused')) {
+            workingDirectory project.file('run-dreamseekers-shadow-corrosion-touch-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_corrosion_touch'
+        } else if (project.hasProperty('dreamseekersShadowCorrosionTouchTestPhase')) {
+            def phase=project.property('dreamseekersShadowCorrosionTouchTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid ShadowCorrosionTouch restart phase')
+            workingDirectory project.file('run-dreamseekers-shadow-corrosion-touch-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_corrosion_touch_restart'
+            property 'dreamseekers.shadowCorrosionTouch.test.phase', phase
+        } else if (project.hasProperty('dreamseekersStoneHeavyShotFocused')) {
+            workingDirectory project.file('run-dreamseekers-stone-heavy-shot-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_stone_heavy_shot'
+        } else if (project.hasProperty('dreamseekersStoneHeavyShotTestPhase')) {
+            def phase=project.property('dreamseekersStoneHeavyShotTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid StoneHeavyShot restart phase')
+            if (project.hasProperty('dreamseekersStoneHeavyShotRestartRun')) {
+                def runId=project.property('dreamseekersStoneHeavyShotRestartRun').toString()
+                if (!(runId ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid isolated Heavy restart run ID')
+                workingDirectory project.file("run-dreamseekers-stone-heavy-shot-restart-${runId}")
+            } else {
+                workingDirectory project.file('run-dreamseekers-stone-heavy-shot-restart')
+            }
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_stone_heavy_shot_restart'
+            property 'dreamseekers.stoneHeavyShot.test.phase', phase
+        } else if (project.hasProperty('dreamseekersSnailShellFormationFocused')) {
+            workingDirectory project.file('run-dreamseekers-snail-shell-formation-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_snail_shell_formation'
+        } else if (project.hasProperty('dreamseekersSnailShellFormationTestPhase')) {
+            def phase=project.property('dreamseekersSnailShellFormationTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid SnailShellFormation restart phase')
+            workingDirectory project.file('run-dreamseekers-snail-shell-formation-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_snail_shell_formation_restart'
+            property 'dreamseekers.snailShellFormation.test.phase', phase
+        } else if (project.hasProperty('dreamseekersBeetleAdvanceFocused')) {
+            workingDirectory project.file('run-dreamseekers-beetle-advance-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_beetle_advance'
+        } else if (project.hasProperty('dreamseekersBeetleAdvanceTestPhase')) {
+            def phase=project.property('dreamseekersBeetleAdvanceTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Beetle advance restart phase')
+            workingDirectory project.file('run-dreamseekers-beetle-advance-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_beetle_advance_restart'
+            property 'dreamseekers.beetle.advance.test.phase',phase
+        } else if (project.hasProperty('dreamseekersFireflyRushFocused')) {
+            workingDirectory project.file('run-dreamseekers-firefly-rush-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_firefly_rush'
+        } else if (project.hasProperty('dreamseekersFireflyRushTestPhase')) {
+            def phase=project.property('dreamseekersFireflyRushTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Firefly rush restart phase')
+            workingDirectory project.file('run-dreamseekers-firefly-rush-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_firefly_rush_restart'
+            property 'dreamseekers.firefly.rush.test.phase',phase
+        } else if (project.hasProperty('dreamseekersFoxSporeFocused')) {
+            workingDirectory project.file('run-dreamseekers-fox-spore-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_fox_spore'
+        } else if (project.hasProperty('dreamseekersFoxSporeTestPhase')) {
+            def phase=project.property('dreamseekersFoxSporeTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Fox spore restart phase')
+            workingDirectory project.file('run-dreamseekers-fox-spore-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_fox_spore_restart'
+            property 'dreamseekers.fox.spore.test.phase',phase
+        } else if (project.hasProperty('dreamseekersBoneMarkFocused')) {
+            workingDirectory project.file('run-dreamseekers-bone-mark-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_bone_mark'
+        } else if (project.hasProperty('dreamseekersBoneMarkTestPhase')) {
+            def phase=project.property('dreamseekersBoneMarkTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid bone mark restart phase')
+            workingDirectory project.file('run-dreamseekers-bone-mark-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_bone_mark_restart'
+            property 'dreamseekers.bone.mark.test.phase',phase
+        } else if (project.hasProperty('dreamseekersWindDashFocused')) {
+            workingDirectory project.file('run-dreamseekers-wind-dash-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_dash'
+        } else if (project.hasProperty('dreamseekersWindDashTestPhase')) {
+            def phase=project.property('dreamseekersWindDashTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid wind dash restart phase')
+            workingDirectory project.file('run-dreamseekers-wind-dash-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_dash_restart'
+            property 'dreamseekers.wind.dash.test.phase',phase
+        } else if (project.hasProperty('dreamseekersFoxBlessingFocused')) {
+            workingDirectory project.file('run-dreamseekers-fox-blessing-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_fox_blessing'
+        } else if (project.hasProperty('dreamseekersFoxBlessingTestPhase')) {
+            def phase=project.property('dreamseekersFoxBlessingTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid fox blessing restart phase')
+            workingDirectory project.file('run-dreamseekers-fox-blessing-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_fox_blessing_restart'
+            property 'dreamseekers.fox.blessing.test.phase',phase
+        } else if (project.hasProperty('dreamseekersJellyFlowFocused')) {
+            workingDirectory project.file('run-dreamseekers-jelly-flow-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_jelly_flow'
+        } else if (project.hasProperty('dreamseekersJellyFlowTestPhase')) {
+            def phase=project.property('dreamseekersJellyFlowTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid jelly flow restart phase')
+            workingDirectory project.file('run-dreamseekers-jelly-flow-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_jelly_flow_restart'
+            property 'dreamseekers.jelly.flow.test.phase',phase
+        } else if (project.hasProperty('dreamseekersGelSkillFocused')) {
+            workingDirectory project.file('run-dreamseekers-gel-skill-focused' + (shadowGolemFinalPriorRun == null ? '' : '-' + shadowGolemFinalPriorRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_gel_skill'
+        } else if (project.hasProperty('dreamseekersGelSkillTestPhase')) {
+            def phase=project.property('dreamseekersGelSkillTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid gel skill restart phase')
+            workingDirectory project.file('run-dreamseekers-gel-skill-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_gel_skill_restart'
+            property 'dreamseekers.gel.skill.test.phase',phase
+        } else if (project.hasProperty('dreamseekersRosterCompleteTest')) {
+            workingDirectory project.file('run-dreamseekers-roster-complete')
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        } else if (project.hasProperty('dreamseekersAaroncosBoundary')) {
+            workingDirectory project.file('run-dreamseekers-aaroncos-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_aaroncos_boundary'
+        } else if (project.hasProperty('dreamseekersAaroncosFocused')) {
+            workingDirectory project.file('run-dreamseekers-aaroncos-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_aaroncos_focused'
+        } else if (project.hasProperty('dreamseekersAaroncosTestPhase')) {
+            def phase=project.property('dreamseekersAaroncosTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Aaroncos restart phase')
+            workingDirectory project.file('run-dreamseekers-aaroncos-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_aaroncos_restart'
+            property 'dreamseekers.aaroncos.test.phase',phase
+        } else if (project.hasProperty('dreamseekersWeepingFocused')) {
+            workingDirectory project.file('run-dreamseekers-weeping-squeal-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_weeping_squeal_focused'
+        } else if (project.hasProperty('dreamseekersWeepingTestPhase')) {
+            def phase=project.property('dreamseekersWeepingTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Weeping restart phase')
+            workingDirectory project.file('run-dreamseekers-weeping-squeal-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_weeping_squeal_restart'
+            property 'dreamseekers.weepingsqueal.test.phase',phase
+        } else if (project.hasProperty('dreamseekersGolemNativeProbe')) {
+            workingDirectory project.file('run-dreamseekers-shadow-golem-native-probe')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_golem_native_probe'
+        } else if (project.hasProperty('dreamseekersGolemFocused')) {
+            def focusedRun=project.findProperty('dreamseekersGolemFocusedRun')?.toString()
+            if (focusedRun != null && !(focusedRun ==~ /[A-Za-z0-9_-]{1,96}/)) throw new GradleException('Invalid original Shadow Golem focused run suffix')
+            workingDirectory project.file('run-dreamseekers-shadow-golem-focused' + (focusedRun == null ? '' : '-' + focusedRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_golem_focused'
+        } else if (project.hasProperty('dreamseekersGolemBoundary')) {
+            workingDirectory project.file('run-dreamseekers-shadow-golem-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_golem_boundary'
+        } else if (project.hasProperty('dreamseekersGolemTestPhase')) {
+            def phase=project.property('dreamseekersGolemTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid shadow golem restart phase')
+            def runId=project.findProperty('dreamseekersGolemRestartRun')?.toString()
+            if (runId != null && !(runId ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid isolated Golem restart suffix')
+            workingDirectory project.file('run-dreamseekers-shadow-golem-restart' + (runId == null ? '' : '-' + runId))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_golem_restart'
+            property 'dreamseekers.shadow_golem.test.phase', phase
+        } else if (project.hasProperty('dreamseekersCrazyTerrorbeakFocused')) {
+            workingDirectory project.file('run-dreamseekers-crazy-terrorbeak-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_crazy_terrorbeak_focused'
+        } else if (project.hasProperty('dreamseekersCrazyTerrorbeakTestPhase')) {
+            def phase=project.property('dreamseekersCrazyTerrorbeakTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid crazy terrorbeak restart phase')
+            workingDirectory project.file('run-dreamseekers-crazy-terrorbeak-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_crazy_terrorbeak_restart'
+            property 'dreamseekers.crazy_terrorbeak.test.phase', phase
+        } else if (project.hasProperty('dreamseekersAshBoundary')) {
+            workingDirectory project.file('run-dreamseekers-ash-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_ash_boundary'
+        } else if (project.hasProperty('dreamseekersAshBoneWingFocused')) {
+            workingDirectory project.file('run-dreamseekers-ash-bone-wing-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_ash_bone_wing_focused'
+        } else if (project.hasProperty('dreamseekersAshBoneWingTestPhase')) {
+            def phase=project.property('dreamseekersAshBoneWingTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid ash bone wing restart phase')
+            def restartRun=project.findProperty('dreamseekersAshBoneWingRestartRun')?.toString()
+            if (restartRun != null && !(restartRun ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid ash bone wing restart run suffix')
+            workingDirectory project.file('run-dreamseekers-ash-bone-wing-restart' + (restartRun == null ? '' : '-' + restartRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_ash_restart'
+            property 'dreamseekers.ashbonewing.test.phase', phase
+        } else if (project.hasProperty('dreamseekersShadowHandFocused')) {
+            workingDirectory project.file('run-dreamseekers-shadow-hand-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_hand_focused'
+        } else if (project.hasProperty('dreamseekersShadowHandTestPhase')) {
+            def phase=project.property('dreamseekersShadowHandTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid shadow hand restart phase')
+            if (project.hasProperty('dreamseekersShadowHandRestartRun')) {
+                def runName=project.property('dreamseekersShadowHandRestartRun').toString()
+                if (!(runName ==~ /[a-z0-9-]+/)) throw new GradleException('Invalid isolated Shadow Hand restart run name')
+                workingDirectory project.file('run-dreamseekers-shadow-hand-restart-' + runName)
+            } else workingDirectory project.file('run-dreamseekers-shadow-hand-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_hand_restart'
+            property 'dreamseekers.shadowhand.test.phase', phase
+        } else if (project.hasProperty('dreamseekersFriendlyGhostFocused')) {
+            workingDirectory project.file('run-dreamseekers-friendly-ghost-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_friendly_ghost_focused'
+        } else if (project.hasProperty('dreamseekersFriendlyGhostTestPhase')) {
+            def phase=project.property('dreamseekersFriendlyGhostTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid friendly ghost restart phase')
+            if (project.hasProperty('dreamseekersFriendlyGhostRestartRun')) {
+                def runName=project.property('dreamseekersFriendlyGhostRestartRun').toString()
+                if (!(runName ==~ /[a-z0-9-]+/)) throw new GradleException('Invalid isolated Friendly Ghost restart run name')
+                workingDirectory project.file('run-dreamseekers-friendly-ghost-restart-' + runName)
+            } else workingDirectory project.file('run-dreamseekers-friendly-ghost-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_friendly_restart'
+            property 'dreamseekers.friendlyghost.test.phase', phase
+        } else if (project.hasProperty('dreamseekersTerrorbeakFocused')) {
+            workingDirectory project.file('run-dreamseekers-terrorbeak-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_terrorbeak_focused'
+        } else if (project.hasProperty('dreamseekersTerrorbeakTestPhase')) {
+            def phase=project.property('dreamseekersTerrorbeakTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid terrorbeak restart phase')
+            if (project.hasProperty('dreamseekersTerrorbeakRestartRun')) {
+                def runName=project.property('dreamseekersTerrorbeakRestartRun').toString()
+                if (!(runName ==~ /[a-z0-9-]+/)) throw new GradleException('Invalid isolated Terrorbeak restart run name')
+                workingDirectory project.file('run-dreamseekers-terrorbeak-restart-' + runName)
+            } else workingDirectory project.file('run-dreamseekers-terrorbeak-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_terrorbeak_restart'
+            property 'dreamseekers.terrorbeak.test.phase', phase
+        } else if (project.hasProperty('dreamseekersShadowSquealFocused')) {
+            workingDirectory project.file('run-dreamseekers-shadow-squeal-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_squeal_focused'
+        } else if (project.hasProperty('dreamseekersShadowSquealTestPhase')) {
+            def phase=project.property('dreamseekersShadowSquealTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid shadow squeal restart phase')
+            if (project.hasProperty('dreamseekersShadowSquealRestartRun')) {
+                def runId=project.property('dreamseekersShadowSquealRestartRun').toString()
+                if (!(runId ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid isolated ShadowSqueal restart run ID')
+                workingDirectory project.file("run-dreamseekers-shadow-squeal-restart-${runId}")
+            } else {
+                workingDirectory project.file('run-dreamseekers-shadow-squeal-restart')
+            }
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_squeal_restart'
+            property 'dreamseekers.shadowsqueal.test.phase', phase
+        } else if (project.hasProperty('dreamseekersShadowGhostBoundary')) {
+            workingDirectory project.file('run-dreamseekers-shadow-ghost-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_ghost_boundary'
+        } else if (project.hasProperty('dreamseekersShadowGhostFocused')) {
+            workingDirectory project.file('run-dreamseekers-shadow-ghost-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_ghost_focused'
+        } else if (project.hasProperty('dreamseekersShadowGhostTestPhase')) {
+            def phase=project.property('dreamseekersShadowGhostTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid shadow ghost restart phase')
+            if (project.hasProperty('dreamseekersShadowGhostRestartRun')) {
+                def runId=project.property('dreamseekersShadowGhostRestartRun').toString()
+                if (!(runId ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid isolated ShadowGhost restart run ID')
+                workingDirectory project.file("run-dreamseekers-shadow-ghost-restart-${runId}")
+            } else {
+                workingDirectory project.file('run-dreamseekers-shadow-ghost-restart')
+            }
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_shadow_ghost_restart'
+            property 'dreamseekers.shadowghost.test.phase', phase
+        } else if (project.hasProperty('dreamseekersMotherNativeDiagnostic')) {
+            workingDirectory project.file('run-dreamseekers-mother-native-diagnostic')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_mother_native_diagnostic'
+            property 'dreamseekers.mother.native.diagnostic', 'true'
+        } else if (project.hasProperty('dreamseekersMotherBoundary')) {
+            workingDirectory project.file('run-dreamseekers-mother-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_mother_boundary'
+        } else if (project.hasProperty('dreamseekersMotherFocused')) {
+            workingDirectory project.file('run-dreamseekers-mother-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_mother_focused'
+        } else if (project.hasProperty('dreamseekersMotherTestPhase')) {
+            def phase=project.property('dreamseekersMotherTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Mother restart phase')
+            workingDirectory project.file('run-dreamseekers-mother-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_mother_restart'
+            property 'dreamseekers.beetlemother.test.phase', phase
+        } else if (project.hasProperty('dreamseekersStoneBoundary')) {
+            workingDirectory project.file('run-dreamseekers-stone-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_stone_boundary'
+        } else if (project.hasProperty('dreamseekersStoneFocused')) {
+            workingDirectory project.file('run-dreamseekers-stone-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_stone_focused'
+        } else if (project.hasProperty('dreamseekersStoneTestPhase')) {
+            def phase=project.property('dreamseekersStoneTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid StoneThrower restart phase')
+            if (project.hasProperty('dreamseekersStoneRestartRun')) {
+                def runId=project.property('dreamseekersStoneRestartRun').toString()
+                if (!(runId ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid isolated Stone restart run ID')
+                workingDirectory project.file("run-dreamseekers-stone-restart-${runId}")
+            } else {
+                workingDirectory project.file('run-dreamseekers-stone-restart')
+            }
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_stone_restart'
+            property 'dreamseekers.stone.test.phase', phase
+        } else if (project.hasProperty('dreamseekersLightHoldFocused')) {
+            workingDirectory project.file('run-dreamseekers-light-hold-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_light_hold_focused'
+        } else if (project.hasProperty('dreamseekersLightCompleteTest')) {
+            workingDirectory project.file('run-dreamseekers-light-complete')
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        } else if (project.hasProperty('dreamseekersSporeFocused')) {
+            workingDirectory project.file('run-dreamseekers-spore-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_spore_focused'
+        } else if (project.hasProperty('dreamseekersSporeTestPhase')) {
+            def phase=project.property('dreamseekersSporeTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid Spore restart phase')
+            workingDirectory project.file('run-dreamseekers-spore-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_spore_restart'
+            property 'dreamseekers.spore.test.phase', phase
+        } else if (project.hasProperty('dreamseekersWindKnightBoundary')) {
+            workingDirectory project.file('run-dreamseekers-wind-knight-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_knight_boundary'
+        } else if (project.hasProperty('dreamseekersWindKnightFocused')) {
+            workingDirectory project.file('run-dreamseekers-wind-knight-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_knight_focused'
+        } else if (project.hasProperty('dreamseekersWindKnightTestPhase')) {
+            def phase=project.property('dreamseekersWindKnightTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid WindKnight restart phase')
+            workingDirectory project.file('run-dreamseekers-wind-knight-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_wind_knight_restart'
+            property 'dreamseekers.windknight.test.phase', phase
+        } else if (project.hasProperty('dreamseekersBoneWingTest')) {
+            workingDirectory project.file('run-dreamseekers-bone-wing-aggregate')
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        } else if (project.hasProperty('dreamseekersBoneWingSpawnBoundary')) {
+            workingDirectory project.file('run-dreamseekers-bone-wing-spawn-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_bone_wing_spawn_boundary'
+        } else if (project.hasProperty('dreamseekersBoneWingFocused')) {
+            workingDirectory project.file('run-dreamseekers-bone-wing-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_bone_wing_focused'
+        } else if (project.hasProperty('dreamseekersBoneWingTestPhase')) {
+            def phase = project.property('dreamseekersBoneWingTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('Invalid BoneWing restart phase')
+            workingDirectory project.file('run-dreamseekers-bone-wing-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_bone_wing_restart'
+            property 'dreamseekers.bonewing.test.phase', phase
+        } else if (project.hasProperty('dreamseekersTestBatch')) {
+            def batch = project.property('dreamseekersTestBatch').toString()
+            def testCase = (project.findProperty('dreamseekersTestCase') ?: '').toString()
+            def runId = (project.findProperty('dreamseekersTestRun') ?: 'manual').toString()
+            if (!(batch ==~ /[a-z0-9_]+/) || !(testCase ==~ /[A-Za-z0-9_]*/) || !(runId ==~ /[A-Za-z0-9_-]+/))
+                throw new GradleException('Invalid split test selector/run ID')
+            workingDirectory project.file("run-dreamseekers-split-${batch}-${runId}")
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_split'
+            property 'dreamseekers.test.batch', batch
+            property 'dreamseekers.test.case', testCase
+            // Test-only controlled setup latency; never changes world time or observation windows.
+            def readyDelay = (project.findProperty('dreamseekersFixtureReadyDelay') ?: '0').toString()
+            if (!readyDelay.isInteger() || readyDelay.toInteger() < 0 || readyDelay.toInteger() > 400)
+                throw new GradleException('Fixture readiness delay must be between 0 and 400 ticks')
+            property 'dreamseekers.test.fixtureReadyDelay', readyDelay
+        } else if (project.hasProperty('dreamseekersMarkVisionFocused')) {
+            workingDirectory project.file('run-dreamseekers-mark-vision-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_mark_vision_focused'
+        } else if (project.hasProperty('dreamseekersJellyfishRallyLifecycle')) {
+            workingDirectory project.file('run-dreamseekers-jellyfish-rally-lifecycle')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_jellyfish_rally_lifecycle_focused'
+        } else if (project.hasProperty('dreamseekersJellyfishRallyBoundary')) {
+            workingDirectory project.file('run-dreamseekers-jellyfish-rally-boundary')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_jellyfish_rally_boundary'
+        } else if (project.hasProperty('dreamseekersJellyfishFocused')) {
+            workingDirectory project.file('run-dreamseekers-jellyfish-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_jellyfish_focused'
+        } else if (project.hasProperty('dreamseekersJellyfishTest')) {
+            workingDirectory project.file('run-dreamseekers-jellyfish-aggregate')
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        } else if (project.hasProperty('dreamseekersJellyfishTestPhase')) {
+            def phase = project.property('dreamseekersJellyfishTestPhase').toString()
+            if (!(phase in ['prepare', 'verify'])) throw new GradleException('dreamseekersJellyfishTestPhase must be prepare or verify')
+            workingDirectory project.file('run-dreamseekers-jellyfish-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_jellyfish_restart'
+            property 'dreamseekers.jellyfish.test.phase', phase
+        } else if (project.hasProperty('dreamseekersSlimeFocused')) {
+            workingDirectory project.file('run-dreamseekers-slime-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_slime_focused'
+        } else if (project.hasProperty('dreamseekersSlimeTest')) {
+            workingDirectory project.file('run-dreamseekers-slime-aggregate')
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        } else if (project.hasProperty('dreamseekersSlimeTestPhase')) {
+            def phase = project.property('dreamseekersSlimeTestPhase').toString()
+            if (!(phase in ['prepare', 'verify'])) throw new GradleException('dreamseekersSlimeTestPhase must be prepare or verify')
+            workingDirectory project.file('run-dreamseekers-slime-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_slime_restart'
+            property 'dreamseekers.slime.test.phase', phase
+        } else if (project.hasProperty('dreamseekersFoxFocused')) {
+            workingDirectory project.file('run-dreamseekers-fox-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_fox_focused'
+        } else if (project.hasProperty('dreamseekersFoxTest')) {
+            workingDirectory project.file('run-dreamseekers-light-fox')
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        } else if (project.hasProperty('dreamseekersFoxTestPhase')) {
+            def phase = project.property('dreamseekersFoxTestPhase').toString()
+            if (!(phase in ['prepare', 'verify'])) throw new GradleException('dreamseekersFoxTestPhase must be prepare or verify')
+            workingDirectory project.file('run-dreamseekers-fox-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_fox_restart'
+            property 'dreamseekers.fox.test.phase', phase
+        } else if (project.hasProperty('dreamseekersScoutFocused')) {
+            if (['dreamseekersLightTest','dreamseekersScoutTestPhase','dreamseekersFireflyWorkTest','dreamseekersFireflyTestPhase','dreamseekersTestPhase','dreamseekersScaffoldTestPhase'].any { project.hasProperty(it) })
+                throw new GradleException('Choose the scout focused tests or one other probe')
+            workingDirectory project.file('run-dreamseekers-scout-focused')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_scout_focused'
+        } else if (project.hasProperty('dreamseekersLightTest')) {
+            if (['dreamseekersFireflyWorkTest','dreamseekersFireflyTestPhase','dreamseekersTestPhase','dreamseekersScaffoldTestPhase','dreamseekersScoutTestPhase'].any { project.hasProperty(it) })
+                throw new GradleException('Choose the light aggregate or one other probe')
+            workingDirectory project.file('run-dreamseekers-light-scout')
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        } else if (project.hasProperty('dreamseekersScoutTestPhase')) {
+            if (['dreamseekersFireflyWorkTest','dreamseekersFireflyTestPhase','dreamseekersTestPhase','dreamseekersScaffoldTestPhase'].any { project.hasProperty(it) })
+                throw new GradleException('Choose one restart probe')
+            def phase = project.property('dreamseekersScoutTestPhase').toString()
+            if (!(phase in ['prepare','verify'])) throw new GradleException('dreamseekersScoutTestPhase must be prepare or verify')
+            def restartRun=project.findProperty('dreamseekersScoutRestartRun')?.toString()
+            if (restartRun != null && !(restartRun ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid scout restart run suffix')
+            workingDirectory project.file('run-dreamseekers-scout-restart' + (restartRun == null ? '' : '-' + restartRun))
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_scout_restart'
+            property 'dreamseekers.scout.test.phase', phase
+        } else if (project.hasProperty('dreamseekersFireflyWorkTest')) {
+            if (project.hasProperty('dreamseekersFireflyTestPhase') || project.hasProperty('dreamseekersTestPhase') || project.hasProperty('dreamseekersScaffoldTestPhase'))
+                throw new GradleException('Choose focused work tests or one restart probe')
+            workingDirectory project.file('run-dreamseekers-firefly-work')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_firefly_work'
+        } else if (project.hasProperty('dreamseekersFireflyTestPhase')) {
+            if (project.hasProperty('dreamseekersTestPhase') || project.hasProperty('dreamseekersScaffoldTestPhase'))
+                throw new GradleException('Choose one restart probe, not multiple')
+            def phase = project.property('dreamseekersFireflyTestPhase').toString()
+            if (!(phase in ['prepare', 'verify'])) throw new GradleException('dreamseekersFireflyTestPhase must be prepare or verify')
+            workingDirectory project.file('run-dreamseekers-firefly-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_firefly_restart'
+            property 'dreamseekers.firefly.test.phase', phase
+        } else if (project.hasProperty('dreamseekersScaffoldTestPhase')) {
+            if (project.hasProperty('dreamseekersTestPhase')) throw new GradleException('Choose one restart probe, not both')
+            def phase = project.property('dreamseekersScaffoldTestPhase').toString()
+            if (!(phase in ['prepare', 'verify'])) throw new GradleException('dreamseekersScaffoldTestPhase must be prepare or verify')
+            workingDirectory project.file('run-dreamseekers-scaffold-restart')
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_scaffold_restart'
+            property 'dreamseekers.scaffold.test.phase', phase
+            if(project.hasProperty('dreamseekersHallMigration')) property 'dreamseekers.hall.migration', 'true'
+        } else if (project.hasProperty('dreamseekersTestPhase')) {
+            def phase = project.property('dreamseekersTestPhase').toString()
+            if (project.hasProperty('dreamseekersTestRun')) {
+                def runId = project.property('dreamseekersTestRun').toString()
+                if (!(runId ==~ /[A-Za-z0-9_-]+/)) throw new GradleException('Invalid isolated foundation restart run ID')
+                workingDirectory project.file("run-dreamseekers-foundation-restart-${runId}")
+            }
+            if (!(phase in ['prepare', 'verify'])) throw new GradleException('dreamseekersTestPhase must be prepare or verify')
+            // Core roundtrip tests deliberately replace all live buildings;
+            // do not let them erase a pending queue between real JVM restarts.
+            property 'forge.enabledGameTestNamespaces', 'dreamseekers_restart'
+            property 'dreamseekers.test.phase', phase
+        } else {
+            property 'forge.enabledGameTestNamespaces', 'reignofnether,dreamseekers'
+        }
+    }
+}
+
+minecraft.runs {
+    gameTestServer {
+        // Reused aggregate worlds retain many fixture chunks; give this headless test JVM
+        // an explicit ceiling and fail promptly on OOM instead of hanging its test runner.
+        // This is not a client/server release memory setting or a gameplay workaround.
+        jvmArgs '-Xms256m', '-Xmx4g', '-XX:+ExitOnOutOfMemoryError'
+        arg '-mixin.config=dreamseekers.mixins.json'
+        arg '-mixin.config=dreamseekers_spore_gametest.mixins.json'
+        setForceExit false
+        source sourceSets.dreamseekers
+        source sourceSets.dreamseekersGametest
+        mods {
+            dreamseekers {
+                source sourceSets.dreamseekers
+                source sourceSets.dreamseekersGametest
+            }
+        }
+    }
+    // Use the canonical FG5 server template. The root already registers the
+    // reignofnether mod from main; only production sources belong on this run.
+    server {
+        workingDirectory project.file('run-dreamseekers-server')
+        args '--nogui'
+        arg '-mixin.config=reignofnether.mixins.json'
+        arg '-mixin.config=dreamseekers.mixins.json'
+        source sourceSets.main
+        source sourceSets.dreamseekers
+        mods {
+            dreamseekers { source sourceSets.dreamseekers }
+        }
+    }
+    client {
+        workingDirectory project.file('run-dreamseekers-client')
+        arg '-mixin.config=dreamseekers.mixins.json'
+        source sourceSets.dreamseekers
+        mods {
+            dreamseekers { source sourceSets.dreamseekers }
+        }
+    }
+}
+
+tasks.register('dreamseekersJar', Jar) {
+    group = 'build'
+    description = 'Build only the Dreamseekers compatibility addon; no dependency content is bundled.'
+    archiveBaseName = 'dreamseekers'
+    archiveVersion = dreamseekersVersion
+    from sourceSets.dreamseekers.output
+    manifest.attributes([
+        'Specification-Title': 'Dreamseekers',
+        'Specification-Version': '1',
+        'Implementation-Title': 'Dreamseekers PasterDream compatibility',
+        'Implementation-Version': dreamseekersVersion
+    ])
+    if (file('addons/dreamseekers/src/main/resources/dreamseekers.mixins.json').exists()) {
+        manifest.attributes('MixinConfigs': 'dreamseekers.mixins.json')
+    }
+}
+reobf {
+    dreamseekersJar {
+        classpath.from sourceSets.dreamseekers.compileClasspath
+    }
+}
+tasks.named('dreamseekersJar').configure { finalizedBy 'reobfDreamseekersJar' }
+
+// Source-derived audit guard also covers fixtures, controls and nested test classes.
+def forbiddenTestContent = { List<String> entries ->
+    def classNames = [] as Set
+    def resourceNames = [] as Set
+    ['src/gametest', 'addons/dreamseekers/src/gametest'].each { root ->
+        fileTree(root + '/java').matching { include '**/*.java' }.files.each { source ->
+            def packageMatch = source.getText('UTF-8') =~ /(?m)^package\s+([\w.]+)\s*;/
+            if (packageMatch.find()) classNames.add(packageMatch.group(1).replace('.', '/') + '/' + source.name.replaceFirst(/\.java$/, ''))
+        }
+        def resourceRoot = file(root + '/resources').toPath()
+        fileTree(root + '/resources').files.each { resource -> resourceNames.add(resourceRoot.relativize(resource.toPath()).toString().replace('\\', '/')) }
+    }
+    entries.findAll { entry -> resourceNames.contains(entry) || (entry.endsWith('.class') && classNames.any { name -> entry == name + '.class' || entry.startsWith(name + '$') }) }
+}
+
+// A cheap distribution guard: development dependencies must never leak into the
+// release addon, and runtime-only GameTest code/resources must stay out too.
+tasks.register('verifyDreamseekersJar') {
+    group = 'verification'
+    description = 'Check that the addon release contains only addon code/resources.'
+    dependsOn 'reobfDreamseekersJar'
+    doLast {
+        def jarFile = tasks.named('dreamseekersJar').get().archiveFile.get().asFile
+        def zip = new java.util.zip.ZipFile(jarFile)
+        try {
+            def entries = java.util.Collections.list(zip.entries()).collect { it.name }
+            def unexpectedClasses = entries.findAll { it.endsWith('.class') && !it.startsWith('com/dreamseekers/') }
+            if (!unexpectedClasses.empty) throw new GradleException('Bundled non-addon classes: ' + unexpectedClasses)
+            def allTestLeaks = forbiddenTestContent(entries)
+            if (!allTestLeaks.empty) throw new GradleException('Bundled test source-set content: ' + allTestLeaks)
+            def unexpectedResources = entries.findAll { it.startsWith('assets/pasterdream/') || it.startsWith('data/pasterdream/') || it.contains('/gametest/') || it.endsWith('GameTests.class') || it.endsWith('.jar') }
+            if (!unexpectedResources.empty) throw new GradleException('Bundled dependency or test content: ' + unexpectedResources)
+            ['META-INF/mods.toml', 'LICENSE-DREAMSEEKERS.txt', 'CREDITS-DREAMSEEKERS.txt', 'dreamseekers.refmap.json'].each { path ->
+                if (!entries.contains(path)) throw new GradleException('Missing required addon file: ' + path)
+            }
+            def refmapText = zip.getInputStream(zip.getEntry('dreamseekers.refmap.json')).getText('UTF-8')
+            def refmap = new groovy.json.JsonSlurper().parseText(refmapText)
+            if (!(refmap instanceof Map) || !(refmap.mappings instanceof Map)) {
+                throw new GradleException('Addon refmap must be a nonempty JSON document with a mappings object')
+            }
+            def crownAtlas = zip.getEntry('assets/minecraft/atlases/blocks.json')
+            if (crownAtlas == null) throw new GradleException('Missing crown entity-texture block atlas registration')
+            def crownSources = new groovy.json.JsonSlurper().parseText(zip.getInputStream(crownAtlas).getText('UTF-8')).sources
+            if (crownSources != [[type:'minecraft:single', resource:'pasterdream:entities/meltdream_crystal_entity', sprite:'pasterdream:entities/meltdream_crystal_entity']])
+                throw new GradleException('Unexpected crown atlas registration; preserve narrow native texture reference')
+            def cameraDistance = refmap.mappings['com/dreamseekers/unit/mixin/DreamUnitRenderDistanceMixin']
+            if (!(cameraDistance instanceof Map) || cameraDistance['shouldRenderAtSqrDistance(D)Z'] != 'Lnet/minecraft/world/entity/Entity;m_6783_(D)Z')
+                throw new GradleException('Missing production mapping for client-only Dream RTS camera distance')
+            def flightGrip = refmap.mappings['com/dreamseekers/unit/mixin/ShadowGripFlyingImpulseMixin']
+            if (!(flightGrip instanceof Map) || flightGrip.tick != 'Lcom/solegendary/reignofnether/unit/controls/FlyingUnitMoveControl;m_8126_()V')
+                throw new GradleException('Missing production mapping for inherited FlyingUnitMoveControl.tick selector')
+            def mixinConfig = new groovy.json.JsonSlurper().parseText(
+                    zip.getInputStream(zip.getEntry('dreamseekers.mixins.json')).getText('UTF-8'))
+            if (!mixinConfig.client.contains('DreamUnitRenderDistanceMixin') || mixinConfig.mixins.contains('DreamUnitRenderDistanceMixin'))
+                throw new GradleException('Dream RTS camera distance mixin must remain client-list-only')
+            if (mixinConfig.refmap != 'dreamseekers.refmap.json') {
+                throw new GradleException('Addon mixin configuration does not reference its verified refmap')
+            }
+            def structures = ['dream_anchor', 'reverie_garden', 'beetle_sanctuary', 'dream_depot',
+                    'shadow_mine', 'shadow_furnace', 'dream_hall', 'resonance_laboratory',
+                    'contract_ecology', 'resonance_dais', 'shadow_watchtower']
+            structures.each { name ->
+                def client = zip.getEntry('assets/dreamseekers/structures/' + name + '.nbt')
+                def server = zip.getEntry('data/dreamseekers/structures/' + name + '.nbt')
+                if (client == null || server == null || !java.util.Arrays.equals(
+                        zip.getInputStream(client).bytes, zip.getInputStream(server).bytes)) {
+                    throw new GradleException('Missing or divergent client/server structure: ' + name)
+                }
+            }
+            if (!entries.contains('com/dreamseekers/function/DreamFunctionalPlacement.class'))
+                throw new GradleException('Missing scaffold lifecycle implementation')
+            logger.lifecycle('DREAMSEEKERS_JAR_CONTENT_PASS entries=' + entries.size() + ' refmapBytes=' + refmapText.getBytes('UTF-8').length + ' file=' + jarFile.name)
+        } finally { zip.close() }
+    }
+}
+
+tasks.named('dreamseekersJar').configure {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
+
+// FG 5 injects userdev launch templates by the canonical run names. Keep the
+// isolated addon setup on those runs and expose descriptive task aliases.
+tasks.register('runDreamseekersGameTestServer') {
+    group = 'forgegradle runs'
+    dependsOn 'runGameTestServer'
+}
+// Verify the effective ForgeGradle launch, not just the declarations above.
+// Resolves the mapped runtime artifacts but never starts a server/world.
+tasks.register('verifyDreamseekersDevServer') {
+    group = 'verification'
+    description = 'Check paired userdev server sources, mixins and locked dependency classpath.'
+    doLast {
+        def run = project.minecraft.runs.getByName('server')
+        def launch = tasks.named('runServer', JavaExec).get()
+        def mods = run.getMods().collectEntries { [(it.name): it.getSources()*.name.toSet()] }
+        if (mods != [reignofnether: ['main'] as Set, dreamseekers: ['dreamseekers'] as Set] ||
+                run.getAllSources()*.name.toSet() != (['main', 'dreamseekers'] as Set))
+            throw new GradleException('Ordinary paired server must have exactly two production mod sources: ' + mods)
+        if (launch.workingDir.canonicalFile != file('run-dreamseekers-server').canonicalFile ||
+                !launch.args.containsAll(['-mixin.config=reignofnether.mixins.json', '-mixin.config=dreamseekers.mixins.json']) ||
+                launch.args.any { it.toLowerCase(Locale.ROOT).contains('gametest') } ||
+                launch.systemProperties['forge.gameTestServer']?.toString()?.toBoolean())
+            throw new GradleException('Ordinary paired server has a wrong directory, launch target, or mixin')
+        def lock = new groovy.json.JsonSlurper().parse(file('addons/dreamseekers/dependencies.lock.json'))
+        def expected = lock.dependencies.collectEntries { [(it.mavenArtifact): it.mavenVersion] }
+        def artifacts = configurations.dreamseekersRuntimeClasspath.resolvedConfiguration.resolvedArtifacts.findAll {
+            it.moduleVersion.id.group == 'local.dreamseekers.dependencies'
+        }
+        def selected = artifacts.collectEntries { [(it.name): it.moduleVersion.id.version.replaceFirst(/_mapped_.+$/, '')] }
+        def classpath = launch.classpath.files
+        if (selected != expected || artifacts.size() != expected.size() || !artifacts.every { classpath.contains(it.file) })
+            throw new GradleException('Paired server classpath differs from the locked addon dependency set: ' + selected)
+        logger.lifecycle('DREAMSEEKERS_DEV_SERVER_PROFILE_PASS mods=' + mods + ' dependencies=' + selected + ' directory=' + launch.workingDir.name)
+    }
+}
+
+tasks.register('runDreamseekersServer') {
+    group = 'forgegradle runs'
+    description = 'Start the paired ordinary development server (no GameTest fixtures).'
+    dependsOn 'runServer'
+}
+tasks.register('runDreamseekersClient') {
+    group = 'forgegradle runs'
+    dependsOn 'runClient'
+}
+
+tasks.named('dreamseekersJar').configure {
+    // MixinGradle otherwise injects every project refmap into every Jar task.
+    exclude 'reignofnether.refmap.json'
+}
+// Conversely, the generic core must not contain the addon-only refmap either.
+tasks.named('jar').configure { exclude 'dreamseekers.refmap.json' }
+
+tasks.register('verifyDreamseekersCoreJar') {
+    group = 'verification'
+    description = 'Verify exact core/addon version compatibility and package separation.'
+    dependsOn 'reobfJar', 'verifyDreamseekersJar'
+    doLast {
+        def coreFile = tasks.named('jar').get().archiveFile.get().asFile
+        def core = new java.util.zip.ZipFile(coreFile)
+        try {
+            def entries = java.util.Collections.list(core.entries()).collect { it.name }
+            def allTestLeaks = forbiddenTestContent(entries)
+            if (!allTestLeaks.empty) throw new GradleException('Bundled test source-set content in core: ' + allTestLeaks)
+            def leaked = entries.findAll { it.startsWith('com/dreamseekers/') ||
+                    it.startsWith('assets/pasterdream/') || it.startsWith('data/pasterdream/') ||
+                    it.endsWith('GameTests.class') || it == 'dreamseekers.refmap.json' }
+            if (!leaked.empty) throw new GradleException('Addon/dependency/test content in core: ' + leaked)
+            def coreMods = core.getInputStream(core.getEntry('META-INF/mods.toml')).getText('UTF-8')
+            def addonMods = file('addons/dreamseekers/src/main/resources/META-INF/mods.toml').getText('UTF-8')
+            def runtimeVersionSource = file('src/main/java/com/solegendary/reignofnether/ReignOfNether.java').getText('UTF-8')
+            if (!coreMods.contains(project.version.toString()) || !addonMods.contains('[' + project.version.toString() + ']'))
+                throw new GradleException('Core metadata and exact addon dependency version disagree')
+            if (!runtimeVersionSource.contains('VERSION_STRING = "' + project.version.toString() + '"'))
+                throw new GradleException('Core runtime/config version and artifact version disagree')
+            if (!addonMods.contains('version="' + dreamseekersVersion + '"'))
+                throw new GradleException('Addon metadata and artifact version disagree')
+            ['com/solegendary/reignofnether/building/BuildingServerboundPacket.class',
+             'com/solegendary/reignofnether/resources/ResourcesServerEvents.class',
+             'reignofnether.refmap.json'].each { name ->
+                if (!entries.contains(name)) throw new GradleException('Missing required core entry: ' + name)
+            }
+            logger.lifecycle('DREAMSEEKERS_CORE_JAR_CONTENT_PASS entries=' + entries.size() + ' version=' + project.version)
+        } finally { core.close() }
+    }
+}
+
+// Append to addons/dreamseekers/build.gradle. No production source set or release Jar changes.
+if (project.hasProperty('dreamseekersVisualFixture')) {
+    sourceSets {
+        dreamseekersVisualFixture {
+            java.srcDir 'addons/dreamseekers/src/gametest/java'
+            java.include 'com/dreamseekers/visual/ShadowHudVisualFixture.java'
+            resources.setSrcDirs([])
+            compileClasspath += sourceSets.dreamseekers.output + sourceSets.dreamseekers.compileClasspath
+            runtimeClasspath += sourceSets.dreamseekers.runtimeClasspath
+        }
+    }
+    minecraft.runs.client {
+        workingDirectory project.file('run-dreamseekers-visual-fixture')
+        property 'dreamseekers.visualFixture', 'true'
+        property 'dreamseekers.visualFixtureWorld', project.file('run-dreamseekers-visual-fixture/saves/DREAMSEEKERS_VISUAL_FIXTURE').absolutePath
+        source sourceSets.dreamseekersVisualFixture
+        mods {
+            dreamseekers { source sourceSets.dreamseekersVisualFixture }
+        }
+    }
+}

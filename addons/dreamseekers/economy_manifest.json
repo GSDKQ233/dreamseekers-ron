@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "scope": "automatic building economy only",
+  "shadowResource": "dreamseekers:shadow_energy",
+  "shadowIncomeCap": 1000,
+  "garden": {
+    "registry": "dreamseekers:reverie_garden",
+    "baseTemplateUnchanged": true,
+    "runtimePaletteOverride": {
+      "minecraft:wheat[age=7]": "dreamseekers:decorative_garden_wheat[legacy_age=7]"
+    },
+    "positions": 16,
+    "legacyAgesPreserved": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "foodPerEffectiveTickInterval": 40,
+    "manualHarvest": false,
+    "woodReplant": false
+  },
+  "mine": {
+    "registry": "dreamseekers:shadow_mine",
+    "orePerEffectiveTickInterval": 40,
+    "placementCap": 2,
+    "cost": {
+      "food": 0,
+      "wood": 300,
+      "ore": 150
+    }
+  },
+  "furnace": {
+    "registry": "dreamseekers:shadow_furnace",
+    "shadowPerEffectiveTickInterval": 100,
+    "placementCap": 2,
+    "cost": {
+      "food": 0,
+      "wood": 150,
+      "ore": 100
+    }
+  },
+  "existingCostsHealthPopulationUnchanged": false,
+  "noOfflineCatchup": true,
+  "ownerPolicy": {
+    "foodOre": "any valid RTS faction",
+    "shadow": "Dreamseekers only; other factions paused",
+    "hud": "own Dream faction or own positive S; non-Dream positive S is read-only",
+    "refunds": "Receipt-backed production and research refunds return to the original payer in the same account epoch, without faction gating; building construction cancellation instead uses the paid cost snapshot and native current-owner refund semantics."
+  },
+  "healthPopulationUnchanged": true,
+  "dependencies": [
+    "core stage-B2 EconomyBalanceSync authoritative owner-only FWO+extra snapshot"
+  ]
+}

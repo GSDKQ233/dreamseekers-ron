@@ -1,0 +1,224 @@
+package com.solegendary.reignofnether.building.production;
+
+import com.solegendary.reignofnether.building.*;
+import com.solegendary.reignofnether.building.buildings.placements.ProductionPlacement;
+import com.solegendary.reignofnether.debug.RtsDebugClientEvents;
+import com.solegendary.reignofnether.gamerules.GameruleClient;
+import com.solegendary.reignofnether.keybinds.Keybinding;
+import com.solegendary.reignofnether.player.PlayerServerEvents;
+import com.solegendary.reignofnether.player.RTSPlayer;
+import com.solegendary.reignofnether.player.RTSPlayerScoresEnum;
+import com.solegendary.reignofnether.research.ResearchClient;
+import com.solegendary.reignofnether.research.ResearchServerEvents;
+import com.solegendary.reignofnether.resources.ResourceCost;
+import com.solegendary.reignofnether.resources.Resources;
+import com.solegendary.reignofnether.resources.ResourcesServerEvents;
+import com.solegendary.reignofnether.unit.UnitClientEvents;
+import com.solegendary.reignofnether.unit.UnitServerEvents;
+import net.minecraft.world.level.Level;
+
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.function.BiConsumer;
+
+// units and/or research tech that a ProductionBuilding can produce
+public abstract class ProductionItem {
+
+    public enum WorkKind { OTHER, RESEARCH }
+    public WorkKind workKind=WorkKind.OTHER;
+    public ResourceCost defaultCost;
+    public BiConsumer<Level, ProductionPlacement> onComplete;
+    public ProdDupeRule dupeRule;
+
+    public ProductionItem(ResourceCost cost, ProdDupeRule dupeRule, BiConsumer<Level, ProductionPlacement> onComplete) {
+        this.defaultCost = cost;
+        this.dupeRule = dupeRule;
+        this.onComplete = onComplete;
+    }
+
+    public ProductionItem(ResourceCost cost, ProdDupeRule dupeRule) {
+        this.defaultCost = cost;
+        this.dupeRule = dupeRule;
+    }
+
+    public ProductionItem(ResourceCost cost) {
+        this.defaultCost = cost;
+        this.dupeRule = ProdDupeRule.ALLOW;
+    }
+
+    /** Custom recipes retain their original unit/non-unit completion kind. */
+    public ProductionItem nativeCompletionItem() { return this; }
+
+    // is the player allowed to start this production item?
+    public boolean canProduce(ProductionPlacement pp) {
+        return getProduceErrorMsg(pp) == null;
+    }
+
+    @Nullable
+    public String getProduceErrorMsg(ProductionPlacement pp) {
+        return NativeProductionEligibility.error(this, pp, false);
+    }
+
+    // allows for dynamic costs in subclasses
+    public ResourceCost getCost(boolean isClientSide, String ownerName) {
+        return defaultCost;
+    }
+
+    public abstract String getItemName();
+
+    public boolean canAfford(ProductionPlacement pp) {
+        for (Resources resources : ResourcesServerEvents.resourcesList)
+            if (resources.ownerName.equals(pp.ownerName))
+                return (resources.food >= getCost(pp.getLevel().isClientSide(), pp.ownerName).food &&
+                        resources.wood >= getCost(pp.getLevel().isClientSide(), pp.ownerName).wood &&
+                        resources.ore >= getCost(pp.getLevel().isClientSide(), pp.ownerName).ore &&
+                        canAffordPopulation(pp));
+        return false;
+    }
+
+    public boolean canAffordPopulation(ProductionPlacement pp) {
+        if (getCost(pp.getLevel().isClientSide(), pp.ownerName).population == 0)
+            return true;
+
+        int currentPop = UnitServerEvents.getCurrentPopulation(pp.ownerName);
+        int popSupply = BuildingServerEvents.getTotalPopulationSupply(pp.ownerName);
+
+        for (Resources resources : ResourcesServerEvents.resourcesList)
+            if (resources.ownerName.equals(pp.ownerName))
+                return (currentPop + getCost(pp.getLevel().isClientSide(), pp.ownerName).population) <= popSupply;
+        return false;
+    }
+
+    // check we didn't dip below pop supply after starting production
+    public boolean isBelowPopulationSupply(ProductionPlacement pp) {
+        if (getCost(pp.getLevel().isClientSide(), pp.ownerName).population == 0)
+            return true;
+
+        int currentPop;
+        int popSupply;
+        if (pp.getLevel().isClientSide()) {
+            currentPop = UnitClientEvents.getCurrentPopulation(pp.ownerName);
+            popSupply = BuildingClientEvents.getTotalPopulationSupply(pp.ownerName);
+        } else {
+            currentPop = UnitServerEvents.getCurrentPopulation(pp.ownerName);
+            popSupply = BuildingServerEvents.getTotalPopulationSupply(pp.ownerName);
+        }
+        return currentPop <= popSupply;
+    }
+
+    public boolean isBelowMaxPopulation(ProductionPlacement pp) {
+        if (getCost(pp.getLevel().isClientSide(), pp.ownerName).population == 0)
+            return true;
+
+        int currentPop = UnitServerEvents.getCurrentPopulation(pp.ownerName);
+
+        for (Resources resources : ResourcesServerEvents.resourcesList) {
+            if (resources.ownerName.equals(pp.ownerName)) {
+                if (pp.getLevel().isClientSide())
+                    return (currentPop + getCost(pp.getLevel().isClientSide(), pp.ownerName).population) <= GameruleClient.maxPopulation;
+                else
+                    return (currentPop + getCost(pp.getLevel().isClientSide(), pp.ownerName).population) <= UnitServerEvents.maxPopulation;
+            }
+        }
+        return false;
+    }
+
+    /** Opt-in paid queues report why the actual server tick stopped. Native queues are unchanged. */
+    public boolean reportsHeadPause() { return false; }
+
+    // some items (eg. research) are enabled only if the item doesn't exist in any existing clientside queue
+    public boolean itemIsBeingProduced(String ownerName) {
+        return itemIsBeingProduced(true, ownerName);
+    }
+
+    public boolean itemIsBeingProduced(boolean isClientSide, String ownerName) {
+        List<BuildingPlacement> buildings = isClientSide ? BuildingClientEvents.getBuildings() : BuildingServerEvents.getBuildings();
+
+        for (BuildingPlacement building : buildings)
+            if (building.ownerName.equals(ownerName) && building instanceof ProductionPlacement prodBuilding)
+                for (ActiveProduction prodItem : prodBuilding.productionQueue)
+                    if (prodItem.item == this)
+                        return true;
+        return false;
+    }
+
+    // check if this is being produced at one particular building
+    public boolean itemIsBeingProducedAt(ProductionPlacement pp) {
+        return itemIsBeingProducedAt(true, pp);
+    }
+
+    public boolean itemIsBeingProducedAt(boolean isClientSide, ProductionPlacement pp) {
+        List<BuildingPlacement> buildings = isClientSide ? BuildingClientEvents.getBuildings() : BuildingServerEvents.getBuildings();
+
+        for (BuildingPlacement building : buildings)
+            if (building == pp)
+                for (ActiveProduction prodItem : pp.productionQueue)
+                    if (prodItem.item == this)
+                        return true;
+        return false;
+    }
+
+    // Button object to build
+    public StartProductionButton getStartButton(ProductionPlacement prodBuilding, Keybinding keybinding) {
+        return null;
+    }
+    // Button object to show in-progress items
+    // firstItem means this button will cancel the currently-building item
+    public StopProductionButton getCancelButton(ProductionPlacement prodBuilding, boolean first) {
+        return null;
+    }
+
+    public void recordScore(ProductionPlacement placement) {
+        // Both legacy and receipt-backed research use this explicit work kind.
+        // Research completion may alter a building or unlock a recipe, but is not
+        // a produced unit and must not inflate total/worker/military counts.
+        if (workKind == WorkKind.RESEARCH)
+            return;
+        if (!placement.getLevel().isClientSide()) {
+            RTSPlayer rtsPlayer = PlayerServerEvents.getRTSPlayer(placement.ownerName);
+            if (rtsPlayer != null) {
+                rtsPlayer.scores.addToScore(RTSPlayerScoresEnum.TOTAL_UNITS_PRODUCED);
+                if (List.of(
+                        ProductionItems.VILLAGER,
+                        ProductionItems.ZOMBIE_VILLAGER,
+                        ProductionItems.GRUNT
+                ).contains(this))
+                    rtsPlayer.scores.addToScore(RTSPlayerScoresEnum.WORKER_UNITS_PRODUCED);
+                else
+                    rtsPlayer.scores.addToScore(RTSPlayerScoresEnum.MILITARY_UNITS_PRODUCED);
+            }
+        }
+    }
+
+    // return true if the tick finished
+    public boolean tick(ProductionPlacement placement, ActiveProduction active) {
+        boolean predictingServerHead = placement.getLevel().isClientSide() && reportsHeadPause();
+        if (predictingServerHead && active.pause().paused()) return false;
+        if (active.ticksLeft > 0) {
+            // On opt-in clients only the server decides to freeze this paid entry. No estimated
+            // balance, prerequisite or population snapshot is a new order or completion authority.
+            if (!predictingServerHead && !isBelowPopulationSupply(placement)) {
+                if (reportsHeadPause()) return active.pauseBecause("server.resources.reignofnether.not_enough_pop");
+                return false;
+            }
+            if (!predictingServerHead && !placement.isBuilt) return false;
+            boolean fast=(placement.getLevel().isClientSide()&&ResearchClient.hasCheat("warpten"))
+                    ||(!placement.getLevel().isClientSide()&&ResearchServerEvents.playerHasCheat(placement.ownerName,"warpten"));
+            ProductionWorkRates.advance(placement,active,fast?10:1);
+
+            if (active.ticksLeft < 0)
+                active.ticksLeft = 0;
+        }
+        if (!placement.level.isClientSide() && active.ticksLeft <= 0 && !active.completed) {
+            if (!isBelowPopulationSupply(placement)) {
+                if (reportsHeadPause()) return active.pauseBecause("server.resources.reignofnether.not_enough_pop");
+                return false;
+            }
+            active.complete(placement);
+            return active.completed;
+        }
+        return false;
+    }
+
+
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Valley of Deceit",
+  "players": 4,
+  "description": "Legacy four-player metadata for Valley of Deceit; the map world is supplied separately.",
+  "gamerules": {
+    "doMobSpawning": false,
+    "keepInventory": true,
+    "doDaylightCycle": false,
+    "doFireTick": false,
+    "naturalRegeneration": false
+  },
+  "image": "valley_of_deceit.png"
+
+}

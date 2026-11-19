@@ -1,0 +1,1690 @@
+{
+  "style_revision": 4,
+  "runtime_integration_revision": 2,
+  "reference_urls": [
+    "https://www.mcmod.cn/item/674092.html",
+    "https://www.mcmod.cn/item/788163.html",
+    "https://www.mcmod.cn/item/735332.html",
+    "https://www.mcmod.cn/item/734202.html",
+    "https://www.mcmod.cn/item/791102.html",
+    "https://www.mcmod.cn/item/674091.html",
+    "https://www.mcmod.cn/item/673081.html",
+    "https://www.mcmod.cn/item/668833.html",
+    "https://www.mcmod.cn/item/749974.html",
+    "https://www.mcmod.cn/item/668831.html",
+    "https://www.mcmod.cn/item/715475.html"
+  ],
+  "approved_concept_library_id": "libfile_36ecc4e82908819183a13051199c8a62",
+  "preserved_worldtree": true,
+  "authorship": "Original generated layouts; PasterDream block registry references only; upstream structures inspected as style references, never imported by generator.",
+  "reference_ids": [
+    "pasterdream:dyedream_worldtree",
+    "pasterdream:traveler_house_0",
+    "pasterdream:dyedream_pavilion_0",
+    "pasterdream:dream_wishingtree_0"
+  ],
+  "structures": [
+    {
+      "id": "dream_anchor",
+      "title": "微缩世界树主城",
+      "size_xyz": [
+        11,
+        10,
+        9
+      ],
+      "description": "Original miniature world-tree capitol: spreading roots and a hollow three-wide entry, a white quartz wraparound platform, branching trunk, asymmetric lobed crown of actual world-tree leaves, glass crystals and hanging dream lights. Reference: dyedream_worldtree, not dream_wishingtree; no source coordinates imported.",
+      "non_air_blocks": 324,
+      "access_xz": [
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "role_status": "Worker training, resource drop-off, 15 population, paid Shadow/Wind World Tree branches, economy research and Root Shelter.",
+      "registered": true,
+      "runtime_role": "capitol_worker_dropoff_population_worldtree",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:stone_bricks": 39,
+        "pasterdream:dyedream_glass": 4,
+        "pasterdream:dyedream_lartern": 6,
+        "pasterdream:dyedream_log": 97,
+        "pasterdream:dyedream_planks": 18,
+        "pasterdream:dyedream_planks_fence": 4,
+        "pasterdream:dyedream_worldtree_leaves": 86,
+        "pasterdream:dyedreamquartz_block": 42,
+        "pasterdream:dyedreamquartz_block_slab": 22,
+        "pasterdream:dyedreamquartz_block_stairs": 2,
+        "pasterdream:polished_calcite_wall": 4
+      },
+      "sha256": "ca2e9c21c2e03f751d7c3d25198f1dd48b23b7f91fe69b483bdf359e4d21c948",
+      "base_asset_id": "dream_anchor",
+      "runtime_transform": "DreamWorldTreeService selects versioned WorldTreeModel geometry for paid branch upgrades; base asset fields here describe only the initial capitol."
+    },
+    {
+      "id": "reverie_garden",
+      "title": "梦生花园",
+      "size_xyz": [
+        13,
+        8,
+        11
+      ],
+      "description": "Original low mushroom-cap dwelling beside sixteen original wheat-bed asset positions; three-wide flat entry, raised dyedream-dirt beds, pink dreamwood dome and pale spots. Runtime replaces asset wheat with decorative wheat.",
+      "non_air_blocks": 314,
+      "access_xz": [
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          5,
+          10
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          6,
+          9
+        ],
+        [
+          6,
+          10
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          7,
+          9
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          1,
+          5
+        ],
+        [
+          1,
+          6
+        ],
+        [
+          1,
+          7
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          2,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          2,
+          6
+        ],
+        [
+          2,
+          7
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          3,
+          8
+        ]
+      ],
+      "role_status": "Passive food (1 per 40 eligible ticks), 8 population and Garden Rest. Sixteen decorative wheat plants; manual farming, replanting and crop growth disabled.",
+      "registered": true,
+      "runtime_role": "passive_food_population_garden_rest",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:cyan_stained_glass": 1,
+        "minecraft:grass_block": 5,
+        "minecraft:stone_bricks": 73,
+        "minecraft:wheat": 16,
+        "pasterdream:dyedream_dirt": 16,
+        "pasterdream:dyedream_glass": 4,
+        "pasterdream:dyedream_lartern": 3,
+        "pasterdream:dyedream_log": 12,
+        "pasterdream:dyedream_planks": 110,
+        "pasterdream:dyedream_planks_fence": 8,
+        "pasterdream:flower_14": 5,
+        "pasterdream:polished_calcite": 61
+      },
+      "sha256": "78498615c7806fef08c765195d6da336b544a4ecc7548ed74bfaec7070db0dce",
+      "base_asset_id": "reverie_garden",
+      "runtime_transform": "DreamGardenPlacement replaces template minecraft:wheat with dreamseekers:decorative_garden_wheat. Saved-entry migration preserves legacy wheat ages."
+    },
+    {
+      "id": "dream_depot",
+      "title": "逐梦货栈",
+      "size_xyz": [
+        13,
+        8,
+        10
+      ],
+      "description": "Original stationary segmented cargo depot: three copper-banded timber bays, dark low roof, a clear loading apron and short display rail siding. Crates are solid planks, not inventories; no train entity or automatic logistics is implemented.",
+      "non_air_blocks": 332,
+      "access_xz": [
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          8,
+          2
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          9,
+          2
+        ],
+        [
+          9,
+          3
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          10,
+          2
+        ],
+        [
+          10,
+          3
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          11,
+          2
+        ],
+        [
+          11,
+          3
+        ],
+        [
+          11,
+          4
+        ]
+      ],
+      "role_status": "Owned worker resource drop-off. No automatic logistics or train entity.",
+      "registered": true,
+      "runtime_role": "resource_dropoff",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:deepslate_tile_stairs": 26,
+        "minecraft:deepslate_tiles": 39,
+        "minecraft:lantern": 3,
+        "minecraft:rail": 8,
+        "minecraft:spruce_log": 48,
+        "minecraft:spruce_planks": 122,
+        "minecraft:spruce_slab": 6,
+        "minecraft:stone_bricks": 52,
+        "minecraft:waxed_cut_copper_slab": 20,
+        "pasterdream:dyedream_glass": 3,
+        "pasterdream:dyedream_lartern": 5
+      },
+      "sha256": "aec2b0c85b40be92a999dfcf917da6949bb0d950aecc6b09c4f9a415553ed46c",
+      "base_asset_id": "dream_depot"
+    },
+    {
+      "id": "shadow_mine",
+      "title": "潜影矿井",
+      "size_xyz": [
+        11,
+        9,
+        11
+      ],
+      "description": "Original semi-buried dark workshop and enclosed display shaft, with timber hoist, back rock bank and three-wide level entrance. The shaft is a bounded relief above an intact foundation, not terrain excavation. Runtime ore income is handled separately.",
+      "non_air_blocks": 342,
+      "access_xz": [
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "role_status": "Passive ore (1 per 40 eligible ticks); maximum two including unfinished sites. Decorative shaft never excavates terrain.",
+      "registered": true,
+      "runtime_role": "passive_ore",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:amethyst_block": 4,
+        "minecraft:blackstone": 6,
+        "minecraft:chain": 3,
+        "minecraft:cobbled_deepslate": 117,
+        "minecraft:deepslate_bricks": 114,
+        "minecraft:deepslate_tile_stairs": 10,
+        "minecraft:deepslate_tiles": 5,
+        "minecraft:iron_bars": 3,
+        "minecraft:spruce_log": 26,
+        "minecraft:stone_bricks": 24,
+        "pasterdream:dyedream_glass": 1,
+        "pasterdream:dyedream_lartern": 4,
+        "pasterdream:dyedream_planks": 24,
+        "pasterdream:polished_calcite": 1
+      },
+      "sha256": "871461c902b5c19b29930998174d349293b51089ee3cba04aa52e1093053d45a",
+      "base_asset_id": "shadow_mine"
+    },
+    {
+      "id": "shadow_furnace",
+      "title": "凝影炉场",
+      "size_xyz": [
+        11,
+        12,
+        11
+      ],
+      "description": "Original two-storey trapezoidal shadow furnace with a framed upper reservoir and an offset glazed descending channel. All glow is solid glass/amethyst/dream lamps: no molten shadow, water, lava or fire blocks. Runtime Shadow Energy income is handled separately.",
+      "non_air_blocks": 477,
+      "access_xz": [
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ]
+      ],
+      "role_status": "Passive Shadow Energy (1 per 100 eligible ticks), maximum two including unfinished sites, balance cap 1000; pauses for non-Dreamseeker owners.",
+      "registered": true,
+      "runtime_role": "passive_shadow_energy",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:amethyst_block": 4,
+        "minecraft:deepslate_brick_stairs": 22,
+        "minecraft:deepslate_bricks": 198,
+        "minecraft:deepslate_tile_slab": 4,
+        "minecraft:deepslate_tiles": 12,
+        "minecraft:lantern": 2,
+        "minecraft:polished_blackstone_bricks": 138,
+        "minecraft:purple_stained_glass": 34,
+        "minecraft:spruce_log": 4,
+        "minecraft:stone_bricks": 31,
+        "minecraft:waxed_cut_copper": 16,
+        "minecraft:waxed_cut_copper_slab": 7,
+        "pasterdream:dyedream_lartern": 5
+      },
+      "sha256": "c32384837d9a299fe9aa6d99a650bd57fa15a4960fdc1692c0453063ad2d4e13",
+      "base_asset_id": "shadow_furnace"
+    },
+    {
+      "id": "beetle_sanctuary",
+      "title": "破风训练庭",
+      "size_xyz": [
+        11,
+        7,
+        11
+      ],
+      "description": "Original compact knight ritual training courtyard: level three-wide rally ingress, inset ritual floor, open sparring yard, low broken walls and one equipment shelter. Existing troop-training role retained; no roster or balance changes.",
+      "non_air_blocks": 253,
+      "access_xz": [
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          4,
+          9
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          6,
+          9
+        ]
+      ],
+      "role_status": "Six direct training recipes; support-unit recipes require a completed Ecology Court.",
+      "registered": true,
+      "runtime_role": "troop_production",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:amethyst_block": 5,
+        "minecraft:deepslate_tile_slab": 8,
+        "minecraft:deepslate_tile_stairs": 16,
+        "minecraft:deepslate_tiles": 8,
+        "minecraft:grass_block": 4,
+        "minecraft:lantern": 2,
+        "minecraft:spruce_log": 26,
+        "minecraft:spruce_planks": 3,
+        "minecraft:stone_bricks": 68,
+        "pasterdream:calcite_tiles_slab": 4,
+        "pasterdream:chiseled_dyedreamquartz_block": 16,
+        "pasterdream:dyedream_planks": 2,
+        "pasterdream:dyedream_planks_fence": 8,
+        "pasterdream:dyedream_planks_slab": 3,
+        "pasterdream:dyedreamquartz_block": 58,
+        "pasterdream:flower_13": 4,
+        "pasterdream:polished_calcite": 18
+      },
+      "sha256": "c7c1317392b9ad14e2069f7aba687f27bfefb66debe211a625415d3e0e4dc485",
+      "base_asset_id": "beetle_sanctuary"
+    },
+    {
+      "id": "dream_hall",
+      "title": "梦术礼堂",
+      "size_xyz": [
+        11,
+        12,
+        11
+      ],
+      "description": "Original compact asymmetric gothic hall: one small nave, three-wide arch, pointed purple windows, one offset tower and blue soul lamps. Runtime troop production and preparation are handled separately.",
+      "non_air_blocks": 453,
+      "access_xz": [
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          7
+        ],
+        [
+          3,
+          8
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          4,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          4,
+          6
+        ],
+        [
+          4,
+          7
+        ],
+        [
+          4,
+          8
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          8
+        ]
+      ],
+      "role_status": "Fourteen direct training recipes over three display pages; Hall Preparation requires a completed laboratory.",
+      "registered": true,
+      "runtime_role": "paged_troop_production_hall_preparation",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:deepslate_tile_slab": 9,
+        "minecraft:deepslate_tile_stairs": 56,
+        "minecraft:deepslate_tiles": 76,
+        "minecraft:grass_block": 4,
+        "minecraft:purple_stained_glass": 25,
+        "minecraft:soul_lantern": 2,
+        "minecraft:stone_bricks": 45,
+        "pasterdream:chiseled_dyedreamquartz_block": 1,
+        "pasterdream:dyedream_glass": 3,
+        "pasterdream:dyedreamquartz_block": 76,
+        "pasterdream:flower_14": 4,
+        "pasterdream:polished_calcite": 143,
+        "pasterdream:polished_calcite_slab": 2,
+        "pasterdream:polished_calcite_stairs": 6,
+        "pasterdream:polished_calcite_wall": 1
+      },
+      "sha256": "5337eccbd17d70886a3fbf64daee005180547db381d07a2a3ea17c490f5770c3",
+      "base_asset_id": "dream_hall"
+    },
+    {
+      "id": "resonance_laboratory",
+      "title": "共鸣研究院",
+      "size_xyz": [
+        13,
+        8,
+        11
+      ],
+      "description": "Original low L-shaped dream laboratory: dark tiled wings with pink eaves, open courtyard and a stepped trapezoid instrument. Runtime receipt research is handled separately.",
+      "non_air_blocks": 441,
+      "access_xz": [
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          7,
+          7
+        ],
+        [
+          7,
+          8
+        ]
+      ],
+      "role_status": "Twenty-eight registered receipt research identities, including fifteen Wind tiers shown as three next-tier routes.",
+      "registered": true,
+      "runtime_role": "receipt_research",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:amethyst_block": 1,
+        "minecraft:deepslate_tile_slab": 20,
+        "minecraft:deepslate_tile_stairs": 43,
+        "minecraft:deepslate_tiles": 20,
+        "minecraft:grass_block": 3,
+        "minecraft:polished_deepslate": 9,
+        "minecraft:purple_stained_glass": 8,
+        "minecraft:soul_lantern": 2,
+        "minecraft:stone_bricks": 41,
+        "pasterdream:chiseled_dyedreamquartz_block": 3,
+        "pasterdream:dyedream_glass": 8,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:dyedream_log": 12,
+        "pasterdream:dyedream_planks": 58,
+        "pasterdream:dyedream_planks_fence": 3,
+        "pasterdream:dyedream_planks_stairs": 35,
+        "pasterdream:dyedreamquartz_block": 99,
+        "pasterdream:flower_13": 3,
+        "pasterdream:polished_calcite": 72
+      },
+      "sha256": "e79313d53f8e836d2f9f8472b4fa7ef4c42e86915058541c8a62c0ff42393271",
+      "base_asset_id": "resonance_laboratory"
+    },
+    {
+      "id": "contract_ecology",
+      "title": "契约生态庭",
+      "size_xyz": [
+        13,
+        10,
+        13
+      ],
+      "description": "Original transparent faceted ecology dome over a planted tree, sealed decorative glass pool and an open three-wide animal approach. The blue pool is solid glass, not flowing water. Runtime care, contract support and codex are handled separately; the dome itself does not automatically tame creatures.",
+      "non_air_blocks": 428,
+      "access_xz": [
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          5,
+          7
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          1
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          7,
+          0
+        ],
+        [
+          7,
+          1
+        ],
+        [
+          7,
+          2
+        ],
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          4
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          7,
+          7
+        ]
+      ],
+      "role_status": "Training prerequisite and neutral-contract support; two explicit permanent-ground-unit care posts, researched healing, owned visible-unit codex.",
+      "registered": true,
+      "runtime_role": "training_prerequisite_contract_support_care_codex",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:cyan_stained_glass": 5,
+        "minecraft:grass_block": 4,
+        "minecraft:light_blue_stained_glass": 198,
+        "minecraft:stone_bricks": 62,
+        "pasterdream:dyedream_lartern": 4,
+        "pasterdream:dyedream_leaves": 31,
+        "pasterdream:dyedream_log": 9,
+        "pasterdream:dyedream_planks": 24,
+        "pasterdream:dyedream_planks_fence": 6,
+        "pasterdream:dyedreamquartz_block": 3,
+        "pasterdream:flower_14": 4,
+        "pasterdream:polished_calcite": 78
+      },
+      "sha256": "4a5920413c9d78ac4a68a493f3de00a7c0e7a3404b7d41047269468fc201020f",
+      "base_asset_id": "contract_ecology"
+    },
+    {
+      "id": "resonance_dais",
+      "title": "共鸣晶台",
+      "size_xyz": [
+        9,
+        7,
+        9
+      ],
+      "description": "Original low circular stepped ritual dais with a suspended-looking glass/amethyst crystal on a transparent central stalk, pale quartz ring and four dream lights. Runtime aura, network, pulse and ward are handled separately.",
+      "non_air_blocks": 133,
+      "access_xz": [
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          3
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          5,
+          1
+        ],
+        [
+          5,
+          2
+        ],
+        [
+          5,
+          3
+        ]
+      ],
+      "role_status": "Local production aura, linked resonance network, paid pulse and researched linked Dais Ward.",
+      "registered": true,
+      "runtime_role": "production_aura_network_pulse_ward",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:amethyst_block": 2,
+        "minecraft:purple_stained_glass": 6,
+        "minecraft:stone_bricks": 20,
+        "pasterdream:chiseled_dyedreamquartz_block": 4,
+        "pasterdream:dyedream_lartern": 5,
+        "pasterdream:dyedream_planks": 15,
+        "pasterdream:dyedreamquartz_block": 46,
+        "pasterdream:dyedreamquartz_block_slab": 23,
+        "pasterdream:dyedreamquartz_block_stairs": 3,
+        "pasterdream:polished_calcite": 9
+      },
+      "sha256": "767ee35143cc6a5f743c39403a492cd267f64c6b8fd0b2e11582d48035c23dac",
+      "base_asset_id": "resonance_dais"
+    },
+    {
+      "id": "shadow_watchtower",
+      "title": "影灯守望塔",
+      "size_xyz": [
+        7,
+        14,
+        7
+      ],
+      "description": "Original narrow shadow-stone lamp column, purple light cage wrapped with trapdoors, copper collars and hanging chains. Three-wide front inspection approach; solid column has no interior. This is the retained legacy v1 asset; new construction uses the separate garrison v2 template.",
+      "non_air_blocks": 236,
+      "access_xz": [
+        [
+          2,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          0
+        ],
+        [
+          4,
+          1
+        ],
+        [
+          4,
+          2
+        ]
+      ],
+      "role_status": "New model v2: three safe garrison positions, native occupied defense at range 24 and paid visible-target observation. Saved legacy v1 remains solid and cannot garrison.",
+      "registered": true,
+      "runtime_role": "occupied_defense_observation",
+      "function_status": "enabled",
+      "palette_counts": {
+        "minecraft:chain": 12,
+        "minecraft:dark_oak_trapdoor": 16,
+        "minecraft:deepslate_tile_slab": 4,
+        "minecraft:deepslate_tiles": 83,
+        "minecraft:grass_block": 2,
+        "minecraft:lantern": 2,
+        "minecraft:polished_deepslate": 21,
+        "minecraft:purple_stained_glass": 16,
+        "minecraft:soul_lantern": 1,
+        "minecraft:stone_bricks": 47,
+        "minecraft:waxed_cut_copper": 23,
+        "pasterdream:chiseled_dyedreamquartz_block": 5,
+        "pasterdream:dyedream_lartern": 2,
+        "pasterdream:flower_14": 2
+      },
+      "sha256": "783432e49375e4569d89393a997308723a7a07856fc447f3e664f43f19c86bb2",
+      "base_asset_id": "shadow_watchtower",
+      "runtime_templates": {
+        "new_construction": "shadow_watchtower_garrison_v2",
+        "legacy_saved_model": "shadow_watchtower"
+      }
+    }
+  ],
+  "asset_scope": "size_xyz, palette_counts, non_air_blocks and sha256 describe the original named base NBT asset. Runtime roles are current; versioned runtime templates and decoration transforms are listed separately. No original geometry or authorship is rewritten by this integration manifest.",
+  "reserved_extensions": [
+    "Generic DreamFunctionService role interface remains disabled; enabled functions use their dedicated services.",
+    "No automatic logistics, terrain excavation, or blanket neutral-creature taming is implied by building models."
+  ]
+}

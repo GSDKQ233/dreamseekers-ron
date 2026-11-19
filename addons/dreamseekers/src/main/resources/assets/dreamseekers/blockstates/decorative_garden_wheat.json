@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "legacy_age=0": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    },
+    "legacy_age=1": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    },
+    "legacy_age=2": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    },
+    "legacy_age=3": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    },
+    "legacy_age=4": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    },
+    "legacy_age=5": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    },
+    "legacy_age=6": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    },
+    "legacy_age=7": {
+      "model": "dreamseekers:block/decorative_garden_wheat"
+    }
+  }
+}

@@ -1,0 +1,67 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="GPL-3.0-only"
+
+[[mods]]
+modId="dreamseekers"
+version="0.65.0-repair2"
+displayName="Dreamseekers — PasterDream × Reign of Nether"
+authors="Local compatibility project"
+description='''
+An independent RTS compatibility addon connecting the original PasterDream with Reign of Nether.
+Build World Tree settlements, command the Dreamseekers faction, and develop branch upgrades,
+Shadow Energy production, and resonance technologies.
+Requires separately installed original dependencies.
+No PasterDream code, models, textures, sounds or dependency JARs are included.
+'''
+
+[[dependencies.dreamseekers]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1]"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.dreamseekers]]
+modId="forge"
+mandatory=true
+versionRange="[47.4.0,48)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.dreamseekers]]
+modId="reignofnether"
+mandatory=true
+versionRange="[1.5.0b-ore-mines.2-dreamseekers-api.65-repair2]"
+ordering="AFTER"
+side="BOTH"
+
+# Original beta0.4.2 advertises 0.3.5.7 internally; the build is pinned by SHA256.
+# PasterDream: Reborn is not a supported replacement, even if it shares this ID.
+[[dependencies.dreamseekers]]
+modId="pasterdream"
+mandatory=true
+versionRange="[0.3.5.7]"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.dreamseekers]]
+modId="geckolib"
+mandatory=true
+versionRange="[4.8.2,5)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.dreamseekers]]
+modId="curios"
+mandatory=true
+versionRange="[5.14.1,6)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.dreamseekers]]
+modId="playeranimator"
+mandatory=true
+versionRange="[1.0.2-rc1,)"
+ordering="AFTER"
+side="BOTH"

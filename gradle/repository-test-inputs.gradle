@@ -1,0 +1,29 @@
+// Some JUnit tests open files relative to the checkout, not via their compiled
+// classpath. Keep these roots narrow: no build outputs, caches or test worlds.
+tasks.named('test', Test).configure {
+    workingDir project.projectDir
+    def contractFiles = fileTree(project.projectDir) {
+        // Core tests also inspect addon Java and both resource trees without -Pdreamseekers.
+        include 'src/main/java/**/*.java', 'addons/dreamseekers/src/main/java/**/*.java'
+        include 'src/main/resources/**/*.json', 'src/main/resources/**/*.mcmeta'
+        include 'addons/dreamseekers/src/main/resources/**/*.json', 'addons/dreamseekers/src/main/resources/**/*.mcmeta'
+        // Source guards in CommandFeedbackWiringTest and SurvivalWaveWiringTest.
+        ['commands/CommandFeedbackGameTests', 'building/PendingConstructionGameTests',
+         'fogofwar/NeutralFogLifecycleGameTests', 'survival/SurvivalSequenceGameTests'].each {
+            include "src/gametest/java/com/solegendary/reignofnether/${it}.java"
+        }
+        ['command_feedback', 'pending_construction', 'neutral_fog_lifecycle', 'survival_sequence'].each {
+            include "src/gametest/resources/data/reignofnether_${it}/structures/ore_mine_test_arena.nbt"
+        }
+        if (project.hasProperty('dreamseekers')) {
+            include 'addons/dreamseekers/src/main/resources/data/dreamseekers/structures/*.nbt'
+            include 'addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/*.png'
+        }
+    }
+    inputs.files(contractFiles).withPropertyName('checkoutContractFiles').withPathSensitivity(PathSensitivity.RELATIVE)
+    if (project.hasProperty('dreamseekers')) {
+        ['economy_manifest', 'structure_manifest'].each { name ->
+            inputs.file("addons/dreamseekers/${name}.json").withPropertyName(name).withPathSensitivity(PathSensitivity.RELATIVE)
+        }
+    }
+}

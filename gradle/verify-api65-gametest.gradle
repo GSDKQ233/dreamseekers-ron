@@ -1,0 +1,66 @@
+import org.apache.tools.ant.util.LineOrientedOutputStream
+import org.apache.tools.ant.util.TeeOutputStream
+
+// Inspect only this JavaExec process. Stale logs from a prior phase, a plain
+// server exit, and an empty test set cannot satisfy these checks.
+// Gradle closes custom Exec streams when the child exits; do not close its console.
+@groovy.transform.CompileStatic
+class Api65Console extends OutputStream {
+    private final OutputStream destination
+    Api65Console(OutputStream destination) { this.destination = destination }
+    @Override void write(int b) { destination.write(b) }
+    @Override void write(byte[] data, int off, int count) { destination.write(data, off, count) }
+    @Override void flush() { destination.flush() }
+    @Override void close() { flush() }
+}
+
+class Api65GameTestEvidence {
+    final List<String> namespaces = []
+    final List<Integer> completed = []
+    final List<Integer> passed = []
+    int heroCycleMarkers
+    boolean failed
+
+    synchronized void observe(String line) {
+        def match = line =~ /Enabled Gametest Namespaces:\s*\[([^\]]*)\]/
+        if (match.find()) namespaces << match.group(1)
+        match = line =~ /={3,}\s+(\d+) GAME TESTS COMPLETE\s+=/
+        if (match.find()) completed << match.group(1).toInteger()
+        match = line =~ /All (\d+) required tests passed :\)/
+        if (match.find()) passed << match.group(1).toInteger()
+        if (line.contains('REPAIR2_HERO_WORLD_CYCLE_PASS')) heroCycleMarkers++
+        if (line =~ /\b[1-9]\d* (?:optional|required) tests failed\b/) failed = true
+    }
+
+    OutputStream tap(OutputStream console) {
+        def evidence = this
+        def lines = new LineOrientedOutputStream() {
+            @Override protected void processLine(String line) { evidence.observe(line) }
+            // Exec may flush between chunks of a single log line; wait for its newline.
+            @Override void flush() {}
+        }
+        return new TeeOutputStream(new Api65Console(console), lines)
+    }
+}
+
+def plan = gradle.ext.dreamseekersGameTestPlan
+if (plan.expected != null) {
+    tasks.withType(JavaExec).matching { it.name == 'runGameTestServer' }.configureEach { runner ->
+        def evidence = new Api65GameTestEvidence()
+        def label = "suite=${plan.suite} profile=${plan.module} phase=${plan.phase ?: 'single'} namespace=${plan.namespace} expected=${plan.expected}"
+        doFirst {
+            logger.lifecycle("GAMETEST_PLAN ${label} worldDir=${plan.directory}")
+            runner.standardOutput = evidence.tap(runner.standardOutput ?: System.out)
+            runner.errorOutput = evidence.tap(runner.errorOutput ?: System.err)
+        }
+        doLast {
+            def heroCycle = plan.suite == 'api65_repair2_hero'
+            def expectedCounts = heroCycle ? [plan.expected] * 4 : [plan.expected]
+            if (evidence.namespaces != [plan.namespace] || evidence.completed != expectedCounts ||
+                    evidence.passed != expectedCounts || evidence.failed || (heroCycle && evidence.heroCycleMarkers != 1)) {
+                throw new GradleException("Missing or mismatched GameTest evidence: ${label}; observed namespaces=${evidence.namespaces}, complete=${evidence.completed}, passed=${evidence.passed}, heroCycleMarkers=${evidence.heroCycleMarkers}, failed=${evidence.failed}")
+            }
+            logger.lifecycle("GAMETEST_VERIFIED ${label} actual=${evidence.completed.sum()}")
+        }
+    }
+}

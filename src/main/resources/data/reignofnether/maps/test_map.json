@@ -1,0 +1,14 @@
+{
+  "name": "Map Metadata Example",
+  "players": 4,
+  "description": "Legacy four-player map metadata example; this resource does not include a playable world.",
+  "gamerules": {
+    "doMobSpawning": false,
+    "keepInventory": true,
+    "doDaylightCycle": false,
+    "doFireTick": false,
+    "naturalRegeneration": false
+  },
+  "image": "valley_of_deceit.png"
+
+}
