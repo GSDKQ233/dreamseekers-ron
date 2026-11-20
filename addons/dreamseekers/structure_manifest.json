@@ -1686,5 +1686,148 @@
   "reserved_extensions": [
     "Generic DreamFunctionService role interface remains disabled; enabled functions use their dedicated services.",
     "No automatic logistics, terrain excavation, or blanket neutral-creature taming is implied by building models."
+  ],
+  "runtime_template_assets": [
+    {
+      "id": "dream_anchor_ascended",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        16,
+        9
+      ],
+      "non_air_blocks": 451,
+      "palette_counts": {
+        "minecraft:amethyst_block": 18,
+        "minecraft:crying_obsidian": 6,
+        "minecraft:polished_blackstone_bricks": 4,
+        "minecraft:purple_stained_glass": 10,
+        "minecraft:stone_bricks": 37,
+        "pasterdream:dyedream_glass": 4,
+        "pasterdream:dyedream_lartern": 12,
+        "pasterdream:dyedream_log": 116,
+        "pasterdream:dyedream_planks": 18,
+        "pasterdream:dyedream_planks_fence": 4,
+        "pasterdream:dyedream_worldtree_leaves": 132,
+        "pasterdream:dyedreamquartz_block": 40,
+        "pasterdream:dyedreamquartz_block_slab": 44,
+        "pasterdream:dyedreamquartz_block_stairs": 2,
+        "pasterdream:polished_calcite_wall": 4
+      },
+      "sha256": "4981c0a057c5464e9459b8f968f8b6558401fe4bb4e956dc282ee1e8c165a813"
+    },
+    {
+      "id": "dream_anchor_base_v3",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        11,
+        9
+      ],
+      "non_air_blocks": 325,
+      "palette_counts": {
+        "dreamseekers:meltdream_crown_crystal": 1,
+        "pasterdream:bricks_dyedreamquartz_block": 37,
+        "pasterdream:dyedream_bud_wall": 4,
+        "pasterdream:dyedream_glass": 4,
+        "pasterdream:dyedream_lartern": 6,
+        "pasterdream:dyedream_log": 97,
+        "pasterdream:dyedream_planks": 18,
+        "pasterdream:dyedream_planks_pane": 2,
+        "pasterdream:dyedream_worldtree_leaves": 75,
+        "pasterdream:dyedreamquartz_block": 40,
+        "pasterdream:dyedreamquartz_block_slab": 22,
+        "pasterdream:dyedreamquartz_block_stairs": 2,
+        "pasterdream:gold_carve_dyedream_glasspane": 13,
+        "pasterdream:pillar_dyedreamquartz_block": 4
+      },
+      "sha256": "72c1e9effabb388a70ab70df8f41a9e2d67ad328e9b3b59a044bf8ec440194dc"
+    },
+    {
+      "id": "dream_anchor_shadow_v3",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        17,
+        9
+      ],
+      "non_air_blocks": 452,
+      "palette_counts": {
+        "dreamseekers:meltdream_crown_crystal": 1,
+        "minecraft:amethyst_block": 18,
+        "pasterdream:bricks_dyedreamquartz_block": 35,
+        "pasterdream:chiseled_dyedreamquartz_block": 4,
+        "pasterdream:dyedream_bud_wall": 4,
+        "pasterdream:dyedream_glass": 14,
+        "pasterdream:dyedream_lartern": 18,
+        "pasterdream:dyedream_log": 116,
+        "pasterdream:dyedream_planks": 18,
+        "pasterdream:dyedream_planks_pane": 2,
+        "pasterdream:dyedream_worldtree_leaves": 106,
+        "pasterdream:dyedreamquartz_block": 38,
+        "pasterdream:dyedreamquartz_block_slab": 44,
+        "pasterdream:dyedreamquartz_block_stairs": 2,
+        "pasterdream:gold_carve_dyedream_glasspane": 28,
+        "pasterdream:pillar_dyedreamquartz_block": 4
+      },
+      "sha256": "2c79095c658ad7f3504410fff5c1bcd1d64cb9da1b59ec92291bac07f7bb3555"
+    },
+    {
+      "id": "dream_anchor_wind_v4",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        18,
+        9
+      ],
+      "non_air_blocks": 377,
+      "palette_counts": {
+        "dreamseekers:meltdream_crown_crystal": 1,
+        "pasterdream:bricks_dyedreamquartz_block": 35,
+        "pasterdream:chiseled_dyedreamquartz_block": 4,
+        "pasterdream:cyan_stone_pillar": 4,
+        "pasterdream:dyedream_bud_wall": 4,
+        "pasterdream:dyedream_glass": 4,
+        "pasterdream:dyedream_lartern": 14,
+        "pasterdream:dyedream_log": 86,
+        "pasterdream:dyedreamquartz_block": 38,
+        "pasterdream:dyedreamquartz_block_slab": 44,
+        "pasterdream:dyedreamquartz_block_stairs": 2,
+        "pasterdream:gold_carve_dyedream_glasspane": 11,
+        "pasterdream:windiron_bars": 15,
+        "pasterdream:windmoor_fence": 12,
+        "pasterdream:windmoor_leaves_0": 30,
+        "pasterdream:windmoor_leaves_1": 14,
+        "pasterdream:windmoor_planks": 33,
+        "pasterdream:windrunner_crystal_block": 26
+      },
+      "sha256": "f8ca712d67ebdd1ec164d76d5d0d14d5ae96143ef57f99a95d47c3380e1c44d3"
+    },
+    {
+      "id": "shadow_watchtower_garrison_v2",
+      "base_building": "shadow_watchtower",
+      "size_xyz": [
+        7,
+        14,
+        7
+      ],
+      "non_air_blocks": 211,
+      "palette_counts": {
+        "minecraft:chain": 12,
+        "minecraft:dark_oak_trapdoor": 16,
+        "minecraft:deepslate_tile_slab": 4,
+        "minecraft:deepslate_tiles": 73,
+        "minecraft:grass_block": 2,
+        "minecraft:lantern": 2,
+        "minecraft:polished_deepslate": 21,
+        "minecraft:soul_lantern": 1,
+        "minecraft:stone_bricks": 47,
+        "minecraft:waxed_cut_copper": 23,
+        "pasterdream:chiseled_dyedreamquartz_block": 7,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:flower_14": 2
+      },
+      "sha256": "17b194ad0d315a960ac1c4333459360354499e9cce5c67fc65e1c341c6cf6214"
+    }
   ]
 }

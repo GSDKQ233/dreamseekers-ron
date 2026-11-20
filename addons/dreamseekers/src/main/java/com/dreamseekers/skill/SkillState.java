@@ -28,11 +28,13 @@ public final class SkillState {
     public boolean canAdvance() { return revision<Long.MAX_VALUE; }
     void commit(UnitSkill skill) {
         cooldowns.put(skill,now()+skill.cooldownTicks());revision++;
+        SkillCastAnimation.play(source.mob(),skill);
     }
     /** Only a matching server-created successful-cast profile can shorten this new cooldown. */
     void commit(UnitSkill skill,SkillAmplification.Profile profile) {
         int ticks=profile!=null&&profile.matches(source,skill)?profile.cooldownTicks():skill.cooldownTicks();
         cooldowns.put(skill,now()+ticks);revision++;
+        SkillCastAnimation.play(source.mob(),skill);
     }
     public boolean allowFeedback() {
         if (lastFeedback!=Long.MIN_VALUE && now()-lastFeedback<5) return false;

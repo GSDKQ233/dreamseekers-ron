@@ -90,11 +90,7 @@ public final class UnitSkillAbility extends Ability {
     }
     @Override public AbilityButton getButton(Keybinding key,Unit unit) {
         SkillUnit source=(SkillUnit)unit;
-        ResourceLocation icon = skill==UnitSkill.AARONCOS_LEFT_PRESS ? com.dreamseekers.DreamseekersMod.AARONCOS_LEFT_HAND_ICON
-                : skill==UnitSkill.AARONCOS_RIGHT_SHOCK||skill==UnitSkill.AARONCOS_RIGHT_VORTEX ? com.dreamseekers.DreamseekersMod.AARONCOS_RIGHT_HAND_ICON
-                : skill==UnitSkill.MOTHER_BROOD||skill==UnitSkill.MOTHER_NEST ? com.dreamseekers.DreamseekersMod.BEETLE_MOTHER_ICON
-                : skill==UnitSkill.WEEPING_ECHOES ? com.dreamseekers.DreamseekersMod.WEEPING_SQUEAL_GHOST_ICON
-                : ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/skill_"+skill.id()+".png");
+        ResourceLocation icon = ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/skill_"+skill.id()+".png");
         return SnapshotSkillButton.bind(new AbilityButton(skill.id(),icon,
                 key,()->SkillClient.isArmed(source,skill)||isAutocasting(unit)||skill==UnitSkill.MOTHER_NEST&&SkillClient.motherNestActive(source),()->false,()->(skill!=UnitSkill.MOTHER_NEST||com.dreamseekers.unitprogression.AdvancedUnitResearch.unlocked(source.getOwnerName(),com.dreamseekers.unitprogression.AdvancedUnitResearch.MOTHER_NEST_ID,true))&&(skill!=UnitSkill.AARONCOS_RIGHT_VORTEX||com.dreamseekers.unitprogression.ExpansionResearch.unlocked(source.getOwnerName(),com.dreamseekers.unitprogression.ExpansionResearch.AARONCOS_VORTEX_ID,true)),
                 ()->SkillClient.arm(source,skill),()->SkillClient.rightClick(source,skill),
