@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.skill;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.world.entity.Mob;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
 import net.pasterdream.entity.AaroncosLefthand0Entity;
 import net.pasterdream.entity.AaroncosRighthand0Entity;
 import net.pasterdream.entity.BlackBeetleEntity;
@@ -15,6 +20,7 @@ import net.pasterdream.entity.WindKnightEntity;
  * Presentation only: plays the cast animation that already ships in the installed PasterDream model
  * through its own synced one-shot animation channel. Skills whose model has no such animation stay silent.
  */
+@Mod.EventBusSubscriber(modid = "dreamseekers")
 public final class SkillCastAnimation {
     private SkillCastAnimation() {}
 
@@ -32,10 +38,29 @@ public final class SkillCastAnimation {
         };
     }
 
-    /** Server-side; the native entity synchronizes the one-shot animation to tracking clients. */
+    private record Pending(Mob caster, UnitSkill skill) {}
+    private static final List<Pending> PENDING = new ArrayList<>();
+
+    /**
+     * Server-side. PasterDream's own LivingTick handler consumes the synced animation name on the server too,
+     * so a name written before the caster's tick is cleared before the entity tracker sends it. The name is
+     * therefore written at the end of the server tick, after every entity tick and before the next broadcast.
+     */
     public static void play(Mob caster, UnitSkill skill) {
+        if (nativeAnimation(skill) == null || caster == null || caster.level().isClientSide() || !caster.isAlive()) return;
+        PENDING.add(new Pending(caster, skill));
+    }
+
+    @SubscribeEvent public static void flush(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || PENDING.isEmpty()) return;
+        List<Pending> due = new ArrayList<>(PENDING);
+        PENDING.clear();
+        for (Pending pending : due) apply(pending.caster(), pending.skill());
+    }
+
+    private static void apply(Mob caster, UnitSkill skill) {
         String animation = nativeAnimation(skill);
-        if (animation == null || caster == null || caster.level().isClientSide() || !caster.isAlive()) return;
+        if (animation == null || caster.isRemoved() || !caster.isAlive()) return;
         switch (skill) {
             case WIND_DASH -> { if (caster instanceof WindKnightEntity e) e.setAnimation(animation); }
             // The crazy variant's model has no roar animation, so only the ordinary terrorbeak plays it.
