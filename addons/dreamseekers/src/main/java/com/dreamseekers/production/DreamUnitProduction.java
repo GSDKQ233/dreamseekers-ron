@@ -197,16 +197,26 @@ public final class DreamUnitProduction extends ProductionItem implements IUnitPr
             text.add(ResourceCosts.getFormattedCost(defaultCost));
             text.add(ResourceCosts.getFormattedPopAndTime(defaultCost));
         }
-        text.add(Component.translatable(entityType.get().getDescriptionId() + ".tooltip").getVisualOrderText());
+        // Descriptions are whole sentences: split them at the current GUI width instead of one long line.
+        text.addAll(wrap(Component.translatable(entityType.get().getDescriptionId() + ".tooltip")));
         if (prerequisiteError != null) {
-            text.add(Component.translatable(prerequisiteError).getVisualOrderText());
-            text.add(Component.translatable("dreamseekers.production.prerequisite_pause").getVisualOrderText());
-            text.add(Component.translatable("dreamseekers.production.spawn_exit").getVisualOrderText());
+            text.addAll(wrap(Component.translatable(prerequisiteError),
+                    Component.translatable("dreamseekers.production.prerequisite_pause"),
+                    Component.translatable("dreamseekers.production.spawn_exit")));
         }
         return text;
     }
 
-    @Override public UnitSpawnButton getPlaceButton() { return new UnitSpawnButton(getItemName(), icon, tooltip(false)); }
+    private static List<FormattedCharSequence> wrap(Component... lines) { return com.dreamseekers.client.DreamTooltipText.wrap(lines); }
+    @Override public UnitSpawnButton getPlaceButton() {
+        // Registered once at load: resolve language and width on every real hover instead.
+        return new UnitSpawnButton(getItemName(), icon, List.of()) {
+            @Override public void renderTooltip(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY) {
+                this.tooltipLines = tooltip(false);
+                super.renderTooltip(graphics, mouseX, mouseY);
+            }
+        };
+    }
     private List<FormattedCharSequence> tooltip(ProductionPlacement placement) {
         var text=tooltip(false);var quote=getCost(true,placement.ownerName);
         text.add(1,ResourceCosts.getFormattedCost(quote));
@@ -215,9 +225,9 @@ public final class DreamUnitProduction extends ProductionItem implements IUnitPr
                 com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem.resourceLabel(extra.getKey()),extra.getValue()).getVisualOrderText());
         String missing = getProduceErrorMsg(placement);
         if(missing != null && !missing.equals(prerequisiteError))
-            text.add(Component.translatable(missing).withStyle(net.minecraft.ChatFormatting.RED).getVisualOrderText());
-        if(!canAffordExtra(placement))text.add(Component.translatable("dreamseekers.production.extra_insufficient").getVisualOrderText());
-        text.add(Component.translatable("research.economy.refund_notice").getVisualOrderText());return text;
+            text.addAll(wrap(Component.translatable(missing).withStyle(net.minecraft.ChatFormatting.RED)));
+        if(!canAffordExtra(placement))text.addAll(wrap(Component.translatable("dreamseekers.production.extra_insufficient")));
+        text.addAll(wrap(Component.translatable("research.economy.refund_notice")));return text;
     }
     @Override public StartProductionButton getStartButton(ProductionPlacement placement, Keybinding key) {
         return getStartButton(placement, key, lines -> {});
@@ -250,9 +260,8 @@ public final class DreamUnitProduction extends ProductionItem implements IUnitPr
         var button = new StopProductionButton(Component.translatable(entityType.get().getDescriptionId()).getString(),
                 icon, placement, this, first);
         // The public client queue does not expose the immutable paid receipt: never invent a refund quote.
-        button.tooltipLines = java.util.List.of(
-                Component.translatable(entityType.get().getDescriptionId()).getVisualOrderText(),
-                Component.translatable("research.economy.refund_notice").getVisualOrderText());
+        button.tooltipLines = wrap(Component.translatable(entityType.get().getDescriptionId()),
+                Component.translatable("research.economy.refund_notice"));
         return button;
     }
 }

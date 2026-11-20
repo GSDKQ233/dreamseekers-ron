@@ -102,8 +102,8 @@ public class ReceiptBackedResearchItem extends ProductionItem {
     }
     @Override public StopProductionButton getCancelButton(ProductionPlacement p,boolean first) {
         var button=new StopProductionButton(Component.translatable(title).getString(),icon,p,this,first);
-        button.tooltipLines=java.util.List.of(Component.translatable(title).getVisualOrderText(),
-            Component.translatable("research.economy.refund_notice").getVisualOrderText());
+        button.tooltipLines=wrapTooltip(java.util.List.of(Component.translatable(title),
+            Component.translatable("research.economy.refund_notice")));
         button.onLeftClick=first && !p.productionQueue.isEmpty() && p.productionQueue.get(0).item==this
                 ? ResearchQueueClient.cancelClick(p,this,p.productionQueue.get(0)) : ()->ResearchQueueClient.query(p);
         return button;

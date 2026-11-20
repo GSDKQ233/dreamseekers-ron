@@ -54,13 +54,13 @@ public final class ResonanceClient {
         EconomyActionClient.submit(new EconomyActionGate.Fingerprint("resonance_pulse",payload),(session,sequence)->new ResonancePackets.Request(payload,s.epoch(),session,sequence),ResonancePackets.CHANNEL::sendToServer);}
     private static ResourceLocation icon(String name){return ResourceLocation.fromNamespaceAndPath("minecraft","textures/item/"+name+".png");}
     private static List<net.minecraft.util.FormattedCharSequence> tooltip(BuildingPlacement p,boolean pulse){var out=new ArrayList<net.minecraft.util.FormattedCharSequence>();var s=state(p);
-        out.add(Component.translatable(pulse?"resonance.pulse":"resonance.network").getVisualOrderText());
-        if(s==null)out.add(Component.translatable("resonance.waiting").getVisualOrderText());else{
-            out.add(Component.translatable("resonance.summary",s.rank(),s.active(),s.limit(),s.total()).getVisualOrderText());
-            if(!s.supported())out.add(Component.translatable("resonance.unsupported").getVisualOrderText());else if(s.rank()==0)out.add(Component.translatable("resonance.disconnected").getVisualOrderText());
-            if(pulse){out.add(Component.translatable("resonance.actual_range",s.pulseRange()).getVisualOrderText());out.add(Component.translatable("resonance.quote",ResonanceNetwork.COST,s.tuned()?15:10,s.tuned()?8:5).getVisualOrderText());out.add(Component.translatable("resonance.cooldown_seconds",(cooldown(p)+19)/20).getVisualOrderText());}
+        out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable(pulse?"resonance.pulse":"resonance.network")));
+        if(s==null)out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.waiting")));else{
+            out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.summary",s.rank(),s.active(),s.limit(),s.total())));
+            if(!s.supported())out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.unsupported")));else if(s.rank()==0)out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.disconnected")));
+            if(pulse){out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.actual_range",s.pulseRange())));out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.quote",ResonanceNetwork.COST,s.tuned()?15:10,s.tuned()?8:5)));if(cooldown(p)>0)out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.cooldown_seconds",(cooldown(p)+19)/20)));}
         }
-        out.add(Component.translatable(pulse?"resonance.pulse_rules":"resonance.network_rules").getVisualOrderText());return out;}
+        out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable(pulse?"resonance.pulse_rules":"resonance.network_rules")));return out;}
     public static List<AbilityButton> append(BuildingPlacement p,List<AbilityButton> original){context();if(!own(p))return original;query(p);var out=new ArrayList<>(original);
         var info=new AbilityButton(Component.translatable("resonance.network").getString(),icon("ender_eye"),null,()->false,()->false,()->true,()->{},null,tooltip(p,false),null,p){
             @Override public void renderTooltip(net.minecraft.client.gui.GuiGraphics graphics,int mouseX,int mouseY){tooltipLines=tooltip(p,false);super.renderTooltip(graphics,mouseX,mouseY);}};
@@ -68,7 +68,7 @@ public final class ResonanceClient {
         var button=new AbilityButton(Component.translatable("resonance.pulse").getString(),icon("amethyst_shard"),null,()->false,()->false,
             ()->{var s=state(p);return s!=null&&s.supported()&&s.rank()>0&&cooldown(p)==0&&EconomyActionClient.ready(s.epoch());},()->pulse(p),null,tooltip(p,true),null,p){
             @Override public void renderTooltip(net.minecraft.client.gui.GuiGraphics graphics,int mouseX,int mouseY){tooltipLines=tooltip(p,true);super.renderTooltip(graphics,mouseX,mouseY);}};
-        button.bottomLeftText=()->cooldown(p)>0?Long.toString((cooldown(p)+19)/20):Integer.toString(ResonanceNetwork.COST);out.add(button);return out;}
+        button.bottomLeftText=()->cooldown(p)>0?com.dreamseekers.client.DreamTooltipLayout.cooldownBadge(cooldown(p)):Integer.toString(ResonanceNetwork.COST);out.add(button);return out;}
     @SubscribeEvent public static void tick(TickEvent.ClientTickEvent e){if(e.phase!=TickEvent.Phase.END)return;context();if(CLOCK.endTick(Minecraft.getInstance().isPaused()))clearView();if(level!=null)for(var p:BuildingClientEvents.getSelectedBuildings())query(p);}
     @SubscribeEvent public static void login(ClientPlayerNetworkEvent.LoggingIn e){clear();}
     @SubscribeEvent public static void logout(ClientPlayerNetworkEvent.LoggingOut e){clear();}

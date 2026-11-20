@@ -125,7 +125,8 @@ public final class DreamBuildingSupport {
             List<FormattedCharSequence> lines = new ArrayList<>();
             lines.addAll(mc.font.split(Component.translatable(key).withStyle(Style.EMPTY.withBold(true)), width));
             lines.add(ResourceCosts.getFormattedCost(building.cost));
-            lines.add(ResourceCosts.getFormattedPop(building.cost));
+            // Only buildings that supply population show the line, as the core building tooltips do.
+            if (building.cost.population != 0) lines.add(ResourceCosts.getFormattedPop(building.cost));
             lines.add(FormattedCharSequence.forward("", Style.EMPTY));
             lines.addAll(mc.font.split(Component.translatable(key + ".tooltip1"), width));
             lines.addAll(mc.font.split(Component.translatable(key + ".tooltip2"), width));

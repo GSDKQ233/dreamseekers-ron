@@ -56,13 +56,15 @@ public final class UnitSkillAbility extends Ability {
         String primary=skill==UnitSkill.FOX_BLESSING?potency.foxPercent():potency.shieldOrHealingTotal();
         String derived=skill==UnitSkill.GEL_GUARD?potency.reboundPercent():potency.tidePercent();
         boolean extended=SkillClient.lightExtension(source,skill);
-        double duration=(extended&&(skill==UnitSkill.GEL_GUARD||skill==UnitSkill.FOX_BLESSING)?skill.durationTicks()*1.2:skill.durationTicks())/20.0;
-        double cooldown=(extended?skill.cooldownTicks()*.9:skill.cooldownTicks())/20.0;
+        // Whole seconds print as "8", not "8.0"; extended values such as 9.6 keep their fraction.
+        String duration=com.dreamseekers.client.DreamTooltipLayout.number((extended&&(skill==UnitSkill.GEL_GUARD||skill==UnitSkill.FOX_BLESSING)?skill.durationTicks()*1.2:skill.durationTicks())/20.0);
+        String cooldown=com.dreamseekers.client.DreamTooltipLayout.number((extended?skill.cooldownTicks()*.9:skill.cooldownTicks())/20.0);
+        String tide=com.dreamseekers.client.DreamTooltipLayout.number(extended?4.8:4.0);
         int range=skill==UnitSkill.STONE_HEAVY_SHOT&&source instanceof com.dreamseekers.unit.StoneSpiritThrowerUnit stone?StoneHeavyShot.range(stone):skill.range();
         java.util.List<Component> tooltip=new java.util.ArrayList<>(List.of(
                 Component.translatable(prefix).withStyle(Style.EMPTY.withBold(true)),
                 Component.translatable(prefix+".tooltip1",skill==UnitSkill.FIREFLY_RUSH?35:skill==UnitSkill.BEETLE_ADVANCE?25:range,duration,cooldown,primary,potency.healingPulse()),
-                Component.translatable(prefix+".tooltip2",derived,extended?4.8:4.0),
+                Component.translatable(prefix+".tooltip2",derived,tide),
                 Component.translatable(prefix+".tooltip3")));
         if(skill==UnitSkill.MOTHER_BROOD||skill==UnitSkill.AARONCOS_RIGHT_SHOCK||skill==UnitSkill.AARONCOS_RIGHT_VORTEX)
             for(int line=4;line<=5;line++)tooltip.add(Component.translatable(prefix+".tooltip"+line));
@@ -72,7 +74,7 @@ public final class UnitSkillAbility extends Ability {
             String key=!SkillClient.hasCurrentState(source,skill)?"unavailable":potency.tier()==0?"baseline":"active";
             tooltip.add(Component.translatable("ability.dreamseekers.unit_skill.amplification."+key,potency.tier(),potency.multiplier()));
         }
-        if(SkillPotencyView.supports(skill))tooltip.add(Component.translatable("ability.dreamseekers.unit_skill.extension."+(!SkillClient.hasCurrentState(source,skill)?"unknown":extended?"active":"baseline"),skill==UnitSkill.JELLY_FLOW?(extended?4.8:4.0):duration,cooldown));
+        if(SkillPotencyView.supports(skill))tooltip.add(Component.translatable("ability.dreamseekers.unit_skill.extension."+(!SkillClient.hasCurrentState(source,skill)?"unknown":extended?"active":"baseline"),skill==UnitSkill.JELLY_FLOW?tide:duration,cooldown));
         if(skill==UnitSkill.MOTHER_NEST||skill==UnitSkill.MOTHER_BROOD)tooltip.add(Component.translatable("ability.dreamseekers.mother_nest.state."+(!SkillClient.hasCurrentState(source,UnitSkill.MOTHER_NEST)?"unknown":SkillClient.motherNestActive(source)?"active":"mobile")));
         if(skill==UnitSkill.AARONCOS_LEFT_PRESS||skill==UnitSkill.AARONCOS_RIGHT_SHOCK)tooltip.add(Component.translatable("ability.dreamseekers.hand_harmony."+(!SkillClient.hasCurrentState(source,skill)?"unknown":SkillClient.handHarmonyActive(source,skill)?"active":"inactive")));
         return ClientTooltip.wrap(tooltip);

@@ -307,8 +307,8 @@ public final class DreamseekersMod {
             com.dreamseekers.economy.DreamEconomyResearch.register(DREAM_ANCHOR);
             REVERIE_GARDEN = Registry.register(ReignOfNetherRegistries.BUILDING, id("reverie_garden"), new ReverieGarden());
             BEETLE_SANCTUARY = Registry.register(ReignOfNetherRegistries.BUILDING, id("beetle_sanctuary"), new BeetleSanctuary(BEETLE_PRODUCTION, SNAIL_PRODUCTION, PINK_CHICKEN_PRODUCTION, GOLDEN_FOX_PRODUCTION, PINK_SLIME_PRODUCTION, JELLYFISH_PRODUCTION));
-            Factions.registerStartBuilding(DREAMSEEKERS, DREAM_ANCHOR, null); // Worker Q is Firefly Rush; construction remains mouse-accessible.
-            Factions.registerBuildings(DREAMSEEKERS, REVERIE_GARDEN, null); // Worker W is Neutral Contract; do not arm a building too.
+            Factions.registerStartBuilding(DREAMSEEKERS, DREAM_ANCHOR, Keybindings.hotkey3); // Worker Q is Firefly Rush, so the World Tree builds on F.
+            Factions.registerBuildings(DREAMSEEKERS, REVERIE_GARDEN, Keybindings.hotkey4); // Worker W is Neutral Contract, so the garden builds on C.
             Factions.registerBuildings(DREAMSEEKERS, BEETLE_SANCTUARY, Keybindings.abilitySlot3);
             DREAM_DEPOT = registerScaffold(DreamBuildingSpec.DREAM_DEPOT);
             SHADOW_MINE = registerScaffold(DreamBuildingSpec.SHADOW_MINE);
@@ -333,10 +333,12 @@ public final class DreamseekersMod {
             SCAFFOLD_BUILDINGS = List.of(DREAM_DEPOT,SHADOW_MINE,SHADOW_FURNACE,CONTRACT_ECOLOGY,RESONANCE_DAIS,SHADOW_WATCHTOWER);
             FUNCTIONAL_BUILDINGS = List.of(DREAM_DEPOT, SHADOW_MINE, SHADOW_FURNACE, DREAM_HALL,
                     RESONANCE_LABORATORY, CONTRACT_ECOLOGY, RESONANCE_DAIS, SHADOW_WATCHTOWER);
-            // RoN wraps the worker's building menu across rows. Leave these mouse
-            // buttons unbound rather than stealing existing unit/action hotkeys.
-            for (com.solegendary.reignofnether.building.Building building : FUNCTIONAL_BUILDINGS)
-                Factions.registerBuildings(DREAMSEEKERS, building);
+            // The Firefly only uses Q/W for its own skills; these are the build keys the other
+            // factions' workers already use, in menu order (R T Y U I O P L).
+            var buildKeys = List.of(Keybindings.abilitySlot4, Keybindings.abilitySlot5, Keybindings.abilitySlot6, Keybindings.abilitySlot7,
+                    Keybindings.abilitySlot8, Keybindings.abilitySlot9, Keybindings.abilitySlot10, Keybindings.hotkey2);
+            for (int i = 0; i < FUNCTIONAL_BUILDINGS.size(); i++)
+                Factions.registerBuildings(DREAMSEEKERS, FUNCTIONAL_BUILDINGS.get(i), buildKeys.get(i));
             if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient())
                 com.dreamseekers.client.DreamSurvivalBeaconButton.register();
         });
