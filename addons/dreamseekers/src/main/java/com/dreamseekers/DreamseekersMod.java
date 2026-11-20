@@ -139,13 +139,13 @@ public final class DreamseekersMod {
     /** Kept for existing entity NBT; no silent world migration or deletion. */
     public static final RegistryObject<EntityType<StoneSpiritWorker>> STONE_SPIRIT_WORKER = ENTITIES.register("stone_spirit_worker", () ->
             EntityType.Builder.<StoneSpiritWorker>of(StoneSpiritWorker::new, MobCategory.MISC)
-                    .sized(0.7F, 1.0F).clientTrackingRange(10).build(id("stone_spirit_worker").toString()));
+                    .sized(0.6F, 0.8F).clientTrackingRange(10).build(id("stone_spirit_worker").toString()));
     public static final RegistryObject<EntityType<BeetleUnit>> BEETLE = ENTITIES.register("beetle", () ->
             EntityType.Builder.<BeetleUnit>of(BeetleUnit::new, MobCategory.MISC)
                     .sized(0.9F, 0.65F).clientTrackingRange(10).build(id("beetle").toString()));
     public static final RegistryObject<EntityType<BasaltSnailUnit>> BASALT_SNAIL = ENTITIES.register("basalt_snail", () ->
             EntityType.Builder.<BasaltSnailUnit>of(BasaltSnailUnit::new, MobCategory.MISC)
-                    .sized(0.8F, 0.8F).clientTrackingRange(10).build(id("basalt_snail").toString()));
+                    .sized(1.1F, 1.1F).clientTrackingRange(10).build(id("basalt_snail").toString()));
 
     public static Faction DREAMSEEKERS;
     public static DreamUnitProduction AARONCOS_LEFT_HAND_PRODUCTION, AARONCOS_RIGHT_HAND_PRODUCTION;

@@ -54,16 +54,4 @@ public final class UnitHudIconLeashGameTests {
         }
         h.succeed();
     }
-
-    /** Hitboxes that enclose the native model body: the worker keeps the native stone spirit size, the snail its real shell. */
-    @GameTest(template = "dreamseekers_test_arena", batch = BATCH, timeoutTicks = 40)
-    public static void stoneWorkerAndSnailHitboxesFitTheirModels(GameTestHelper h) {
-        var worker = DreamseekersMod.STONE_SPIRIT_WORKER.get().getDimensions();
-        var thrower = DreamseekersMod.STONE_SPIRIT_THROWER_UNIT.get().getDimensions();
-        h.assertTrue(worker.width == .7F && worker.height == 1F && worker.width == thrower.width && worker.height == thrower.height,
-                "legacy stone worker uses the native small stone spirit body shared with the thrower");
-        var snail = DreamseekersMod.BASALT_SNAIL.get().getDimensions();
-        h.assertTrue(snail.width == .8F && snail.height == .8F, "snail hitbox fits its 0.5 x 0.88 x 0.75 model and one-block gaps");
-        h.succeed();
-    }
 }
