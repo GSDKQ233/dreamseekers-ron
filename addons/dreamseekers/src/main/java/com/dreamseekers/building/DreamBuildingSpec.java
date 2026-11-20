@@ -2,7 +2,6 @@
 package com.dreamseekers.building;
 
 import com.solegendary.reignofnether.resources.ResourceCost;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -16,11 +15,11 @@ public enum DreamBuildingSpec {
     DREAM_DEPOT("dream_depot", "Dream Depot", Role.LOGISTICS, "chest_minecart", Blocks.BARREL),
     SHADOW_MINE("shadow_mine", "Shadow Mine", Role.ORE_EXTRACTION, "iron_pickaxe", Blocks.DEEPSLATE_BRICKS),
     SHADOW_FURNACE("shadow_furnace", "Shadow Furnace", Role.SHADOW_ENERGY, "amethyst_shard", Blocks.POLISHED_BLACKSTONE_BRICKS),
-    DREAM_HALL("dream_hall", "Dream Hall", Role.PRODUCTION, "book", Blocks.QUARTZ_BLOCK, "polished_calcite"),
-    RESONANCE_LABORATORY("resonance_laboratory", "Resonance Laboratory", Role.RESEARCH, "spyglass", Blocks.AMETHYST_BLOCK, "dyedreamquartz_block"),
-    CONTRACT_ECOLOGY("contract_ecology", "Contract Ecology Court", Role.CONTRACTS, "lead", Blocks.OAK_LEAVES, "dyedream_leaves"),
-    RESONANCE_DAIS("resonance_dais", "Resonance Dais", Role.RESONANCE, "ender_eye", Blocks.AMETHYST_BLOCK, "chiseled_dyedreamquartz_block"),
-    SHADOW_WATCHTOWER("shadow_watchtower", "Shadow Watchtower", Role.DEFENSE, "glowstone_dust", Blocks.DEEPSLATE_TILES);
+    DREAM_HALL("dream_hall", "Dream Hall", Role.PRODUCTION, "book", Blocks.QUARTZ_BLOCK),
+    RESONANCE_LABORATORY("resonance_laboratory", "Resonance Laboratory", Role.RESEARCH, "spyglass", Blocks.AMETHYST_BLOCK),
+    CONTRACT_ECOLOGY("contract_ecology", "Contract Ecology Court", Role.CONTRACTS, "lead", Blocks.OAK_LEAVES),
+    RESONANCE_DAIS("resonance_dais", "Resonance Dais", Role.RESONANCE, "ender_eye", Blocks.AMETHYST_BLOCK),
+    SHADOW_WATCHTOWER("shadow_watchtower", "Shadow Watchtower", Role.DEFENSE, "glowstone_dust", Blocks.STONE_BRICKS);
 
     public enum Role {
         LOGISTICS, ORE_EXTRACTION, SHADOW_ENERGY, PRODUCTION,
@@ -39,15 +38,8 @@ public enum DreamBuildingSpec {
     private final Role role;
     private final String iconItem;
     private final Block portraitBlock;
-    private final String nativePortraitBlock;
 
     DreamBuildingSpec(String structureName, String displayName, Role role, String iconItem, Block portraitBlock) {
-        this(structureName, displayName, role, iconItem, portraitBlock, null);
-    }
-
-    /** nativePortraitBlock: the PasterDream block that dominates this structure's own palette. */
-    DreamBuildingSpec(String structureName, String displayName, Role role, String iconItem, Block portraitBlock, String nativePortraitBlock) {
-        this.nativePortraitBlock = nativePortraitBlock;
         this.structureName = structureName;
         this.displayName = displayName;
         this.role = role;
@@ -61,12 +53,7 @@ public enum DreamBuildingSpec {
     public ResourceLocation icon() {
         return ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/" + structureName + ".png");
     }
-    /** Resolved on use, after registries exist; the vanilla block remains the fallback. */
-    public Block portraitBlock() {
-        if (nativePortraitBlock == null) return portraitBlock;
-        return BuiltInRegistries.BLOCK.getOptional(ResourceLocation.fromNamespaceAndPath("pasterdream", nativePortraitBlock))
-                .orElse(portraitBlock);
-    }
+    public Block portraitBlock() { return portraitBlock; }
 
     /** Role-specific construction costs; supply, income, health and build time are configured separately. */
     public ResourceCost newProvisionalCost() {
