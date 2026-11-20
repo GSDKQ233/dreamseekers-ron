@@ -44,7 +44,7 @@ public final class WorldTreeClient {
         var local=feedback.get(p);var cached=states.get(p);
         boolean currentIdentity=newer||cached==null||feedbackContext(cached.value()).equals(feedbackContext(snapshot));
         if(local!=null&&currentIdentity){String reason=local.accept(feedbackContext(snapshot),snapshot.completed(),snapshot.status(),CLOCK.now());
-            if(reason!=null)mc.player.displayClientMessage(Component.translatable("worldtree.dreamseekers.action_failed",Component.translatable(reason)),true);}
+            if(reason!=null)com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("worldtree.dreamseekers.action_failed",Component.translatable(reason)));}
         if(newer)states.put(p,new Cache(snapshot,CLOCK.now()));
     }
     public static void query(DreamAnchorPlacement p){if(!current())return;var mc=Minecraft.getInstance();if(p==null||p.getLevel()!=mc.level||!BuildingClientEvents.getBuildings().contains(p)||!p.ownerName.equals(mc.player.getName().getString()))return;

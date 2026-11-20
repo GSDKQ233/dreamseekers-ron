@@ -65,7 +65,7 @@ public final class EcologyClient {
         BuildingPlacement court=VIEWS.keySet().stream().filter(p->own(p)&&p.originPos.equals(packet.origin())&&VIEWS.get(p).nonce.equals(packet.view())).findFirst().orElse(null);
         if(court==null)return;
         View view=VIEWS.get(court);view.snapshot=packet;view.received=CLOCK.now();
-        if(!packet.status().equals("ready"))mc.player.displayClientMessage(Component.translatable("ecology_workposts."+packet.status()),true);
+        if(!packet.status().equals("ready"))com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("ecology_workposts."+packet.status()));
     }
     private static void send(BuildingPlacement p,EcologyPackets.Action action,UUID lease,List<EcologyPackets.Target> targets){var s=state(p);
         if(s==null||!EconomyActionClient.ready(s.epoch())){query(p);return;}
@@ -79,7 +79,7 @@ public final class EcologyClient {
         var mc=Minecraft.getInstance();var targets=selected.stream().filter(e->e instanceof Unit unit&&e.isAlive()&&e.level()==level&&!unit.isFlyingUnit()
             &&unit.getOwnerName().equals(p.ownerName)).limit(64).map(e->new EcologyPackets.Target(e.getId(),e.getUUID())).toList();
         if(targets.isEmpty())return false;query(p);var s=state(p);
-        if(s==null||!EconomyActionClient.ready(s.epoch())){mc.player.displayClientMessage(Component.translatable("ecology_workposts.waiting"),true);return true;}
+        if(s==null||!EconomyActionClient.ready(s.epoch())){com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("ecology_workposts.waiting"));return true;}
         send(p,EcologyPackets.Action.ASSIGN,EcologyPackets.ZERO,targets);return true;
     }
     /** Read-only codex bridge. This returns only the existing fresh, actual-owner view. */

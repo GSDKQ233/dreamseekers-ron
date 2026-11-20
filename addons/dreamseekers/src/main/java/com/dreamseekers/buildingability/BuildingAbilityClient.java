@@ -188,7 +188,7 @@ public final class BuildingAbilityClient {
         view.snapshot = packet;
         view.received = CLOCK.now();
         if (!"ready".equals(packet.status()))
-            mc.player.displayClientMessage(statusMessage(packet.status()), true);
+            com.dreamseekers.client.DreamTooltipText.hudMessage(statusMessage(packet.status()));
     }
 
     /** A completion may retire its own pending request, but cannot touch any building/page snapshot.
@@ -200,7 +200,7 @@ public final class BuildingAbilityClient {
         if(connection==null||source!=connection||mc.player==null||!packet.valid()
                 ||!mc.player.getGameProfile().getName().equals(packet.owner()))return;
         if(EconomyActionClient.accept(packet.stream(),packet.order(),packet.session(),packet.epoch(),packet.request()))
-            mc.player.displayClientMessage(statusMessage(packet.status()),true);
+            com.dreamseekers.client.DreamTooltipText.hudMessage(statusMessage(packet.status()));
     }
 
     private static Component statusMessage(String status) {

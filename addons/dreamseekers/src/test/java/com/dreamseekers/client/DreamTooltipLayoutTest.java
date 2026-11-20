@@ -77,6 +77,16 @@ class DreamTooltipLayoutTest {
         assertTrue(source("client/DreamEconomyClientHud.java").contains("lines.add(title);"));
     }
 
+    @Test void clientFeedbackUsesTheRtsMessageLineNotTheActionBarOverTheSelectionName() throws Exception {
+        for (String path : List.of("resonance/ResonanceClient.java", "buildingability/BuildingAbilityClient.java",
+                "neutralcontract/ContractClient.java", "ecologyworkposts/EcologyClient.java", "worldtree/WorldTreeClient.java",
+                "shadow/TerrorbeakUpgradeClient.java", "encounter/EncounterClient.java")) {
+            String source = source(path);
+            assertTrue(source.contains("DreamTooltipText.hudMessage("), path);
+            assertFalse(source.contains("displayClientMessage"), path);
+        }
+    }
+
     @Test void everyBuildingHasABuildMenuHotkeyAwayFromTheWorkerSkills() throws Exception {
         String mod = source("DreamseekersMod.java");
         assertFalse(mod.contains("Factions.registerBuildings(DREAMSEEKERS, building);"));

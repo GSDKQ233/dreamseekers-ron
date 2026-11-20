@@ -56,7 +56,7 @@ public final class EncounterClient {
         if(!EconomyActionClient.accept(p.stream(),p.order(),p.session(),p.epoch(),p.request()))return;
         if(!editor()||level==null||!p.view().equals(view)||!p.dimension().equals(level.dimension().location()))return;
         state=p;received=CLOCK.now();if(!p.status().equals("ready"))message(p.status());}
-    private static void message(String key){var mc=Minecraft.getInstance();if(mc.player!=null)mc.player.displayClientMessage(Component.translatable("map_encounter."+key),true);}
+    private static void message(String key){var mc=Minecraft.getInstance();if(mc.player!=null)com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("map_encounter."+key));}
     @SubscribeEvent(priority=EventPriority.HIGHEST) public static void mouse(ScreenEvent.MouseButtonPressed.Pre e){if(armed==null||!(e.getScreen() instanceof TopdownGui))return;
         if(e.getButton()==GLFW.GLFW_MOUSE_BUTTON_RIGHT){armed=null;swallow=e.getButton();e.setCanceled(true);return;}
         if(e.getButton()!=GLFW.GLFW_MOUSE_BUTTON_LEFT)return;

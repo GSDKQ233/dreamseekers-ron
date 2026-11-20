@@ -42,7 +42,9 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipLayout.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipText.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/DreamTooltipLayoutTest.java",
-    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/HardCodedSkillNumbersTest.java"
+    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/HardCodedSkillNumbersTest.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractClient.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeClient.java"
   ],
   "manifest_self_excluded": true,
   "hash_rule": "SHA256 of each uncompressed member, excluding this manifest.",
@@ -60,8 +62,8 @@
       "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
     },
     "COLLABORATION.md": {
-      "bytes": 3577,
-      "sha256": "214fb3f4da1afa8a5e4fa3799ced59ebf614a9f91c7c5f74b4f145d35c49c2e8"
+      "bytes": 3641,
+      "sha256": "23c9e010ff71eeb19fb31b8f8c3b89bb5dfc727ac493ddbd2dcdc0ac3e0c9d3b"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -2520,8 +2522,8 @@
       "sha256": "d4e4bb8f2bfb322b4963e80202e089588a7f3ea58572a88933e9ee2cf4689a1a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityClient.java": {
-      "bytes": 20821,
-      "sha256": "7d015d78922a65182dfb439d7ce1b0f6a913e03cf1e382d5e5833ca599440712"
+      "bytes": 20852,
+      "sha256": "7657da08718aab380e1dd5a8244b81796250646cca442e347ad3d01ed3a8d6b0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityEffects.java": {
       "bytes": 23872,
@@ -2600,8 +2602,8 @@
       "sha256": "0cf49de9569b8aa9d1e302e889e863ef9e97c6ec8e5a03c65094ba3abadec0bf"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipText.java": {
-      "bytes": 956,
-      "sha256": "4db22ac544724054df8917be93944de62413b8c257957dea13a0effe55eb4147"
+      "bytes": 1227,
+      "sha256": "76aa6c3243d8b6e2bacabc3c817115e8a238c9a89482dd456384ecfffa3ceb46"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamUnitVisibility.java": {
       "bytes": 1340,
@@ -2628,8 +2630,8 @@
       "sha256": "ac60467752f6ff89d71e2593a1745dac73230e7b7184254bdfd5999c29ba1c0b"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/ecologyworkposts/EcologyClient.java": {
-      "bytes": 11009,
-      "sha256": "80b452d4490cf937b1c0ea26d4ff48ee9edb00695a21a1045fafdd567601793b"
+      "bytes": 11041,
+      "sha256": "9a784cc5fe76356d244b19f0f9d1f248ae5cf8f95fd42d17216846ebbadfa167"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/ecologyworkposts/EcologyPackets.java": {
       "bytes": 7501,
@@ -2700,8 +2702,8 @@
       "sha256": "0fc18c0d3c2707512a276d0639629cd5662418836e1ccba68df23aa627e0b7e0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/encounter/EncounterClient.java": {
-      "bytes": 8346,
-      "sha256": "d51fad644b1dd07bdf59d5e1776a9c51ff53e0fe24912f147ff97fae91dff22b"
+      "bytes": 8362,
+      "sha256": "bf88208ccb1579f277c38a42d16c46096b7b040af7784021173236846f519038"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/encounter/EncounterLedger.java": {
       "bytes": 2309,
@@ -2764,8 +2766,8 @@
       "sha256": "cb8022bae1f9b8af77a9c06d9a664f550552b91edc92da609b2ffbc86e6b241c"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractClient.java": {
-      "bytes": 8994,
-      "sha256": "7069b4f50b59efc93565e49f7950f43d49dc6afb2f48e92d81a0379addaa07db"
+      "bytes": 9010,
+      "sha256": "7dc11e8308054d85e9632af7ac78a4e3e006f1c5df6cb6e89579a3b12e84c984"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractLedger.java": {
       "bytes": 4257,
@@ -2840,8 +2842,8 @@
       "sha256": "39e58eeb3ddb173cd5c6d238d18c5dc6459cea407c5d8005fb44cfab94948373"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/resonance/ResonanceClient.java": {
-      "bytes": 8690,
-      "sha256": "c9db31897ae14a68e3ca29478ded7cafe6371539c571119df190fdec6aebf10f"
+      "bytes": 8706,
+      "sha256": "3b9c05f3a291ccffdfdd1d17a170da6700c700e8bfdcc6446f6ae796b60b028a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/resonance/ResonanceNetwork.java": {
       "bytes": 14101,
@@ -2972,8 +2974,8 @@
       "sha256": "f9bd900aebbdf37a0e0d5c91533865b7a5ab7546821875af6ca213de115b65de"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeClient.java": {
-      "bytes": 6121,
-      "sha256": "a1425903162b5ab5838c7a429ae4463d0763b3c6668f5e1ab253d43ee8f6ee7c"
+      "bytes": 6137,
+      "sha256": "badd45d4d93c8e21ca13003609b2e401226e0ae21416a3353ea0a8844bf70228"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradePackets.java": {
       "bytes": 5725,
@@ -3896,8 +3898,8 @@
       "sha256": "cfdeda647967e0d279da0254e1df6d6b1a35497639e1e5d42c1e16810cd539ad"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeClient.java": {
-      "bytes": 10593,
-      "sha256": "0c460d9b1d5214d3287ec19b514433d653f7f1b40bf31b257c71ef788f044cf7"
+      "bytes": 10609,
+      "sha256": "66405a05bdfb177b7cbbdfa457847c02d1d97366444635789fcb58f802d91606"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeHealth.java": {
       "bytes": 791,
@@ -4336,8 +4338,8 @@
       "sha256": "fc7442461789b04b0ae4ab3b2ce07a313cb866e9cbcbacdbba6131f3f16b2c0a"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/DreamTooltipLayoutTest.java": {
-      "bytes": 5669,
-      "sha256": "f841481d71031eec969dd51ff21999afcfbaddd0a1fe870c09aeb5d13c01f2c4"
+      "bytes": 6321,
+      "sha256": "55a68277a2a7422b448afb85ea8d3ea20972779e8fe6bcba2b01c3d561e5bd67"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/DreamUnitVisibilityPolicyTest.java": {
       "bytes": 4704,

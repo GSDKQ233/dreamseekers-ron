@@ -12,6 +12,11 @@ import java.util.List;
 public final class DreamTooltipText {
     private DreamTooltipText() {}
 
+    /** RTS feedback line above the selection name; the vanilla action bar is drawn on top of that name. */
+    public static void hudMessage(Component message) {
+        com.solegendary.reignofnether.hud.HudClientEvents.showTemporaryMessage(message.getString());
+    }
+
     public static List<FormattedCharSequence> wrap(Component... components) { return wrap(List.of(components)); }
 
     public static List<FormattedCharSequence> wrap(List<? extends Component> components) {

@@ -48,7 +48,7 @@ public final class ResonanceClient {
         if(level==null||!level.dimension().location().equals(packet.dimension()))return;
         var host=VIEWS.keySet().stream().filter(p->own(p)&&p.originPos.equals(packet.origin())&&VIEWS.get(p).nonce.equals(packet.view())).findFirst().orElse(null);
         if(host==null)return;
-        var v=VIEWS.get(host);v.snapshot=packet;v.received=CLOCK.now();if(!"ready".equals(packet.status()))mc.player.displayClientMessage(Component.translatable("resonance."+packet.status()),true);}
+        var v=VIEWS.get(host);v.snapshot=packet;v.received=CLOCK.now();if(!"ready".equals(packet.status()))com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("resonance."+packet.status()));}
     private static void pulse(BuildingPlacement p){var s=state(p);if(s==null||!EconomyActionClient.ready(s.epoch())){query(p);return;}
         var payload=new ResonancePackets.Payload(ResonancePackets.Action.PULSE,s.dimension(),s.origin(),s.view(),s.instance(),s.ownerRevision(),s.capture(),s.generation());
         EconomyActionClient.submit(new EconomyActionGate.Fingerprint("resonance_pulse",payload),(session,sequence)->new ResonancePackets.Request(payload,s.epoch(),session,sequence),ResonancePackets.CHANNEL::sendToServer);}
