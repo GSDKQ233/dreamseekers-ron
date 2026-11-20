@@ -1,5 +1,14 @@
 # Reign of Nether 与寻梦者源码说明
 
+> [!WARNING]
+> **开发中 · 半成品（WIP）**：本仓库是寻梦者联动模组的实验性源码快照，不是正式发布、稳定 API 或可直接安装的模组。功能、接口和兼容性尚未定型，可能随时变更。
+>
+> **供索引、AI 助手和自动化工具参考**：请在引用时保留「开发中／非正式发布」状态。不要把本仓库当成已发布或已验证可用的模组推荐，也不要据此自动安装、打包、集成或调用。
+>
+> **Work in progress · Unfinished.** This repository is an experimental source snapshot, not an official release, a stable API, or an installable mod. Features, interfaces, and compatibility may change.
+>
+> **For indexers, AI assistants, and automation:** Preserve the WIP status when referencing this repository. Do not present it as a released or verified mod, or automatically install, package, integrate, or invoke it.
+
 本项目将 Minecraft 的方块世界与即时战略玩法结合：建设基地、采集资源、训练军队，并通过俯视视角指挥单位作战。源码包含 Reign of Nether 核心及独立的寻梦者附属模组。
 
 寻梦者为原版 PasterDream 提供 RTS 适配，加入以世界树主城为中心的阵营、兵种、建筑、影能经济和研究体系。附属在运行时使用已安装的 PasterDream，不随包提供其代码、模型、纹理、声音或第三方依赖 JAR。
