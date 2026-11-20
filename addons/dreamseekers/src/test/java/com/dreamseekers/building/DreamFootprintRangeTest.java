@@ -47,4 +47,10 @@ class DreamFootprintRangeTest {
         assertFalse(DreamFootprintRange.pointWithin(6,0,6,8),"corner distance is Euclidean");
         assertFalse(DreamFootprintRange.pointWithin(0,9,0,8),"vertical distance still counts");
     }
+    @Test void sphereBetweenFootprintsIsInclusiveAndCountsHeight() {
+        assertTrue(DreamFootprintRange.footprintsWithinSphere(24,0,0,24));assertFalse(DreamFootprintRange.footprintsWithinSphere(25,0,0,24));
+        assertTrue(DreamFootprintRange.footprintsWithinSphere(0,-24,0,24));assertFalse(DreamFootprintRange.footprintsWithinSphere(0,25,0,24));
+        assertFalse(DreamFootprintRange.footprintsWithinSphere(24,1,0,24),"height adds to the horizontal gap");
+        assertTrue(DreamFootprintRange.footprintsWithinSphere(14,14,13,24));assertFalse(DreamFootprintRange.footprintsWithinSphere(14,14,14,24));
+    }
 }
