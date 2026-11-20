@@ -15,7 +15,10 @@
     "README.md",
     "addons/dreamseekers/build.gradle",
     "addons/dreamseekers/src/main/resources/META-INF/mods.toml",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/en_us.json",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/zh_cn.json",
     "build.gradle",
+    "docs/dreamseekers/FEATURES.zh-CN.md",
     "docs/dreamseekers/REPAIR3.1.zh-CN.md",
     "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
     "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
@@ -26,25 +29,25 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/EcologyCodexScreen.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamEconomyClientHud.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipLayout.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipText.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/ecologyworkposts/EcologyClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/encounter/EncounterClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractAbility.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamUnitProduction.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/resonance/ResonanceClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/scout/ScoutMarkAbility.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeAbility.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/UnitSkillAbility.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeClient.java",
-    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillTooltipLayoutTest.java",
-    "src/main/java/com/solegendary/reignofnether/hud/HudClientEvents.java",
-    "src/main/java/com/solegendary/reignofnether/research/economy/ReceiptBackedResearchItem.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipLayout.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipText.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/DreamTooltipLayoutTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/HardCodedSkillNumbersTest.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractClient.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeClient.java"
+    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillTooltipLayoutTest.java",
+    "src/main/java/com/solegendary/reignofnether/hud/HudClientEvents.java",
+    "src/main/java/com/solegendary/reignofnether/research/economy/ReceiptBackedResearchItem.java"
   ],
   "manifest_self_excluded": true,
   "hash_rule": "SHA256 of each uncompressed member, excluding this manifest.",
@@ -62,8 +65,8 @@
       "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
     },
     "COLLABORATION.md": {
-      "bytes": 3641,
-      "sha256": "23c9e010ff71eeb19fb31b8f8c3b89bb5dfc727ac493ddbd2dcdc0ac3e0c9d3b"
+      "bytes": 4029,
+      "sha256": "b45d9285edae57626785b73969ba1144b5ba87704284df6aa8463ff170f7868a"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -3946,12 +3949,12 @@
       "sha256": "6ac52037c1d1964818eab4366a94d037b04791e3ac949b72c5a3de6f63ac5aae"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/en_us.json": {
-      "bytes": 83979,
-      "sha256": "837184720539aa4e7fcf57c7d27cc02384b68c2edfdc14178ef32a577ad13b85"
+      "bytes": 84273,
+      "sha256": "12c7a87c7a1333cf0f73c905438bc4798347ec83f8f1749488f2950a78f055d4"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/zh_cn.json": {
-      "bytes": 78655,
-      "sha256": "7c49155815fe039ea7aaa26ee66199c41a8e2d85be3abc177892971d1a5ef025"
+      "bytes": 78735,
+      "sha256": "5883b95b3277b0926d0b8a4f79c409591a1f0b959d9847b54a4201a0dbec21ef"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/models/block/decorative_garden_wheat.json": {
       "bytes": 140,
@@ -4458,8 +4461,8 @@
       "sha256": "06bb99eff2aacd9ea5d03419b8fd79f17837dd92bc923d2d00ce8bf2b63453e6"
     },
     "docs/dreamseekers/FEATURES.zh-CN.md": {
-      "bytes": 6097,
-      "sha256": "60894ae2d0672cf438ee725adff94abaa1dfca9a283ada66f840e8c2244371c4"
+      "bytes": 6183,
+      "sha256": "39f66f850c95d6a8e46963ba35dc66c2a3f883740cf453d0327b515f04929ce8"
     },
     "docs/dreamseekers/INSTALL.zh-CN.txt": {
       "bytes": 4972,
