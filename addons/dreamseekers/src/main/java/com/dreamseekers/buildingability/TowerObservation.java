@@ -39,7 +39,7 @@ public final class TowerObservation {
         if(!(target instanceof Unit unit)||unit.getOwnerName().isBlank()||source.owner().equals(unit.getOwnerName())
                 ||AlliancesServerEvents.isAllied(source.owner(),unit.getOwnerName())
                 ||!BuildingAbilityEffects.permanentUnit(source.level(),unit.getOwnerName(),target)
-                ||!BuildingAbilityEffects.nearby(source,target,24)||!CoordinatedMark.visible(viewer,target))return false;
+                ||!BuildingAbilityEffects.nearbyOrigin(source,target,24)||!CoordinatedMark.visible(viewer,target))return false;
         return LoadedBuildingSight.clear(source.level(),eye(source.host()),target.getEyePosition(),null);
     }
     public static BuildingAbilityEffects.Prepared prepare(ServerPlayer viewer,BuildingAbilitySource source){
