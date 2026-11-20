@@ -164,6 +164,7 @@ def api65Counts = [
     api65_units: 24, api65_world: 16, api65_world_table: 2, api65_addon: 7, api65_addon_restart: 1,
     api65_editor_worlds: 2, api65_repair_play: 4, api65_repair2_cargo: 1, api65_repair2_survival: 1, api65_repair2_training: 3, api65_repair2_lobby: 2, api65_repair2_hero: 1, api65_repair2_beacon: 2, api65_repair3_survival_result: 1, api65_repair3_scenario: 3
 ]
+api65Counts.api65_followup_hero_xp = 3
 api65Counts.each { namespace, count ->
     def phased = [
         api65_addon_restart: 'api65.addon.restart.phase',
