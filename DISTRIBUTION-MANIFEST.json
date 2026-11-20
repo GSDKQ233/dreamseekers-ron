@@ -2605,8 +2605,8 @@
       "sha256": "0cf49de9569b8aa9d1e302e889e863ef9e97c6ec8e5a03c65094ba3abadec0bf"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipText.java": {
-      "bytes": 1227,
-      "sha256": "76aa6c3243d8b6e2bacabc3c817115e8a238c9a89482dd456384ecfffa3ceb46"
+      "bytes": 1571,
+      "sha256": "0271776a7d64fe20ebf0d0c4548a996d137b5fc9910189e83c55629eb64e5e75"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamUnitVisibility.java": {
       "bytes": 1340,
@@ -4341,8 +4341,8 @@
       "sha256": "fc7442461789b04b0ae4ab3b2ce07a313cb866e9cbcbacdbba6131f3f16b2c0a"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/DreamTooltipLayoutTest.java": {
-      "bytes": 6321,
-      "sha256": "55a68277a2a7422b448afb85ea8d3ea20972779e8fe6bcba2b01c3d561e5bd67"
+      "bytes": 6633,
+      "sha256": "a415352d5f29410a6fe71615064c9959005da5eabda714fd7061a3704644e773"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/DreamUnitVisibilityPolicyTest.java": {
       "bytes": 4704,

@@ -12,9 +12,14 @@ import java.util.List;
 public final class DreamTooltipText {
     private DreamTooltipText() {}
 
-    /** RTS feedback line above the selection name; the vanilla action bar is drawn on top of that name. */
+    /**
+     * RTS feedback line above the selection name; the vanilla action bar is drawn on top of that name.
+     * The RTS line is only drawn with the HUD, so another open screen (the codex) or a hidden HUD keeps the action bar.
+     */
     public static void hudMessage(Component message) {
-        com.solegendary.reignofnether.hud.HudClientEvents.showTemporaryMessage(message.getString());
+        if (com.solegendary.reignofnether.hud.HudClientEvents.isHudInteractive())
+            com.solegendary.reignofnether.hud.HudClientEvents.showTemporaryMessage(message.getString());
+        else if (Minecraft.getInstance().player != null) Minecraft.getInstance().player.displayClientMessage(message, true);
     }
 
     public static List<FormattedCharSequence> wrap(Component... components) { return wrap(List.of(components)); }

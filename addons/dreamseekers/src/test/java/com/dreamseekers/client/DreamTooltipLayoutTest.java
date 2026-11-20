@@ -85,6 +85,9 @@ class DreamTooltipLayoutTest {
             assertTrue(source.contains("DreamTooltipText.hudMessage("), path);
             assertFalse(source.contains("displayClientMessage"), path);
         }
+        String shared = source("client/DreamTooltipText.java");
+        assertTrue(shared.contains("HudClientEvents.isHudInteractive()"), "the RTS line is only drawn with the HUD");
+        assertTrue(shared.contains("displayClientMessage(message, true)"), "codex and hidden-HUD feedback keeps the action bar");
     }
 
     @Test void everyBuildingHasABuildMenuHotkeyAwayFromTheWorkerSkills() throws Exception {
