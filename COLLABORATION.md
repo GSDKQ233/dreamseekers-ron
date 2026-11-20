@@ -46,10 +46,20 @@
 
 测试入口：`bash ./gradlew -Pdreamseekers build dreamseekersJar verifyDreamseekersJar verifyDreamseekersCoreJar`，JUnit 375 项中 374 通过、1 个既有音频测试跳过、零失败，其中 `ArtResourceIntegrityTest` 为新增 6 项。`DISTRIBUTION-MANIFEST.json` 描述的是 repair3.1 源码包，本次没有重新生成。
 
+### 建筑重构：帕斯特之梦风格（第二个 PR，待审阅）
+
+| 工作项 | 状态 | 证据与边界 |
+| --- | --- | --- |
+| 9 栋建筑的新模板 | 已改，画面未验 | 花园、仓库、矿场、熔炉、甲虫圣所、礼堂、研究所、生态庭、共鸣台各新增 `<名称>_dyedream_v2.nbt`。方块位置与旧模板逐格相同，只换材质：染梦系用方解石瓦、染梦石英砖、染梦木板和染梦玻璃，暗影系用暗影石、暗影石砖和暗影石瓦。 |
+| 新旧模板并存 | 已改 | `DreamTemplateModel`：新建造用新模板并在放置数据里写入版本；读档时没有版本标记的建筑按旧模板还原，旧存档里的建筑保持旧外观，不会被判为受损。11 个旧模板和它们的哈希没有动。 |
+| 影灯守望塔 | 未做 | 驻军、观测等多处逻辑按 `modelRevision()==2` 判断，测试也直接按 `template(2)` 摆方块，这次没有改它的外观。 |
+
+测试结果：JUnit 379 项，378 通过，1 个既有跳过（新增 `DreamTemplateModelTest` 4 项）。GameTest：`-PdreamseekersShellFunctionsFocused` 11/11、`-PdreamseekersFoundationFocused` 1/1 通过；默认套件在 25 分钟上限内跑完的 81 个批次里有 6 项失败，`main` 上是同样的 6 项。`-PdreamseekersScaffoldTestPhase=prepare` 在 `main` 上就失败（断言要求研究所是 `DreamScaffoldBuilding`），所以真实进程重启下的存读档没有被自动化验证到。
+
 未覆盖并留给后续：
 
 1. **图形验收**：新图标缩放后的清晰度、技能动画播放、融梦冠晶侧面贴图是否拉伸（双端演练里看着略有拉伸，未定论）。
-2. **结构观感**（未认领）：礼堂、研究所、甲虫圣所的深板岩屋顶和旧结构的石砖地基与粉白色图标不一致。建议截图确认后只做同形状的方块替换，不改几何、出入口和驻军点。
+2. **结构观感**：重构只换了材质，没有改造型；守望塔还是旧外观。需要在游戏里实际建造一遍确认新外观，并用旧存档读档确认旧建筑不受影响。
 3. **投射物外观**（未认领）：石块、灰烬落点、压制音波仍用原版物品模型；三种音波弹没有使用 PasterDream 原生渲染器。
 4. **图标批次**（未认领）：甲虫、蜗牛、阵营、旧工人仍用 PasterDream 16×16 物品贴图；10 个研究项复用单位或建筑图标；`shadow_energy.png` 为 16×16。
 5. **交给对应负责人确认**：甲虫、玄武岩蜗牛、石灵工人的碰撞箱与原生模型不同；`DreamBuildingSpec.iconItem` 没有被读取，`portraitBlock` 仍是原版方块但建筑都返回了自定义图标，所以界面上不会画出来；建筑能力、共鸣、生态、契约等按钮使用原版或 PasterDream 物品贴图。
