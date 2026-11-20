@@ -59,6 +59,22 @@ public class UnitSyncClientboundPacket {
         );
     }
 
+    /** Publish both fields to peers in this level; virtual/out-of-range units do not get vanilla entity data. */
+    public static void sendScenarioPublication(Unit unit) {
+        LivingEntity entity = (LivingEntity) unit;
+        if (!(entity.level() instanceof net.minecraft.server.level.ServerLevel level)) return;
+        var owner = new UnitSyncClientboundPacket(UnitSyncAction.SYNC_OWNERNAME, entity.getId(), 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, unit.getOwnerName());
+        var role = new UnitSyncClientboundPacket(UnitSyncAction.SYNC_SCENARIO_ROLE_INDEX, entity.getId(),
+                unit.getScenarioRoleIndex(), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "");
+        for (ServerPlayer viewer : level.players()) {
+            if (!FogOfWarServerEvents.isBlockVisibleFor(viewer, entity.getBlockX(), entity.getBlockZ())) continue;
+            var target = PacketDistributor.PLAYER.with(() -> viewer);
+            PacketHandler.INSTANCE.send(target, owner);
+            PacketHandler.INSTANCE.send(target, role);
+        }
+    }
+
     public static void sendSyncStatsPacket(List<ServerPlayer> players, LivingEntity entity) {
         String owner = "";
         if (entity instanceof Unit unit)

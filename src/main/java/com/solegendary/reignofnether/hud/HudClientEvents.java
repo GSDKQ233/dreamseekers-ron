@@ -402,7 +402,9 @@ public class HudClientEvents {
             boolean hudSelBuildingOwned =
                 BuildingClientEvents.getPlayerToBuildingRelationship(hudSelectedPlacement) == Relationship.OWNED ||
                         SandboxClientEvents.isSandboxPlayer();
-                        //AlliancesClient.canControlAlly(hudSelectedPlacement.ownerName) ||
+            boolean alliedProducer = hudSelectedPlacement instanceof ProductionPlacement
+                    && AlliancesClient.canControlAlly(hudSelectedPlacement.ownerName);
+            boolean normalBuildingPanel = hudSelBuildingOwned || !PlayerClientEvents.isRTSPlayer();
 
             // -----------------
             // Building portrait
@@ -526,13 +528,13 @@ public class HudClientEvents {
             // ---------------------------------------------------------------
             // Building production queue (show only if 1 building is selected)
             // ---------------------------------------------------------------
-            else if ((hudSelBuildingOwned || !PlayerClientEvents.isRTSPlayer()) && hudSelectedPlacement instanceof ProductionPlacement selProdBuilding) {
+            else if ((normalBuildingPanel || alliedProducer) && hudSelectedPlacement instanceof ProductionPlacement selProdBuilding) {
                 blitY = screenHeight - iconFrameSize * 2 - 5;
 
                 for (int i = 0; i < selProdBuilding.productionQueue.size(); i++) {
-                    Button button = selProdBuilding.productionQueue.get(i)
-                            .item.getCancelButton(selProdBuilding, i == 0);
-                    if (!hudSelBuildingOwned) {
+                    ActiveProduction row = selProdBuilding.productionQueue.get(i);
+                    Button button = row.item.getCancelButton(selProdBuilding, row, i == 0);
+                    if (!hudSelBuildingOwned && !alliedProducer) {
                         button.onLeftClick = () -> { };
                         button.onRightClick = () -> { };
                     }
@@ -554,7 +556,7 @@ public class HudClientEvents {
                     float percentageDoneInv = firstProdItem.ticksLeft / firstProdItem.item.getCost(true, selProdBuilding.ownerName).ticks;
 
                     int colour = 0xFFFFFF;
-                    boolean serverHead = firstProdItem.item.reportsHeadPause();
+                    boolean serverHead = firstProdItem.item.reportsHeadPause() || firstProdItem.pause().revision() != 0;
                     if (serverHead ? firstProdItem.pause().paused() : !firstProdItem.item.isBelowPopulationSupply(selProdBuilding)) {
                         colour = 0xFF0000;
                         if (percentageDoneInv <= 0) {
@@ -630,8 +632,9 @@ public class HudClientEvents {
             blitX = 0;
             blitY = screenHeight - iconFrameSize;
 
-            if (hudSelectedPlacement != null && (hudSelBuildingOwned || !PlayerClientEvents.isRTSPlayer())) {
-                if (!hudSelectedPlacement.isBuilt) {
+            if (normalBuildingPanel || alliedProducer) {
+                // An ally grant enables production only, not demolition, shops, or owner-private abilities.
+                if (normalBuildingPanel && !hudSelectedPlacement.isBuilt) {
                     if (!buildingCancelButton.isHidden.get()) {
                         buildingCancelButton.render(evt.getGuiGraphics(), 0, screenHeight - iconFrameSize, mouseX, mouseY);
                         renderedButtons.add(buildingCancelButton);
@@ -640,7 +643,7 @@ public class HudClientEvents {
                 if (hudSelectedPlacement.isBuilt || hudSelectedPlacement.allowProdWhileBuilding) {
 
                     List<AbilityButton> buildingAbilities = List.of();
-                    if (hudSelectedPlacement.isBuilt) {
+                    if (normalBuildingPanel && hudSelectedPlacement.isBuilt) {
                         // Compose once per rendered frame: these extensions refresh owner-private server state.
                         buildingAbilities = com.solegendary.reignofnether.research.economy.PiglinEconomyClient.append(
                                 hudSelectedPlacement, hudSelectedPlacement.getAbilityButtons());
@@ -654,13 +657,17 @@ public class HudClientEvents {
                                 .filter(b -> b != null && !b.isHidden.get())
                                 .toList();
                     }
+                    if (!normalBuildingPanel && hudSelectedPlacement.isBuilt
+                            && com.solegendary.reignofnether.building.garrison.TowerGarrisonClient.canManage(hudSelectedPlacement))
+                        buildingAbilities = com.solegendary.reignofnether.building.garrison.TowerGarrisonClient.append(hudSelectedPlacement, List.of())
+                                .stream().filter(b -> b != null && !b.isHidden.get()).toList();
                     if (buildingAbilities.size() > 0 || !hudSelectedPlacement.isBuilt) {
                         buildingAbilityRowReserved = true;
                         blitY -= Button.DEFAULT_ICON_FRAME_SIZE;
                     }
 
                     int rowButtons = 0;
-                    if (ItemClientEvents.ENABLED && hudSelectedPlacement instanceof ItemShopPlacement itemShopPlacement) {
+                    if (normalBuildingPanel && ItemClientEvents.ENABLED && hudSelectedPlacement instanceof ItemShopPlacement itemShopPlacement) {
                         Button shopMenuButton = new ButtonBuilder("Shop Menu")
                                 .iconResource(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "textures/icons/items/emerald.png"))
                                 .tooltipLines(List.of(fcs(I18n.get("itemshop.reignofnether.toggle_menu"))))

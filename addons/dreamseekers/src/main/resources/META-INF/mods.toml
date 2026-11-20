@@ -4,7 +4,7 @@ license="GPL-3.0-only"
 
 [[mods]]
 modId="dreamseekers"
-version="0.65.0-repair2"
+version="0.65.0-repair3.1"
 displayName="Dreamseekers — PasterDream × Reign of Nether"
 authors="Local compatibility project"
 description='''
@@ -32,7 +32,7 @@ side="BOTH"
 [[dependencies.dreamseekers]]
 modId="reignofnether"
 mandatory=true
-versionRange="[1.5.0b-ore-mines.2-dreamseekers-api.65-repair2]"
+versionRange="[1.5.0b-ore-mines.2-dreamseekers-api.65-repair3.1]"
 ordering="AFTER"
 side="BOTH"
 

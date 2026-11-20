@@ -60,10 +60,14 @@ public class DreamProductionPlacement extends ProductionPlacement {
             var binding=unitReceipts.get(active);
             if(binding!=null&&!DreamUnitReceipts.valid(this,active,binding)
                     &&!DreamUnitReceipts.retainedWhileOpaque(this,active,binding)) {
-                detachUnitAndRefund(active);changed=true;
+                boolean front = !productionQueue.isEmpty() && productionQueue.get(0) == active;
+                if (detachUnitAndRefund(active)) {
+                    changed=true;
+                    String name=BuildingProductionClientboundPacket.recipeName(this,active.item);
+                    if(name!=null)BuildingProductionClientboundPacket.cancelProduction(this,name,front,active.queueEntryId);
+                }
             }
         }
-        if(changed)BuildingProductionClientboundPacket.clearQueue(ownerName,originPos);
         return changed;
     }
     private boolean detachUnitAndRefund(com.solegendary.reignofnether.building.production.ActiveProduction active) {
@@ -144,26 +148,16 @@ public class DreamProductionPlacement extends ProductionPlacement {
         active.ticksLeft=binding.work();productionQueue.add(active);unitReceipts.put(active,binding);
         DreamUnitReceipts.sync(getLevel().getServer(),ownerName);return null;
     }
-    @Override public boolean cancelProductionItem(com.solegendary.reignofnether.building.production.ProductionItem item,boolean front) {
-        if(getLevel().isClientSide())return super.cancelProductionItem(item,front);
-        if(!onProductionServerThread()||tickingUnit!=null||completingUnit)return false;
-        var observed = front && !productionQueue.isEmpty() ? productionQueue.get(0) : null;
-        if (front && (observed == null || observed.item != item)) return false;
-        boolean settled=reconcileUnitReceipts();
-        // Reconciliation can retire the observed job. Never reinterpret this request
-        // against its successor, even if both jobs have the same recipe.
-        if (front && (productionQueue.isEmpty() || productionQueue.get(0) != observed)) return false;
-        if(productionQueue.isEmpty())return settled;
-        if(front && observed.item instanceof DreamUnitProduction)
-            return detachUnitAndRefund(observed);
-        if(!front&&item instanceof DreamUnitProduction) {
-            for(var active:List.copyOf(productionQueue)) {
-                var binding=unitReceipts.get(active);
-                if(active.item==item&&binding!=null&&active.ticksLeft>=binding.work())return detachUnitAndRefund(active);
-            }
-            return false;
-        }
-        return super.cancelProductionItem(item,front);
+    @Override protected boolean cancelExactProduction(
+            com.solegendary.reignofnether.building.production.ActiveProduction observed, boolean front) {
+        if(getLevel().isClientSide())return super.cancelExactProduction(observed,front);
+        if(!onProductionServerThread() || tickingUnit!=null || completingUnit)return false;
+        reconcileUnitReceipts();
+        // Reconciliation may retire the row or promote it to the head. Do not reinterpret that click.
+        int index=productionQueue.indexOf(observed);
+        if(index<0 || (index==0)!=front)return false;
+        if(observed.item instanceof DreamUnitProduction)return detachUnitAndRefund(observed);
+        return super.cancelExactProduction(observed,front);
     }
     @Override public com.solegendary.reignofnether.resources.Resources getPendingProductionRefund(String payer) {
         // All permitted Dream units use ledger projection; receipt-backed research already does likewise.

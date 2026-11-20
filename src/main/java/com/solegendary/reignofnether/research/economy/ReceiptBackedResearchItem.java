@@ -39,10 +39,15 @@ public class ReceiptBackedResearchItem extends ProductionItem {
         return p.getBuilding() instanceof ProductionBuilding host && host.productions.get().contains(this)
             &&PlayerServerEvents.getRTSPlayer(p.ownerName)!=null&&prerequisite.test(p);
     }
+    @Override public boolean reportsHeadPause(){return true;}
     @Override public boolean tick(ProductionPlacement p,ActiveProduction a) {
-        if(p.getLevel().isClientSide()){if(p.isBuilt&&a.ticksLeft>0)ProductionWorkRates.advance(p,a,1);return false;}
-        if(!ReceiptResearchService.bindingValid(p,a))return false; // validation hook detaches invalid jobs before tick
-        if(!p.isBuilt||p.getHealth()<=0||p.shouldBeDestroyed()||!validHostAndPrerequisite(p))return false;
+        if(p.getLevel().isClientSide()){
+            if(!a.pause().paused() && a.ticksLeft>0)ProductionWorkRates.advance(p,a,1);
+            return false;
+        }
+        if(!ReceiptResearchService.bindingValid(p,a))return a.pauseBecause("research.economy.invalid_account");
+        if(!p.isBuilt || p.getHealth()<=0 || p.shouldBeDestroyed() || !validHostAndPrerequisite(p))
+            return a.pauseBecause("research.economy.prerequisite_pause");
         if(a.ticksLeft>0)ProductionWorkRates.advance(p,a,1);
         if(a.ticksLeft<=0&&!a.completed) {
             if(ReceiptResearchService.complete(p,a))return true;
@@ -99,6 +104,13 @@ public class ReceiptBackedResearchItem extends ProductionItem {
         var button=new StopProductionButton(Component.translatable(title).getString(),icon,p,this,first);
         button.tooltipLines=java.util.List.of(Component.translatable(title).getVisualOrderText(),
             Component.translatable("research.economy.refund_notice").getVisualOrderText());
-        button.onLeftClick=()->ResearchQueueClient.cancel(p,this,first);return button;
+        button.onLeftClick=first && !p.productionQueue.isEmpty() && p.productionQueue.get(0).item==this
+                ? ResearchQueueClient.cancelClick(p,this,p.productionQueue.get(0)) : ()->ResearchQueueClient.query(p);
+        return button;
+    }
+    @Override public StopProductionButton getCancelButton(ProductionPlacement p,ActiveProduction row,boolean first) {
+        var button=getCancelButton(p,first);
+        button.onLeftClick=ResearchQueueClient.cancelClick(p,this,row);
+        return button;
     }
 }

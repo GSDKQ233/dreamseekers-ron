@@ -38,7 +38,13 @@ public final class NativeProductionCompletionGameTests {
             var l=h.getLevel();BlockPos pos=h.absolutePos(new BlockPos(x,1,z));
             for(int dx=-2;dx<30;dx++)for(int dz=-2;dz<30;dz++){l.setBlock(pos.offset(dx,0,dz),Blocks.STONE.defaultBlockState(),2);for(int dy=1;dy<20;dy++)l.setBlock(pos.offset(dx,dy,dz),Blocks.AIR.defaultBlockState(),2);}
             for(BuildingBlock b:BuildingUtils.getAbsoluteBlockData(type.getRelativeBlockData(l),l,pos,Rotation.NONE))l.setBlock(b.getBlockPos(),b.getBlockState(),2);
-            var p=(ProductionPlacement)BuildingUtils.getNewBuildingPlacement(type,l,pos,Rotation.NONE,owner,false);BuildingServerEvents.getBuildings().add(p);buildings.add(p);return p;
+            var p=(ProductionPlacement)BuildingUtils.getNewBuildingPlacement(type,l,pos,Rotation.NONE,owner,false);track(p);return p;
+        }
+        void track(BuildingPlacement placement) {
+            BuildingServerEvents.getBuildings().add(placement);
+            buildings.add(placement);
+            // Match the native placement's chunk ticket; these fixtures can extend beyond the harness tickets.
+            placement.forceChunk(true);
         }
         void ready(){h.assertTrue(town.isBuilt&&shrine.isBuilt,"real native buildings completed");}
         ActiveProduction start(ProductionPlacement p,ProductionItem item){int f=account.food,w=account.wood,o=account.ore;var cost=item.getCost(false,owner);
@@ -48,7 +54,7 @@ public final class NativeProductionCompletionGameTests {
         void score(int total,int worker){var scores=PlayerServerEvents.getRTSPlayer(owner).scores.getScoreList();h.assertTrue(scores.get(RTSPlayerScoresEnum.TOTAL_UNITS_PRODUCED)==total&&scores.get(RTSPlayerScoresEnum.WORKER_UNITS_PRODUCED)==worker&&scores.get(RTSPlayerScoresEnum.MILITARY_UNITS_PRODUCED)==total-worker,"only successful production scores once: "+scores);}
         Join join(ProductionPlacement p,EntityType<?> type,int mode){var j=new Join(this,p,type,mode);MinecraftForge.EVENT_BUS.register(j);listeners.add(j);return j;}
         void close(){listeners.forEach(MinecraftForge.EVENT_BUS::unregister);for(var e:List.copyOf(UnitServerEvents.getAllUnits()))if(e instanceof Unit u&&u.getOwnerName().equals(owner))e.discard();
-            for(var b:buildings){b.onRemoved(BuildingPlacement.RemovalReason.RELOAD);BuildingServerEvents.getBuildings().remove(b);}HeroServerEvents.fallenHeroes.removeIf(s->s.ownerName.equals(owner));PlayerServerEvents.rtsPlayers.removeIf(p->p.name.equals(owner));ResourcesServerEvents.resourcesList.removeIf(r->r.ownerName.equals(owner));h.getLevel().getGameRules().getRule(GameRuleRegistrar.ALLOWED_HEROES).set(oldHeroLimit,h.getLevel().getServer());FIXTURES.remove(this);}
+            for(var b:buildings){b.forceChunk(false);b.onRemoved(BuildingPlacement.RemovalReason.RELOAD);BuildingServerEvents.getBuildings().remove(b);}HeroServerEvents.fallenHeroes.removeIf(s->s.ownerName.equals(owner));PlayerServerEvents.rtsPlayers.removeIf(p->p.name.equals(owner));ResourcesServerEvents.resourcesList.removeIf(r->r.ownerName.equals(owner));h.getLevel().getGameRules().getRule(GameRuleRegistrar.ALLOWED_HEROES).set(oldHeroLimit,h.getLevel().getServer());FIXTURES.remove(this);}
         void done(){close();h.succeed();}
     }
     static final class Join {
@@ -92,7 +98,7 @@ public final class NativeProductionCompletionGameTests {
         // A real incomplete shrine: only its native starting block is placed, not a completed building with a toggled flag.
         for(var b:abs)l.setBlock(b.getBlockPos(),Blocks.AIR.defaultBlockState(),2);
         var first=abs.stream().filter(b->!b.getBlockState().isAir()).findFirst().orElseThrow();l.setBlock(first.getBlockPos(),first.getBlockState(),2);
-        var partial=(ProductionPlacement)BuildingUtils.getNewBuildingPlacement(type,l,pos,Rotation.NONE,f.owner,false);BuildingServerEvents.getBuildings().add(partial);f.buildings.add(partial);
+        var partial=(ProductionPlacement)BuildingUtils.getNewBuildingPlacement(type,l,pos,Rotation.NONE,f.owner,false);f.track(partial);
         h.startSequence().thenWaitUntil(f::ready).thenExecute(()->{h.assertTrue(!partial.isBuilt&&partial.allowProdWhileBuilding,"actual native incomplete shrine permits queued production");var a=f.start(partial,ProductionItems.ROYAL_GUARD);a.ticksLeft=0;partial.tick(l);}).thenIdle(3).thenExecute(()->{h.assertTrue(!partial.isBuilt&&partial.productionQueue.isEmpty()&&f.count(EntityRegistrar.ROYAL_GUARD_UNIT.get())==1,"ready item preserves existing allowed incomplete-host completion");f.score(1,0);f.done();});
     }
 
@@ -103,8 +109,39 @@ public final class NativeProductionCompletionGameTests {
         var type=new com.solegendary.reignofnether.building.custombuilding.CustomBuilding("api63_custom",new net.minecraft.core.Vec3i(24,20,24),Blocks.STONE,nbt);
         var recipe=new CustomProductionItem(ResourceCost.Unit(23,0,0,2,0),"Api63 custom hero",ProductionItems.ROYAL_GUARD,new ArrayList<>(),true);
         type.productions.add(recipe,com.solegendary.reignofnether.keybinds.Keybindings.abilitySlot1);
+        var eggs = new net.minecraft.nbt.ListTag();
+        var namedA = fixtureEgg("Amber", 7); var namedB = fixtureEgg("Birch", 13);
+        eggs.add(namedA); eggs.add(namedB);
+        var originalEggs = eggs.copy();
+        int firstIndex = type.productions.get().size();
+        type.checkAndAddProductionItems(List.of(eggs));
+        h.assertTrue(type.productions.get().size()==firstIndex+2, "two eggs of the same species produced two recipes");
+        var amber = type.productions.get().get(firstIndex);
+        var birch = type.productions.get().get(firstIndex+1);
         var host=f.install(type,130,50);Join j=f.join(host,EntityRegistrar.ROYAL_GUARD_UNIT.get(),0);final ActiveProduction[] active={null};
-        h.startSequence().thenWaitUntil(()->{f.ready();h.assertTrue(host.isBuilt,"actual custom building built");}).thenExecute(()->{h.getLevel().getGameRules().getRule(GameRuleRegistrar.ALLOWED_HEROES).set(0,h.getLevel().getServer());active[0]=f.start(host,recipe);}).thenIdle(8).thenExecute(()->{h.assertTrue(j.calls>0&&host.productionQueue.contains(active[0])&&f.count(EntityRegistrar.ROYAL_GUARD_UNIT.get())==0&&f.account.food==9977,"custom veto keeps exact paid queue and no body");f.score(0,0);j.enabled=false;}).thenIdle(8).thenExecute(()->{h.assertTrue(f.count(EntityRegistrar.ROYAL_GUARD_UNIT.get())==1&&host.productionQueue.isEmpty()&&f.account.food==9977,"custom creative historical eligibility preserved even heroLimit0, paid once");f.score(1,0);f.done();});
+        h.startSequence().thenWaitUntil(()->{f.ready();h.assertTrue(host.isBuilt,"actual custom building built");}).thenExecute(()->{h.getLevel().getGameRules().getRule(GameRuleRegistrar.ALLOWED_HEROES).set(0,h.getLevel().getServer());active[0]=f.start(host,recipe);}).thenIdle(8).thenExecute(()->{h.assertTrue(j.calls>0&&host.productionQueue.contains(active[0])&&f.count(EntityRegistrar.ROYAL_GUARD_UNIT.get())==0&&f.account.food==9977,"custom veto keeps exact paid queue and no body");f.score(0,0);j.enabled=false;}).thenIdle(8).thenExecute(()->{h.assertTrue(f.count(EntityRegistrar.ROYAL_GUARD_UNIT.get())==1&&host.productionQueue.isEmpty()&&f.account.food==9977,"custom creative historical eligibility preserved even heroLimit0, paid once");f.score(1,0);
+            for(var variant:List.of(amber,birch,amber)) {
+                var row=f.start(host,variant); row.ticksLeft=0; host.tick(h.getLevel());
+                h.assertTrue(row.completed && host.productionQueue.isEmpty(),"each exact variant commits");
+            }
+        }).thenIdle(4).thenExecute(()->{
+            var names=UnitServerEvents.getAllUnits().stream()
+                    .filter(e->e.getType()==EntityRegistrar.VILLAGER_UNIT.get() && e instanceof Unit u && u.getOwnerName().equals(f.owner))
+                    .map(e->e.getName().getString()).sorted().toList();
+            h.assertTrue(names.equals(List.of("Amber","Amber","Birch")) && f.account.food==9977-7-13-7,
+                    "A/B/A train with their own names and prices");
+            h.assertTrue(eggs.equals(originalEggs),"spawn locations and UUIDs cannot be written back to the map template");
+            f.done();
+        });
+    }
+
+    private static net.minecraft.nbt.CompoundTag fixtureEgg(String name,int food) {
+        var egg = new net.minecraft.nbt.CompoundTag();
+        egg.putString("id","reignofnether:villager_unit_spawn_egg");
+        var meta = new net.minecraft.nbt.CompoundTag(); meta.putInt("foodCost",food);
+        var entity = new net.minecraft.nbt.CompoundTag();
+        entity.putString("CustomName",net.minecraft.network.chat.Component.Serializer.toJson(net.minecraft.network.chat.Component.literal(name)));
+        meta.put("EntityTag",entity); egg.put("tag",meta); return egg;
     }
 
     @AfterBatch(batch="native_skull")public static void cleanupSkull(net.minecraft.server.level.ServerLevel l){for(F f:List.copyOf(FIXTURES))f.close();}
@@ -112,7 +149,16 @@ public final class NativeProductionCompletionGameTests {
     public static void upgradedGraveyardStillCompletesStoredSkull(GameTestHelper h){F f=new F(h,"skull");var l=h.getLevel();var type=Buildings.GRAVEYARD;var pos=h.absolutePos(new BlockPos(130,1,50));
         var relative=BuildingBlockData.getBuildingBlocksFromNbt(type.getUpgradedStructureName(1),l);var blocks=BuildingUtils.getAbsoluteBlockData(relative,l,pos,Rotation.NONE);
         for(var b:blocks)l.setBlock(b.getBlockPos(),b.getBlockState(),2);
-        var host=new com.solegendary.reignofnether.building.buildings.placements.GraveyardPlacement(type,l,pos,Rotation.NONE,f.owner,blocks,false);BuildingServerEvents.getBuildings().add(host);f.buildings.add(host);
-        h.startSequence().thenWaitUntil(()->{f.ready();h.assertTrue(host.isBuilt&&host.getUpgradeLevel()>0,"real upgraded graveyard");}).thenExecute(()->f.start(host,ProductionItems.ZOMBIE)).thenIdle(8).thenExecute(()->{h.assertTrue(host.productionQueue.isEmpty()&&host.getTotalSkulls()==1&&f.count(EntityRegistrar.ZOMBIE_UNIT.get())==0,"native skull branch commits without requiring a live birth");f.score(1,0);f.done();});
+        var host=new com.solegendary.reignofnether.building.buildings.placements.GraveyardPlacement(type,l,pos,Rotation.NONE,f.owner,blocks,false);f.track(host);
+        h.startSequence().thenWaitUntil(()->{f.ready();h.assertTrue(host.isBuilt&&host.getUpgradeLevel()>0,"real upgraded graveyard");}).thenExecute(()->f.start(host,ProductionItems.ZOMBIE)).thenIdle(8).thenExecute(()->{h.assertTrue(host.productionQueue.isEmpty()&&host.getTotalSkulls()==1&&f.count(EntityRegistrar.ZOMBIE_UNIT.get())==0,"native skull branch commits without requiring a live birth");
+            var veto=f.join(host,EntityRegistrar.ZOMBIE_UNIT.get(),0);
+            host.releaseNextUnit();
+            h.assertTrue(veto.calls==1 && host.getTotalSkulls()==1 && f.count(EntityRegistrar.ZOMBIE_UNIT.get())==0,
+                    "join veto leaves the original paid inventory intact");
+            veto.enabled=false;
+            host.releaseNextUnit();host.releaseNextUnit();
+            h.assertTrue(host.getTotalSkulls()==0 && f.count(EntityRegistrar.ZOMBIE_UNIT.get())==1,
+                    "retry exchanges the skull for exactly one published unit");
+            f.score(1,0);f.done();});
     }
 }

@@ -6,18 +6,12 @@ import com.solegendary.reignofnether.building.BuildingUtils;
 import com.solegendary.reignofnether.resources.ResourceName;
 import com.solegendary.reignofnether.resources.ResourceSource;
 import com.solegendary.reignofnether.resources.ResourceSources;
-import com.solegendary.reignofnether.resources.Resources;
-import com.solegendary.reignofnether.resources.ResourcesClientboundPacket;
-import com.solegendary.reignofnether.resources.ResourcesServerEvents;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
 import com.solegendary.reignofnether.unit.interfaces.WorkerUnit;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -94,38 +88,7 @@ public class StockpilePlacement extends ProductionPlacement {
 
     // collect items placed manually inside the chests by players
     public void checkAndConsumeChestItems() {
-        if (!getLevel().isClientSide()) {
-            BlockPos textPos = null;
-            int food = 0;
-            int wood = 0;
-            int ore = 0;
-            int emerald = 0;
-
-            for (BuildingBlock block : getBlocks()) {
-                if (block.getBlockState().getBlock() == Blocks.CHEST) {
-                    BlockEntity blockEntity = getLevel().getBlockEntity(block.getBlockPos());
-                    if (blockEntity instanceof ChestBlockEntity chest) {
-
-                        for (int i = 0; i < chest.items.size(); i++) {
-                            ResourceSource resource = ResourceSources.getFromItem(chest.getItem(i).getItem());
-                            if (resource != null) {
-                                int numItems = chest.getItem(i).getCount();
-                                food += resource.resourceName == ResourceName.FOOD ? resource.resourceValue * numItems: 0;
-                                wood += resource.resourceName == ResourceName.WOOD ? resource.resourceValue * numItems : 0;
-                                ore += resource.resourceName == ResourceName.ORE ? resource.resourceValue * numItems : 0;
-                                emerald += resource.resourceName == ResourceName.EMERALD ? resource.resourceValue * numItems : 0;
-                                chest.removeItem(i, numItems);
-                                textPos = block.getBlockPos().offset(0,-2,0);
-                            }
-                        }
-                    }
-                }
-            }
-            if (food > 0 || wood > 0 || ore > 0 || emerald > 0) {
-                Resources res = new Resources(ownerName, food, wood, ore, emerald);
-                ResourcesServerEvents.addSubtractResources(res);
-                ResourcesClientboundPacket.showFloatingText(res, textPos);
-            }
-        }
+        ManualChestDeposit.collect(this, true);
     }
+
 }

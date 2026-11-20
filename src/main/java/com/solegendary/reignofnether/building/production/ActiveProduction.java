@@ -5,8 +5,13 @@ import com.solegendary.reignofnether.building.buildings.placements.ProductionPla
 public class ActiveProduction {
     /** Public, runtime-only queue identity. Never a payment receipt or permission token. */
     public final java.util.UUID queueEntryId;
+    /** The ordinary queue refunds the amount actually quoted for this job, not today's recipe price.
+     * Dedicated addon/research receipts remain authoritative for their own orders. Never sent to the HUD. */
+    public record NativeQuote(String payer, int food, int wood, int ore, int emerald) {}
+    public final NativeQuote nativeQuote;
     public com.solegendary.reignofnether.research.economy.ReceiptResearchBinding receiptResearch;
     public boolean completed;
+    long nextIndoorSpawnAttempt = Long.MIN_VALUE;
     private ProductionPause pause = ProductionPause.INITIAL;
     private String observedPause = "";
     public ProductionPause pause() { return pause; }
@@ -47,7 +52,9 @@ public class ActiveProduction {
     private ActiveProduction(ProductionItem item, boolean isClientside, String ownerName, java.util.UUID queueEntryId) {
         this.queueEntryId = java.util.Objects.requireNonNull(queueEntryId);
         this.item = item;
-        this.ticksLeft = item.getCost(isClientside, ownerName).ticks;
+        var cost = item.getCost(isClientside, ownerName);
+        this.ticksLeft = cost.ticks;
+        this.nativeQuote = isClientside ? null : new NativeQuote(ownerName, cost.food, cost.wood, cost.ore, cost.emerald);
     }
 
     public void complete(ProductionPlacement placement) {

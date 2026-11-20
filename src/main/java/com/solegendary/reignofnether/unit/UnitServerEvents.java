@@ -417,6 +417,7 @@ public class UnitServerEvents {
         restoredUnitTickets.clear();
         ServerLevel level = evt.getServer().getLevel(Level.OVERWORLD);
         if (level != null) {
+            checkpointUnitPresence(level);
             saveFallenHeroUnits(level);
             saveGatherTargets(level);
             allUnits.clear();
@@ -736,48 +737,76 @@ public class UnitServerEvents {
         }
     }
 
+    /** Positive publication evidence for an exact server-owned body; FULL/HIDDEN sections need
+     * not yet expose lookups. This does not authorize network actions by UUID or numeric ID. */
+    public static boolean isPublishedBody(ServerLevel level, LivingEntity entity) {
+        if (entity.level() != level || !entity.isAlive() || entity.isRemoved() || !entity.isAddedToWorld()) return false;
+        Entity byUuid = level.getEntity(entity.getUUID()), byId = level.getEntity(entity.getId());
+        return (byUuid == null || byUuid == entity) && (byId == null || byId == entity);
+    }
+
+    /** On normal shutdown, bodies still in the loaded list may not be present at first tick after restart.
+     * Store identities on the seat, so a new match/seat can never inherit the previous one's evidence. */
+    public static void checkpointUnitPresence(ServerLevel level) {
+        if (level == null || PlayerServerEvents.serverLevel != level) return;
+        Map<String, com.solegendary.reignofnether.player.RTSPlayer> seats = new HashMap<>();
+        for (var slot : PlayerServerEvents.rtsPlayers) seats.put(slot.name, slot);
+        for (var entity : allUnits) {
+            if (!(entity instanceof Unit unit) || !(entity.level() instanceof ServerLevel world)
+                    || world.getServer() != level.getServer() || !isPublishedBody(world, entity)) continue;
+            var slot = seats.get(unit.getOwnerName());
+            if (slot != null) slot.unavailableUnitIds.add(entity.getUUID());
+        }
+    }
+
+    // Resolve stale evidence only against a live authoritative body. Do not force-load chunks
+    // or count a rejected/replaced same-ID object as a death. An unknown UUID remains unavailable.
+    private static boolean mayStillOwnUnavailableUnit(com.solegendary.reignofnether.player.RTSPlayer slot, ServerLevel level) {
+        slot.unavailableUnitIds.removeIf(id -> {
+            for (ServerLevel world : level.getServer().getAllLevels()) {
+                Entity live = world.getEntity(id);
+                if (live != null && !live.isRemoved()) {
+                    return !(live instanceof Unit unit) || !slot.name.equals(unit.getOwnerName());
+                }
+            }
+            return false;
+        });
+        return !slot.unavailableUnitIds.isEmpty();
+    }
+
     @SubscribeEvent
     public static void onEntityLeave(EntityLeaveLevelEvent evt) {
         discardPendingFormationMove(evt.getEntity());
-        if (isServerStopping) return;
-        if (evt.getEntity() instanceof LivingEntity rollback && (uncommittedSpawnRollbacks.contains(rollback) || transformedRetirements.contains(rollback))) {
-            // Persistent-ticket/population cleanup already happened. Retire any runtime footprint too.
-            retireUnitChunkTickets(rollback, true);
-            UnitSyncClientboundPacket.sendLeavePacket(rollback);
+        if (isServerStopping || !(evt.getLevel() instanceof ServerLevel level)
+                || !(evt.getEntity() instanceof Unit unit) || !(evt.getEntity() instanceof LivingEntity entity)) return;
+        if (uncommittedSpawnRollbacks.contains(entity) || transformedRetirements.contains(entity)) {
+            // Only the committed replaced body's permanent retirement consumes stored evidence.
+            if (transformedRetirements.contains(entity))
+                for (var seat : PlayerServerEvents.rtsPlayers) seat.unavailableUnitIds.remove(entity.getUUID());
+            retireUnitChunkTickets(entity, true);
+            UnitSyncClientboundPacket.sendLeavePacket(entity);
             return;
         }
 
-        if (evt.getEntity() instanceof Unit && evt.getEntity() instanceof LivingEntity entity
-            && !evt.getLevel().isClientSide) {
+        Entity.RemovalReason reason = entity.getRemovalReason();
+        boolean permanent = reason != null && reason.shouldDestroy();
+        if (permanent) discardPendingGatherTarget(entity);
+        retireUnitChunkTickets(entity, permanent || reason == Entity.RemovalReason.CHANGED_DIMENSION);
+        boolean tracked = allUnits.removeIf(e -> e == entity);
+        UnitSyncClientboundPacket.sendLeavePacket(entity);
+        if (!tracked || PlayerServerEvents.serverLevel != level.getServer().overworld()) return;
 
-            // Removal callbacks can run after native entity lookup retirement. Use captured exact ownership,
-            // not a new world/chunk read or just a reusable numeric entity ID.
-            Entity.RemovalReason reason = entity.getRemovalReason();
-            if (reason != null && reason.shouldDestroy()) discardPendingGatherTarget(entity);
-            retireUnitChunkTickets(entity, reason != null && (reason.shouldDestroy()
-                    || reason == Entity.RemovalReason.CHANGED_DIMENSION));
-            allUnits.removeIf(e -> e == entity);
-            UnitSyncClientboundPacket.sendLeavePacket(entity);
+        String owner = unit.getOwnerName();
+        var seat = PlayerServerEvents.getRTSPlayer(owner);
+        if (!permanent) {
+            if (seat != null) seat.unavailableUnitIds.add(entity.getUUID());
+            return; // unload, travel or unspecified removal is not a defeat
         }
-
-        // if a player has no more units, then they are defeated
-        synchronized (allUnits) {
-            try {
-                if (evt.getEntity() instanceof Unit unit) {
-                    var unitsOwned = 0;
-                    for (LivingEntity u : allUnits) {
-                        if ((u instanceof Unit unit1 && unit1.getOwnerName().equals(unit.getOwnerName()))) unitsOwned++;
-                    }
-                    if (!SandboxServer.isSandboxPlayer(unit.getOwnerName()) &&
-                            unitsOwned == 0 && isRTSPlayer(unit.getOwnerName())
-                            && BuildingUtils.getTotalCompletedBuildingsOwned(false, unit.getOwnerName()) == 0) {
-                        PlayerServerEvents.defeat(unit.getOwnerName(), Component.translatable("server.reignofnether.lost_all").getString());
-                    }
-                }
-            } catch (ConcurrentModificationException e) {
-                ReignOfNether.LOGGER.error("Caught ConcurrentModificationException in UnitServerEvents EntityLeaveLevelEvent", e);
-            }
-        }
+        for (var other : PlayerServerEvents.rtsPlayers) other.unavailableUnitIds.remove(entity.getUUID());
+        if (seat == null || SandboxServer.isSandboxPlayer(owner)) return;
+        if (allUnits.stream().anyMatch(e -> e instanceof Unit other && owner.equals(other.getOwnerName()))) return;
+        if (!mayStillOwnUnavailableUnit(seat, level) && BuildingUtils.getTotalCompletedBuildingsOwned(false, owner) == 0)
+            PlayerServerEvents.defeat(owner, Component.translatable("server.reignofnether.lost_all").getString());
     }
 
     // Old native death effects predate ConfirmedRtsKillEvent and also need a final-death boundary.
@@ -883,6 +912,8 @@ public class UnitServerEvents {
     private static void confirmNativeDeath(PendingNativeDeath pending) {
         if (!pending.confirmed() || committedNativeDeaths.containsKey(pending.victim)) return;
         committedNativeDeaths.put(pending.victim,true); // before any reentrant spawn, reward or command
+        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(
+                new ConfirmedLivingDeathEvent(pending.victim, pending.event.getSource()));
         // Preserve native synchronous revival eligibility and snapshot hero state before legacy
         // effects (especially Creeper explosion, defeat and scenario commands) can mutate it.
         HeroServerEvents.commitConfirmedDeath(pending.event);

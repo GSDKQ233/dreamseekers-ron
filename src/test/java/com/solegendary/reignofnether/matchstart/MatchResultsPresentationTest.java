@@ -99,7 +99,7 @@ class MatchResultsPresentationTest {
         assertTrue(events.contains("Commands.literal(\"rts-results\")")); assertTrue(events.contains("instanceof PauseScreen"));
         assertTrue(events.contains("onClientLogout(ClientPlayerNetworkEvent.LoggingOut evt) { clear(); }"));
         assertTrue(player.contains("if (!isSyncing) MatchEndClientEvents.clear();"));
-        assertTrue(player.contains("public static void resetRTS(boolean hardReset) {\n        MatchEndClientEvents.clear();"));
+        assertTrue(player.contains("public static void resetRTS(boolean hardReset, long mode) {\n        MatchEndClientEvents.clear();"));
         assertTrue(player.contains("public static void publishScenarioMap() {\n        MatchEndClientEvents.clear();"));
         assertTrue(screen.contains("g.enableScissor(")); assertTrue(screen.contains("finally { g.disableScissor(); }"));
         assertTrue(screen.contains("GLFW.GLFW_KEY_PAGE_DOWN")); assertTrue(screen.contains("mouseScrolled("));

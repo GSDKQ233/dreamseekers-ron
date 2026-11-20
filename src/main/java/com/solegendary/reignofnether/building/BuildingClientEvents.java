@@ -160,10 +160,12 @@ public class BuildingClientEvents {
     public static void switchHudToIdlestBuilding() {
         if (hudSelectedPlacement == null || MC.player == null)
             return;
+        // A selection containing multiple owners must not silently charge a different owner.
+        String payer = hudSelectedPlacement.ownerName;
         BuildingPlacement idlestBuilding = null;
         float prodTicksLeftMax = Float.MAX_VALUE;
         for (BuildingPlacement building : selectedBuildings) {
-            if (!(building.getBuilding().equals(hudSelectedPlacement.getBuilding()) && building.isBuilt && building.ownerName.equals(MC.player.getName().getString()))) continue;
+            if (!(building.getBuilding().equals(hudSelectedPlacement.getBuilding()) && building.isBuilt && building.ownerName.equals(payer))) continue;
             if (!(building instanceof ProductionPlacement prodB)) continue;
             float prodTicksLeft = 0f;
             for (ActiveProduction production : prodB.productionQueue) {

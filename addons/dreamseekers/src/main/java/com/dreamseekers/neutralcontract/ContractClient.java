@@ -2,6 +2,7 @@ package com.dreamseekers.neutralcontract;
 
 import com.solegendary.reignofnether.client.ActiveClientTickClock;
 import com.dreamseekers.unit.FireflyWorker;
+import com.dreamseekers.client.TargetModeButtons;
 import com.solegendary.reignofnether.cursor.CursorClientEvents;
 import com.solegendary.reignofnether.fogofwar.FogOfWarClientEvents;
 import com.solegendary.reignofnether.guiscreen.TopdownGui;
@@ -46,8 +47,9 @@ public final class ContractClient {
     public static boolean armed(FireflyWorker w){return w.getUUID().equals(armed);}
     public static String label(FireflyWorker w){query(w);var s=current(w);return s==null?"?":s.active()?(s.remaining()<0?"→":((s.remaining()+19)/20)+"s"):s.used()+"/"+s.capacity();}
     public static void arm(FireflyWorker w){if(!available(w))return;var mc=Minecraft.getInstance();if(!(mc.screen instanceof TopdownGui)||!OrthoviewClientEvents.isEnabled())return;
-        if(armed(w)){armed=null;return;}if(active(w)){cancel(w);return;}
-        CursorClientEvents.setLeftClickAction(null);CursorClientEvents.setLeftClickSandboxAction(null);armed=w.getUUID();message("select");}
+        UUID next=TargetModeButtons.toggle(armed,w.getUUID());
+        if(next==null){armed=null;return;}if(active(w)){cancel(w);return;}
+        CursorClientEvents.setLeftClickAction(null);CursorClientEvents.setLeftClickSandboxAction(null);armed=next;message("select");}
     private static void send(FireflyWorker w,ContractPackets.Action action,LivingEntity target){var s=current(w);if(s==null||!EconomyActionClient.ready(s.epoch()))return;
         var payload=new ContractPackets.Payload(action,s.dimension(),s.id(),s.uuid(),s.ownerRevision(),s.view(),target==null?-1:target.getId(),target==null?ContractPackets.ZERO:target.getUUID());
         EconomyActionClient.submit(new EconomyActionGate.Fingerprint("neutral_contract",payload),(session,sequence)->new ContractPackets.Request(payload,s.epoch(),session,sequence),ContractPackets.CHANNEL::sendToServer);}
@@ -64,7 +66,14 @@ public final class ContractClient {
     @SubscribeEvent(priority=EventPriority.HIGHEST) public static void mouse(ScreenEvent.MouseButtonPressed.Pre e){if(armed==null||!(e.getScreen() instanceof TopdownGui))return;
         if(e.getButton()==GLFW.GLFW_MOUSE_BUTTON_RIGHT){armed=null;swallow=e.getButton();e.setCanceled(true);return;}
         if(e.getButton()!=GLFW.GLFW_MOUSE_BUTTON_LEFT)return;
-        if(HudClientEvents.isMouseOverAnyButtonOrHud()){armed=null;return;}
+        CursorClientEvents.preparePress(e);
+        if(HudClientEvents.isMouseOverAnyButtonOrHud()){
+            // Post dispatch owns the same-button toggle. Other controls cancel this mode first.
+            armed=TargetModeButtons.beforeHudClick(armed,
+                    HudClientEvents.getMousedOverButton() instanceof com.solegendary.reignofnether.hud.buttons.AbilityButton button
+                            && button.ability==ContractAbility.INSTANCE && button.isEnabled.get());
+            return;
+        }
         var worker=caster();armed=null;swallow=e.getButton();e.setCanceled(true);if(worker==null)return;
         LivingEntity target=UnitClientEvents.getPreselectedUnits().stream().filter(x->NeutralContracts.nativeKind(x)!=null&&FogOfWarClientEvents.isInBrightChunk(x)).findFirst().orElse(null);
         if(target==null){message("invalid_target");return;}send(worker,ContractPackets.Action.START,target);

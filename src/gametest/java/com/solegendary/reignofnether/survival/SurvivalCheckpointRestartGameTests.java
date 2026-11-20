@@ -110,6 +110,23 @@ public final class SurvivalCheckpointRestartGameTests {
         return id.get();
     }
 
+    /** A valid faction callback may publish nothing when it cannot find a location.
+     * The previous wave's one real entity must not make this attempted final wave "issued". */
+    private static void failFinalDispatch(GameTestHelper h) {
+        var before = SurvivalServerEvents.cursor();
+        h.assertTrue(before.equals(new WaveCursor(30, 29, false)), "29 remains live, 30 is pending");
+        var faction = SurvivalServerEvents.nextWave.faction;
+        var ordinary = faction.spawnWave;
+        try {
+            faction.spawnWave = (world, wave) -> {};
+            SurvivalServerEvents.startNextWave(h.getLevel());
+        } finally { faction.spawnWave = ordinary; }
+        h.assertTrue(SurvivalServerEvents.cursor().equals(before)
+                        && SurvivalSaveData.getInstance(h.getLevel()).cursor().equals(before)
+                        && SurvivalServerEvents.getCurrentEnemies().size() == 1,
+                "confirmed zero new products retains the full old cursor and retry across saves");
+    }
+
     private static void kill(ServerLevel level, UUID id) {
         LivingEntity body = (LivingEntity) level.getEntity(id);
         body.setInvulnerable(false);
@@ -147,15 +164,16 @@ public final class SurvivalCheckpointRestartGameTests {
                 h.assertTrue(p.itemDropQueue.size() >= 3, "non-empty native deterministic reward sequence");
                 var list = p.itemDropQueue.stream().limit(3).toList();
                 for (int i = 0; i < list.size(); i++) n.putString("item" + i, list.get(i).getItem().getDescriptionId());
-                n.putUUID("enemy", issue(h, 3));
+                n.putUUID("enemy", issue(h, 29));
+                failFinalDispatch(h);
                 SurvivalServerEvents.waveCleared(level);
-                h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(4, 3, false)), "cannot settle a living wave");
+                h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(30, 29, false)), "cannot settle a living wave");
                 checkDraws(h, n, 0); finish(h, n, "active");
             }
             case "verify" -> {
                 var n = read(h, "active");
                 UUID id = n.getUUID("enemy");
-                h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(4, 3, false)), "restore active 3, upcoming 4");
+                h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(30, 29, false)), "restore active 29, final 30 still pending");
                 SurvivalServerEvents.waveCleared(level);
                 h.assertTrue(SurvivalServerEvents.isWaveInProgress(), "unresolved/loading cannot be mistaken for killed");
                 checkDraws(h, n, 0);
@@ -163,17 +181,17 @@ public final class SurvivalCheckpointRestartGameTests {
                                 && e.isAlive() && SurvivalServerEvents.getCurrentEnemies().size() == 1
                                 && SurvivalServerEvents.getCurrentEnemies().get(0).getEntity() == e,
                         "one original surviving enemy UUID joined, no replacement"))
-                        .thenExecute(() -> kill(level, id))
+                        .thenExecute(() -> { failFinalDispatch(h); kill(level, id); })
                         .thenWaitUntil(() -> h.assertTrue(!SurvivalServerEvents.isWaveInProgress(), "ordinary scheduler settled the last kill"))
                         .thenExecute(() -> {
-                            h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(4, 0, false)), "next pending = 4");
+                            h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(30, 0, false)), "final 30 still pending");
                             SurvivalServerEvents.waveCleared(level); checkDraws(h, n, 1); checkReward(h, n, 0);
                             finish(h, n, "settled");
                         });
             }
             case "verify_settled" -> {
                 var n = read(h, "settled");
-                h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(4, 0, false)), "cleared 3 cannot restart as 3");
+                h.assertTrue(SurvivalServerEvents.cursor().equals(new WaveCursor(30, 0, false)), "29 cleared without skipping pending 30");
                 SurvivalServerEvents.waveCleared(level); checkDraws(h, n, 1);
                 UUID id = issue(h, WaveCursor.LAST);
                 SurvivalServerEvents.startNextWave(level);

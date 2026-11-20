@@ -64,7 +64,7 @@ public final class PacketHandler {
     private static final String PROTOCOL_VERSION = ModList.get()
             .getModContainerById("reignofnether")
             .map(c -> c.getModInfo().getVersion().toString())
-            .orElse("dev") + ":neutral-fog-uuid-1:native-building-snapshot-2:production-entry-1:repair2-state-1";
+            .orElse("dev") + ":neutral-fog-uuid-1:native-building-snapshot-2:production-entry-2:repair3-state-1";
 
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "main"), () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals,

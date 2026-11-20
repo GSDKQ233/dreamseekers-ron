@@ -3,6 +3,7 @@ package com.solegendary.reignofnether.building.buildings.placements;
 import static com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBlockData;
 
 import com.solegendary.reignofnether.building.Building;
+import com.solegendary.reignofnether.survival.SurvivalServerEvents;
 import com.solegendary.reignofnether.building.BuildingBlock;
 import com.solegendary.reignofnether.building.BuildingBlockData;
 import com.solegendary.reignofnether.building.BuildingPlacement;
@@ -12,12 +13,6 @@ import com.solegendary.reignofnether.building.NetherZone;
 import com.solegendary.reignofnether.building.buildings.piglins.PortalCivilian;
 import com.solegendary.reignofnether.building.buildings.piglins.PortalMilitary;
 import com.solegendary.reignofnether.building.buildings.piglins.PortalTransport;
-import com.solegendary.reignofnether.resources.ResourceName;
-import com.solegendary.reignofnether.resources.ResourceSource;
-import com.solegendary.reignofnether.resources.ResourceSources;
-import com.solegendary.reignofnether.resources.Resources;
-import com.solegendary.reignofnether.resources.ResourcesClientboundPacket;
-import com.solegendary.reignofnether.resources.ResourcesServerEvents;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -25,8 +20,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Rotation;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.ChestBlockEntity;
 
 import java.util.ArrayList;
 
@@ -69,7 +62,7 @@ public class PortalPlacement extends ProductionPlacement {
 
     @Override
     public boolean shouldBeDestroyed() {
-        boolean shouldBeDestroyed = super.shouldBeDestroyed();
+        boolean shouldBeDestroyed = (!getLevel().isClientSide() && SurvivalServerEvents.isRetiredWavePortal(this)) || super.shouldBeDestroyed();
         if (shouldBeDestroyed) {
             disconnectPortal();
         }
@@ -80,6 +73,7 @@ public class PortalPlacement extends ProductionPlacement {
     public void destroy(ServerLevel serverLevel) {
         disconnectPortal();
         super.destroy(serverLevel);
+        SurvivalServerEvents.retiredWavePortalRemoved(this);
     }
 
     public void disconnectPortal() {
@@ -129,37 +123,7 @@ public class PortalPlacement extends ProductionPlacement {
     }
 
     public void checkAndConsumeChestItems() {
-        if (!getLevel().isClientSide()) {
-            BlockPos textPos = null;
-            int food = 0;
-            int wood = 0;
-            int ore = 0;
-
-            for (BuildingBlock block : getBlocks()) {
-                if (block.getBlockState().getBlock() == Blocks.CHEST) {
-                    BlockEntity blockEntity = getLevel().getBlockEntity(block.getBlockPos());
-                    if (blockEntity instanceof ChestBlockEntity chest) {
-
-                        for (int i = 0; i < chest.items.size(); i++) {
-                            ResourceSource resource = ResourceSources.getFromItem(chest.getItem(i).getItem());
-                            if (resource != null) {
-                                int numItems = chest.getItem(i).getCount();
-                                food += resource.resourceName == ResourceName.FOOD ? resource.resourceValue * numItems: 0;
-                                wood += resource.resourceName == ResourceName.WOOD ? resource.resourceValue * numItems : 0;
-                                ore += resource.resourceName == ResourceName.ORE ? resource.resourceValue * numItems : 0;
-                                chest.removeItem(i, numItems);
-                                textPos = block.getBlockPos().offset(0,-2,0);
-                            }
-                        }
-                    }
-                }
-            }
-            if (food > 0 || wood > 0 || ore > 0) {
-                Resources res = new Resources(ownerName, food, wood, ore);
-                ResourcesServerEvents.addSubtractResources(res);
-                ResourcesClientboundPacket.showFloatingText(res, textPos);
-            }
-        }
+        ManualChestDeposit.collect(this, false);
     }
 
     public boolean hasDestination() {

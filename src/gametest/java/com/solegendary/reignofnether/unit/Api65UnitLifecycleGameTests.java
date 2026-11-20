@@ -74,6 +74,38 @@ public final class Api65UnitLifecycleGameTests {
     }
     private static String deathCounter(GameTestHelper h,String key){var server=h.getLevel().getServer();var source=server.createCommandSourceStack().withPermission(4);if(server.getScoreboard().getObjective("api65_units")==null)server.getCommands().performPrefixedCommand(source,"scoreboard objectives add api65_units dummy");server.getScoreboard().getOrCreatePlayerScore(key,server.getScoreboard().getObjective("api65_units")).setScore(0);return "scoreboard players add "+key+" api65_units 1";}
     private static int count(GameTestHelper h,String key){var board=h.getLevel().getServer().getScoreboard();return board.getOrCreatePlayerScore(key,board.getObjective("api65_units")).getScore();}
+    /** A real seat has two owned bodies but no completed base yet. Normal unloaded/loaded body
+     * lifetimes (including a sibling's permanent removal) never count as an unobserved death. */
+    private static void unavailableBodyIsNotDefeat(GameTestHelper h) {
+        var players = com.solegendary.reignofnether.player.PlayerServerEvents.rtsPlayers;
+        var type = EntityRegistrar.VILLAGER_UNIT.get();
+        var first = publish(h, type.create(h.getLevel()), "PendingReturn");
+        var other = publish(h, type.create(h.getLevel()), "PendingReturn");
+        String name = first.getOwnerName();
+        var seat = com.solegendary.reignofnether.player.RTSPlayer.getNewBot(name, com.solegendary.reignofnether.faction.Factions.VILLAGERS);
+        players.add(seat);
+        var resources = com.solegendary.reignofnether.resources.ResourcesServerEvents.resourcesList;
+        var held = new com.solegendary.reignofnether.resources.Resources(name, 13, 17, 19);
+        resources.add(held);
+        var restored = type.create(h.getLevel());
+        try {
+            var saved = first.saveWithoutId(new CompoundTag());
+            first.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);
+            other.discard();
+            h.assertTrue(players.contains(seat) && resources.contains(held) && held.food == 13
+                    && seat.unavailableUnitIds.contains(first.getUUID()), "the absent unit still protects this seat/account");
+            restored.load(saved);
+            h.assertTrue(h.getLevel().addFreshEntity(restored), "same UUID returns");
+            restored.kill();
+            for (int i = 0; i < 25 && !restored.isRemoved(); i++) h.getLevel().tickNonPassenger(restored);
+            h.assertTrue(restored.isRemoved() && !players.contains(seat) && !resources.contains(held),
+                    "actual last death with no base still defeats the owner");
+        } finally {
+            players.remove(seat); resources.remove(held);
+            com.solegendary.reignofnether.player.PlayerServerEvents.postGameRtsPlayers.remove(seat);
+            for (var e : List.of(first, other, restored)) if (!e.isRemoved()) e.discard();
+        }
+    }
     @GameTest(templateNamespace="api65_units",template="ore_mine_test_arena",batch=BATCH)
     public static void hoglinArmourConversionIsNotADeathCommand(GameTestHelper h){
         var hoglin=publish(h,EntityRegistrar.HOGLIN_UNIT.get().create(h.getLevel()),"ConversionCommand");String owner=hoglin.getOwnerName();
@@ -82,6 +114,7 @@ public final class Api65UnitLifecycleGameTests {
     }
     @GameTest(templateNamespace="api65_units",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=70)
     public static void actualDeathCommandRunsExactlyOnce(GameTestHelper h){
+        unavailableBodyIsNotDefeat(h);
         var victim=publish(h,EntityRegistrar.VILLAGER_UNIT.get().create(h.getLevel()),"DeathCommand");victim.setOnDeathCommand(deathCounter(h,"death"));victim.kill();
         h.startSequence().thenExecuteAfter(25,()->{h.assertTrue(count(h,"death")==1,"genuine confirmed death executes command once");victim.discard();h.assertTrue(count(h,"death")==1,"later cleanup cannot repeat a death command");}).thenSucceed();
     }

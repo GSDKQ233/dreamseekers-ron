@@ -108,8 +108,27 @@ public final class JellyFlowSkillGameTests {
     public static void casterDeathAndUnloadInterruptWithoutCompletionReward(GameTestHelper h) {
         floor(h);var a=jelly(h,"Death",3,5);var t1=slime(h,"Death",6,5);var b=jelly(h,"Death",3,14);var t2=slime(h,"Death",6,14);
         ready(h,a,t1,b,t2).thenExecute(()->{t1.setHealth(20);t2.setHealth(20);require(h,cast(h,a,t1),SkillResult.SUCCESS,"first cast");require(h,cast(h,b,t2),SkillResult.SUCCESS,"second cast");})
-          .thenIdle(21).thenExecute(()->{close(h,t1.getHealth(),22,"first pulse before source death");close(h,t2.getHealth(),22,"first pulse before source removal");a.hurt(a.damageSources().genericKill(),10000);b.discard();})
-          .thenIdle(110).thenExecute(()->{for(var target:List.of(t1,t2)){close(h,target.getHealth(),22,"no pulses after source invalidation");h.assertTrue(SkillEffects.healTicks(target)==0,"flow removed");close(h,SkillEffects.bonus(target,BuffKind.MOVEMENT_SPEED),0,"canceled flow never completes");}pass("CASTER_DEATH_UNLOAD_CANCEL");}).thenSucceed();
+          .thenIdle(21).thenExecute(()->{
+              close(h,t1.getHealth(),22,"first pulse before rescued source death");
+              close(h,t2.getHealth(),22,"first pulse before source removal");
+              // Register after the mod's normal listeners, just as a late rescue mod would.
+              var rescue=new LateRescue(a);
+              MinecraftForge.EVENT_BUS.register(rescue);
+              try { a.hurt(a.damageSources().genericKill(),10000); }
+              finally { MinecraftForge.EVENT_BUS.unregister(rescue); }
+              h.assertTrue(rescue.seen==1&&a.isAlive()&&SkillEffects.healTicks(t1)>0,
+                      "final canceled death preserves the original ongoing heal");
+              b.discard();
+          }).thenIdle(20).thenExecute(()->{
+              close(h,t1.getHealth(),24,"original heal delivers its next scheduled pulse after late rescue");
+              close(h,t2.getHealth(),22,"true leave immediately stops pulses");
+              a.invulnerableTime=0;a.hurt(a.damageSources().genericKill(),10000);
+              h.assertTrue(!a.isAlive()&&SkillEffects.healTicks(t1)==0,"subsequent genuine death ends the surviving cast");
+          }).thenIdle(110).thenExecute(()->{
+              close(h,t1.getHealth(),24,"no pulses after genuine source death");close(h,t2.getHealth(),22,"no pulses after unload");
+              for(var target:List.of(t1,t2)){h.assertTrue(SkillEffects.healTicks(target)==0,"flow removed");close(h,SkillEffects.bonus(target,BuffKind.MOVEMENT_SPEED),0,"canceled flow never completes");}
+              pass("LATE_RESCUE_PRESERVES_CAST_REAL_DEATH_UNLOAD_CANCEL");
+          }).thenSucceed();
     }
 
     @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=390)
@@ -277,6 +296,15 @@ public final class JellyFlowSkillGameTests {
     }
     // FINAL22_EXTRA_TESTS_END
 
+    public static final class LateRescue {
+        private final LivingEntity body;
+        int seen;
+        LateRescue(LivingEntity body){this.body=body;}
+        @SubscribeEvent(priority=EventPriority.LOWEST,receiveCanceled=true)
+        public void death(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+            if(event.getEntity()==body){seen++;event.setCanceled(true);body.setHealth(body.getMaxHealth()/2);}
+        }
+    }
     private static boolean queued(JellyfishUnit source,BlockPos target){return UnitServerEvents.getUnitActionSlowQueue().stream().anyMatch(a->Arrays.stream(a.getUnitIds()).anyMatch(id->id==source.getId())&&a.getPreselectedBlockPos().equals(target));}
     private static void watch(LivingEntity target){if(!listening){MinecraftForge.EVENT_BUS.register(PROBE);listening=true;}PROBE.events.put(target.getUUID(),0);}
     public static final class HealProbe {

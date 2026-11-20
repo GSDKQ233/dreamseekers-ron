@@ -10,17 +10,13 @@ import com.solegendary.reignofnether.registrars.PacketHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.server.ServerLifecycleHooks;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -50,12 +46,15 @@ public class BuildingClientboundPacket {
 
     // send only to players whose fog reveals at least one corner of this building
     private static void sendFiltered(BlockPos buildingPos, BuildingClientboundPacket packet) {
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server == null) return;
-        BuildingPlacement b = findBuilding(false, buildingPos);
-        if(b != null) { packet.structureSnapshot = b.structureSnapshot(); packet.nativeState = NativeBuildingSync.snapshot(b); }
-        for (ServerPlayer sp : server.getPlayerList().getPlayers()) {
-            if (b != null && sp.level() == b.level && FogOfWarServerEvents.canPlayerSeeBuilding(sp, b)) {
+        sendFiltered(findBuilding(false, buildingPos), packet);
+    }
+
+    private static void sendFiltered(BuildingPlacement b, BuildingClientboundPacket packet) {
+        if (b == null || b.level.getServer() == null) return;
+        packet.structureSnapshot = b.structureSnapshot();
+        packet.nativeState = NativeBuildingSync.snapshot(b);
+        for (ServerPlayer sp : b.level.getServer().getPlayerList().getPlayers()) {
+            if (sp.level() == b.level && FogOfWarServerEvents.canPlayerSeeBuilding(sp, b)) {
                 PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> sp), packet);
             }
         }
@@ -108,10 +107,27 @@ public class BuildingClientboundPacket {
     }
 
     public static void syncBuilding(BlockPos buildingPos, int blocksPlaced, double partialBlocksDestroyed, String ownerName, int scenarioRoleIndex) {
+        for (BuildingPlacement b : BuildingServerEvents.getBuildings()) {
+            if (b.originPos.equals(buildingPos)) {
+                syncBuilding(b, blocksPlaced, partialBlocksDestroyed, ownerName, scenarioRoleIndex);
+                return;
+            }
+        }
+        // Legacy callers sometimes address an interior block; normalize to its owning origin.
+        syncBuilding(findBuilding(false, buildingPos), blocksPlaced, partialBlocksDestroyed, ownerName, scenarioRoleIndex);
+    }
+
+    /** Address by the actual placement, even when another building's footprint contains its origin. */
+    public static void syncBuilding(BuildingPlacement building) {
+        syncBuilding(building, building.getBlocksPlaced(), building.partialBlocksDestroyed, building.ownerName, building.scenarioRoleIndex);
+    }
+
+    private static void syncBuilding(BuildingPlacement building, int blocksPlaced, double partialBlocksDestroyed, String ownerName, int scenarioRoleIndex) {
+        if (building == null) return;
         BuildingClientboundPacket packet = new BuildingClientboundPacket(BuildingAction.SYNC_BLOCKS_AND_OWNER,
                 EMPTY,
                 "",
-                buildingPos,
+                building.originPos,
                 Rotation.NONE,
                 ownerName,
                 scenarioRoleIndex,
@@ -124,7 +140,7 @@ public class BuildingClientboundPacket {
                 new BlockPos(0,0,0)
         );
         packet.partialBlocksDestroyed = partialBlocksDestroyed;
-        sendFiltered(buildingPos, packet);
+        sendFiltered(building, packet);
     }
 
     public static void changePortal(BlockPos buildingPos, PortalPlacement.PortalType type) {
@@ -326,7 +342,8 @@ public class BuildingClientboundPacket {
                 BuildingPlacement building = null;
                 if (this.action != BuildingAction.PLACE &&
                         this.action != BuildingAction.PLACE_CUSTOM) {
-                    building = structureSnapshot.isEmpty() && nativeState.isEmpty() ? findBuilding(true, this.buildingPos) : findExactClientBuilding(this.buildingPos);
+                    building = action != BuildingAction.SYNC_BLOCKS_AND_OWNER && structureSnapshot.isEmpty() && nativeState.isEmpty()
+                            ? findBuilding(true, this.buildingPos) : findExactClientBuilding(this.buildingPos);
                     if (building == null) {
 
                         // if the client was missing a building, replace it
@@ -384,8 +401,18 @@ public class BuildingClientboundPacket {
                     }
                 }
                 if(action != BuildingAction.REMOVE) {
-                    var current=structureSnapshot.isEmpty() && nativeState.isEmpty() ? findBuilding(true,this.buildingPos) : findExactClientBuilding(this.buildingPos);
+                    boolean placement = action == BuildingAction.PLACE || action == BuildingAction.PLACE_CUSTOM;
+                    var current = !placement && action != BuildingAction.SYNC_BLOCKS_AND_OWNER && structureSnapshot.isEmpty() && nativeState.isEmpty()
+                            ? findBuilding(true, this.buildingPos) : findExactClientBuilding(this.buildingPos);
                     if(current!=null) {
+                        if (placement && (action == BuildingAction.PLACE_CUSTOM
+                                ? current.getBuilding() instanceof CustomBuilding && current.getBuilding().name.equals(itemName)
+                                : current.getBuilding() == ReignOfNetherRegistries.BUILDING.get(itemKey))) {
+                            // The first login/replacement snapshot must carry the role, even for a custom
+                            // definition without native metadata. Do not wait for the periodic delta.
+                            current.ownerName = ownerName;
+                            current.scenarioRoleIndex = scenarioRoleIndex;
+                        }
                         current.applyStructureSnapshot(structureSnapshot,action==BuildingAction.PLACE||action==BuildingAction.PLACE_CUSTOM);
                         if (!nativeState.isEmpty()) NativeBuildingSync.apply(current, nativeState);
                     }

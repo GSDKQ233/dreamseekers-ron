@@ -602,8 +602,8 @@
 
     "commands.reignofnether.toggle_fow": "%s - Activer/Désactiver le brouillard de guerre pour tous",
     "commands.reignofnether.surrender": "%s - Concéder le match",
-    "commands.reignofnether.reset": "%s - Supprimer toutes unités/bâtiments, mettre tout le monde en spectateur",
-    "commands.reignofnether.hard_reset": "%s - Réinitialiser le match, incluant les unités/bâtiments placés en sandbox",
+    "commands.reignofnether.reset": "%s - Réinitialise la partie et passe les joueurs en spectateur. En scénario ou en mode bac à sable actif, les unités et bâtiments sont conservés.",
+    "commands.reignofnether.hard_reset": "%s - Supprime les unités RTS chargées. En scénario ou en mode bac à sable actif, les bâtiments sont conservés ; dans les autres modes, tous les bâtiments RTS sont supprimés.",
     "commands.reignofnether.lock": "%s - Empêcher tous les joueurs de rejoindre le match RTS",
     "commands.reignofnether.ally": "%s - Envoyer une requête d'alliance à un autre joueur",
     "commands.reignofnether.disband": "%s - Dissoudre une alliance avec un autre joueur",
@@ -807,6 +807,7 @@
     "server.reignofnether.victory_alliance": "%s et ses alliés sont victorieux !",
     "server.reignofnether.match_reset": "Le match a été réinitialisé !",
     "server.reignofnether.match_reset_hard": "La carte a été réinitialisée (hard reset) !",
+    "server.reignofnether.match_reset_hard_map": "Partie réinitialisée : unités RTS chargées supprimées, bâtiments de la carte conservés.",
     "server.reignofnether.match_locked": "Le match RTS a été verrouillé. Aucun nouveau joueur ne peut rejoindre.",
     "server.reignofnether.match_unlocked": "Le match RTS a été déverrouillé. De nouveaux joueurs peuvent rejoindre.",
     "server.reignofnether.sync_enabled": "Synchro RTS login activée.",

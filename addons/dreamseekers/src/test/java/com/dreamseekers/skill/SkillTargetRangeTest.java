@@ -44,7 +44,9 @@ class SkillTargetRangeTest {
         for(String gate:new String[]{"!owned(source)","!living.isAlive()","target.isRemoved()","target.isSpectator()","target.level() != source.mob().level()","AlliancesClient.isAllied","!target.isInvisible()","FogOfWarClientEvents.isInBrightChunk"})
             assertTrue(eligibility.contains(gate),gate);
         assertTrue(client.contains("if (!SkillService.supports(source,skill) || !owned(source)"));
-        assertTrue(client.contains("View view = currentView(source, skill);\n        if (view == null)"));
+        String click=client.substring(client.indexOf("SkillUnit source = armedCaster();"),client.indexOf("public static void release("));
+        assertTrue(click.contains("currentView(source,skill)")&&click.contains("SkillReadiness.WAITING"));
+        assertTrue(click.indexOf("if(!state.ready())")>=0&&click.indexOf("if(!state.ready())")<click.indexOf("event.setCanceled(true);"));
         assertTrue(client.contains("SkillNetwork.request(new SkillNetwork.Cast(skill, source.mob().getId()"));
         String server=Files.readString(Path.of("addons/dreamseekers/src/main/java/com/dreamseekers/skill/StoneHeavyShot.java"));
         assertTrue(server.contains("STONE_RANGE_ID,source.level().isClientSide())?12:RANGE"));

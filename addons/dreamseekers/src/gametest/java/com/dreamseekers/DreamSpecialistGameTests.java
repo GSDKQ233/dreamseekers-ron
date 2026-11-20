@@ -159,7 +159,7 @@ public final class DreamSpecialistGameTests {
         var tree=f.install(DreamseekersMod.DREAM_ANCHOR,owner,origin);
         var ecology=f.install(DreamseekersMod.CONTRACT_ECOLOGY,owner,origin.offset(32,0,0));
         var lab=(ProductionPlacement)f.install(DreamseekersMod.RESONANCE_LABORATORY,owner,origin.offset(64,0,0));
-        float[] remaining={0};UUID[] receipt={null};long[] revision={0};
+        float[] remaining={0};UUID[] receipt={null};long[] revision={0}, pauseRevision={0};
         f.at(20,()->{
             h.assertTrue(tree.isBuilt&&ecology.isBuilt&&lab.isBuilt,"sandbox fixtures completed");
             PlayerServerEvents.getRTSPlayer(owner).faction=Factions.VILLAGERS;
@@ -173,14 +173,22 @@ public final class DreamSpecialistGameTests {
         f.at(40,()->{
             h.assertTrue(lab.productionQueue.size()==1&&lab.productionQueue.get(0).ticksLeft==remaining[0]
                     &&account.revision==revision[0]&&account.paidReceipts.containsKey(receipt[0])&&!DreamSpecialistResearch.careUnlocked(owner,false),"lost ecology pauses native timer without refund orgrant");
+            var head=lab.productionQueue.get(0);
+            h.assertTrue(head.item.reportsHeadPause() && "research.economy.prerequisite_pause".equals(head.pause().reasonKey()),
+                    "server projects the research hold instead of letting the HUD guess");
+            pauseRevision[0]=head.pause().revision();
             BuildingServerEvents.getBuildings().add(ecology);
         });
         f.at(60,()->{
             h.assertTrue(lab.productionQueue.get(0).ticksLeft<remaining[0]&&account.revision==revision[0],"restored exact prerequisite resumes withoutnew payment");
-            remaining[0]=lab.productionQueue.get(0).ticksLeft;BuildingServerEvents.getBuildings().remove(tree);
+            var head=lab.productionQueue.get(0);
+            h.assertTrue(!head.pause().paused() && head.pause().revision()>pauseRevision[0]
+                            && head.receiptResearch.receiptId().equals(receipt[0]),"resumed projection keeps the original paid row");
+            remaining[0]=head.ticksLeft;BuildingServerEvents.getBuildings().remove(tree);
         });
         f.at(80,()->{
-            h.assertTrue(lab.productionQueue.get(0).ticksLeft==remaining[0],"missing main tree also pauses");
+            h.assertTrue(lab.productionQueue.get(0).ticksLeft==remaining[0] && lab.productionQueue.get(0).pause().paused(),
+                    "missing main tree also pauses the projected row");
             h.assertTrue(cancel(actor,lab,receipt[0],account).equals("cancelled_refunded"),"pausedresearch can refund without prerequisite");
             // Native sandbox grants shadow only to online players; this direct service bot fixture has no auto credit.
             h.assertTrue(account.food==5000&&account.wood==5000&&account.ore==5000&&account.extra.get(DreamPassiveEconomy.SHADOW)==500

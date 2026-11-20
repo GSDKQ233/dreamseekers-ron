@@ -430,7 +430,7 @@ public class UnitActionItem {
                         // to gather
                         GatherResourcesGoal goal = workerUnit.getGatherResourceGoal();
                         if (goal != null && goal.saveData != null) {
-                            goal.saveData.delete();
+                            goal.clearReturnState();
                         }
                     }
                     ReturnResourcesGoal returnResourcesGoal = unit.getReturnResourcesGoal();

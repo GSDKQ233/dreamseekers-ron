@@ -18,13 +18,26 @@ public final class AaroncosCombatFogGameTests {
     @GameTest(templateNamespace="dreamseekers_aaroncos_fog",template="ore_mine_test_arena",batch="aaroncos_fog",timeoutTicks=100)
     public static void actualColumnLossDuringWindupCancelsWithoutRefund(GameTestHelper h){
         var f=new AaroncosSkillCombatGameTests.F(h,"fog");fixture=f;var source=f.hand(true);var target=f.target(5,0);
+        var knight=f.add(DreamseekersMod.WIND_KNIGHT_UNIT.get().create(h.getLevel()),f.owner,0,9);
+        var dashTarget=f.target(6,9);
+        knight.setNoAi(false); // genuine ground collision before path planning
         h.startSequence().thenIdle(30).thenExecute(()->{
             fog=new ControlledFog(h,f.peer.actor);fog.install();
             h.assertTrue(f.cast(source,target)==SkillResult.INVALID_TARGET&&f.shadow()==500,"hidden actual column no spend");
-            fog.columns(List.of(target.blockPosition()));
+            var dash=new SkillRequest(UnitSkill.WIND_DASH,knight.getId(),knight.getUUID(),knight.rts().skills().revision(),
+                    dashTarget.getId(),dashTarget.getUUID());
+            h.assertTrue(knight.hasLineOfSight(dashTarget)&&SkillService.request(f.peer.actor,dash)==SkillResult.HIDDEN
+                    &&knight.rts().skills().cooldownTicks(UnitSkill.WIND_DASH)==0,"clear physical LOS cannot authorize hidden column");
+            fog.columns(List.of(target.blockPosition(),dashTarget.blockPosition()));
             h.assertTrue(f.cast(source,target)==SkillResult.SUCCESS&&f.shadow()==480,"visible column paid cast");
+            h.assertTrue(SkillService.request(f.peer.actor,dash)==SkillResult.SUCCESS&&WindDash.isActive(knight),"real visible dash starts");
+            fog.columns(List.of(target.blockPosition())); // wind target hidden for the next actual tracking tick
         }).thenIdle(5).thenExecute(()->fog.columns(List.of()))
-          .thenIdle(15).thenExecute(()->{f.hp(target,1000,"lost real visibility no release");h.assertTrue(!AaroncosCombat.active(source)&&f.shadow()==480,"paid canceled windup does not refund");cleanup(h.getLevel());h.succeed();});
+          .thenIdle(15).thenExecute(()->{
+              f.hp(dashTarget,1000,"dash cannot chase or damage after losing commander's exact column");
+              h.assertTrue(!WindDash.isActive(knight)&&knight.rts().skills().cooldownTicks(UnitSkill.WIND_DASH)>0,
+                      "lost-visibility dash stays canceled without refund");
+              f.hp(target,1000,"lost real visibility no release");h.assertTrue(!AaroncosCombat.active(source)&&f.shadow()==480,"paid canceled windup does not refund");cleanup(h.getLevel());h.succeed();});
     }
     /** Controlled raw native cache inputs. No production visibility method is replaced or bypassed. */
     private static final class ControlledFog implements AutoCloseable {

@@ -109,7 +109,18 @@ public final class AuthExtendedGameTests {
     public static void acceptedAllianceCannotBeReplayedAfterDisband(GameTestHelper h)throws Exception {
         try(var f=new AuthBoundaryGameTests.Fixture(h);var peer=new Peer(h.getLevel(),f.name+"B")){
             var b=h.getLevel().getServer().getPlayerList().getPlayerByName(f.name+"B");
-            try{command(f.actor,"ally "+b.getGameProfile().getName());command(b,"allyconfirm "+f.name);
+            try{
+                String to = b.getGameProfile().getName();
+                command(f.actor, "ally " + to);
+                command(b, "ally " + f.name);
+                h.assertTrue(command(f.actor, "allywithdraw " + to) == 1
+                        && !AlliancesServerEvents.pendingAlliances.getOrDefault(to, Set.of()).contains(f.name)
+                        && AlliancesServerEvents.pendingAlliances.getOrDefault(f.name, Set.of()).contains(to),
+                        "outgoing withdrawal leaves the independent incoming invitation intact");
+                h.assertTrue(command(f.actor, "allycancelrequest " + to) == 1
+                        && !AlliancesServerEvents.pendingAlliances.getOrDefault(f.name, Set.of()).contains(to),
+                        "recipient decline consumes only its own incoming invitation");
+                command(f.actor,"ally "+b.getGameProfile().getName());command(b,"allyconfirm "+f.name);
                 h.assertTrue(AlliancesServerEvents.isAllied(f.name,b.getGameProfile().getName()),"legitimate invitation accepted");
                 command(f.actor,"disband "+b.getGameProfile().getName());command(b,"allyconfirm "+f.name);
                 h.assertTrue(!AlliancesServerEvents.isAllied(f.name,b.getGameProfile().getName()),"accepted directed invitation is consumed");

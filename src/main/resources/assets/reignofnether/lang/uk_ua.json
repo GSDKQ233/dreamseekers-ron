@@ -481,8 +481,8 @@
 
     "commands.reignofnether.toggle_fow": "%s - Ввімкнути туман війни для всіх гравців",
     "commands.reignofnether.surrender": "%s - Сдатися",
-    "commands.reignofnether.reset": "%s - Видалити всіх юнітів/будівлі, встановити всі на глядача",
-    "commands.reignofnether.hard_reset": "%s - Скинути матч, включаючи всі юніти та будівлі, розміщені в пісочниці",
+    "commands.reignofnether.reset": "%s - Скинути матч і перевести гравців у спостерігачі. У сценарії та активній пісочниці загони й будівлі зберігаються.",
+    "commands.reignofnether.hard_reset": "%s - Видалити завантажені загони RTS. У сценарії та активній пісочниці будівлі зберігаються; в інших режимах видаляються всі будівлі RTS.",
     "commands.reignofnether.lock": "%s - Заборонити всім гравцям приєднуватися до RTS-матчу",
     "commands.reignofnether.ally": "%s - Надіслати запит на альянс іншому гравцю",
     "commands.reignofnether.disband": "%s - Розірвати альянс з іншим гравцем",
@@ -634,6 +634,7 @@
     "server.reignofnether.victory_alliance": "%s та його союзники переможці!",
     "server.reignofnether.match_reset": "Матч обнулено!",
     "server.reignofnether.match_reset_hard": "Мапа повністю перезавантажена!",
+    "server.reignofnether.match_reset_hard_map": "Матч скинуто: завантажені загони RTS видалено, будівлі мапи збережено.",
     "server.reignofnether.match_locked": "RTS матч заблоковано. Нові гравці не можуть приєднатися.",
     "server.reignofnether.match_unlocked": "RTS матч розблоковано. Нові гравці можуть приєднатися.",
     "server.reignofnether.sync_enabled": "Увімкнено синхронізацію RTS-логіну.",

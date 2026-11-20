@@ -224,7 +224,9 @@ public class BuildingServerEvents {
                     b.partialBlocksDestroyed,
                     b instanceof CustomBuildingPlacement cb ? cb.commandsNbt : new ListTag()
             ));
-            buildingData.buildings.get(buildingData.buildings.size() - 1).pendingConstruction = b.savePendingConstruction();
+            BuildingSave snapshot = buildingData.buildings.get(buildingData.buildings.size() - 1);
+            snapshot.pendingConstruction = b.savePendingConstruction();
+            snapshot.extraFields = b.extraSaveFields;
             //ReignOfNether.LOGGER.info("saved buildings/nether in serverevents: " + b.originPos);
         });
 
@@ -258,7 +260,8 @@ public class BuildingServerEvents {
             for (BuildingPlacement previous : BuildingServerEvents.getBuildings())
                 previous.onRemoved(BuildingPlacement.RemovalReason.RELOAD);
             BuildingServerEvents.getBuildings().clear();
-            buildingData.buildings.forEach(b -> {
+            for (var rows = buildingData.buildings.iterator(); rows.hasNext(); ) {
+                BuildingSave b = rows.next();
                 BuildingPlacement building = b.building.createRestoredBuildingPlacement(level, b.originPos, b.rotation, b.ownerName, b.dataStorage);
                 if (building == null) building = BuildingUtils.getNewBuildingPlacement(b.building,
                     level,
@@ -271,6 +274,7 @@ public class BuildingServerEvents {
                 if (building != null) {
                     building.partialBlocksDestroyed = b.partialBlocksDestroyed;
                     building.dataStorage = b.dataStorage;
+                    building.extraSaveFields = b.extraFields;
                     
                     building.tags = b.dataStorage.getData(BUILDING_TAGS);
                     building.commands = b.dataStorage.getData(BUILDING_COMMANDS);
@@ -317,9 +321,13 @@ public class BuildingServerEvents {
                         cb.setAndUnpackCommandsNbt(b.commandsNbt);
                     }
 
+                    b.inputRecord = null;
                     ReignOfNether.LOGGER.info("loaded building in serverevents: " + b.building.name + "|" + b.originPos);
+                } else {
+                    buildingData.retainUnmaterialized(b);
+                    rows.remove();
                 }
-            });
+            }
             netherData.netherZones.forEach(nz -> {
                 if (!placedNZs.contains(nz.getOrigin())) {
                     BuildingServerEvents.netherZones.add(nz);
@@ -828,8 +836,7 @@ public class BuildingServerEvents {
         if (buildingSyncTicks <= 0) {
             buildingSyncTicks = BUILDING_SYNC_TICKS_MAX;
             for (BuildingPlacement building : buildings)
-                BuildingClientboundPacket.syncBuilding(building.originPos, building.getBlocksPlaced(),
-                        building.partialBlocksDestroyed, building.ownerName, building.scenarioRoleIndex);
+                BuildingClientboundPacket.syncBuilding(building);
         }
         // need to remove from the list first as destroy() will read it to check defeats
         List<BuildingPlacement> buildingsToDestroy = new ArrayList<>();

@@ -523,15 +523,15 @@ public interface Unit {
                         ItemStack itemstack = itementity.getItem();
                         ResourceSource resBlock = ResourceSources.getFromItem(itemstack.getItem());
                         if (resBlock != null) {
-                            while (!Unit.atMaxResources(unit) && itemstack.getCount() > 0) {
+                            // Item entities can carry custom names, nested tags and Forge item
+                            // capabilities. Split the actual stack data, not a new bare item.
+                            ItemStack remaining = itemstack.copy();
+                            while (!Unit.atMaxResources(unit) && !remaining.isEmpty()) {
                                 unitMob.onItemPickup(itementity);
                                 unitMob.take(itementity, 1);
-                                unit.getItems().add(new ItemStack(itemstack.getItem(), 1));
-                                itemstack.setCount(itemstack.getCount() - 1);
+                                unit.getItems().add(remaining.split(1));
                             }
-                            if (itemstack.getCount() <= 0)
-                                itementity.discard();
-
+                            finishPickup(itementity, remaining);
                             UnitSyncClientboundPacket.sendSyncResourcesPacket(unit);
                         }
                         if (Unit.atThresholdResources(unit) && unit instanceof WorkerUnit workerUnit) {
@@ -621,17 +621,22 @@ public interface Unit {
     }
 
     public static void startEatingOrDrinking(Unit unit, ItemEntity itemEntity) {
-        if (ItemUtil.isEdibleDrink(itemEntity.getItem().getItem())) {
+        ItemStack remaining = itemEntity.getItem().copy();
+        if (itemEntity.isRemoved() || remaining.isEmpty()) return;
+        if (ItemUtil.isEdibleDrink(remaining.getItem())) {
             SoundClientboundPacket.playSoundAtPos(SoundAction.POTION_POP, ((LivingEntity) unit).blockPosition(), 1.5f);
         }
-        ItemStack itemStack = itemEntity.getItem();
         ((LivingEntity) unit).onItemPickup(itemEntity);
         ((LivingEntity) unit).take(itemEntity, 1);
-        unit.getItems().add(new ItemStack(itemStack.getItem(), 1));
-        UnitAnimationClientboundPacket.sendEatFoodPacket(((LivingEntity) unit), BuiltInRegistries.ITEM.getId(itemStack.getItem()));
-        itemStack.setCount(itemStack.getCount() - 1);
-        if (itemStack.getCount() <= 0)
-            itemEntity.discard();
+        ItemStack serving = remaining.split(1);
+        unit.getItems().add(serving);
+        UnitAnimationClientboundPacket.sendEatFoodPacket(((LivingEntity) unit), BuiltInRegistries.ITEM.getId(serving.getItem()));
+        finishPickup(itemEntity, remaining);
+    }
+
+    private static void finishPickup(ItemEntity entity, ItemStack remaining) {
+        if (remaining.isEmpty()) entity.discard();
+        else entity.setItem(remaining); // publish the new count and retain tags on the ground remainder
     }
 
     // call from addAdditionalSaveData
@@ -761,7 +766,7 @@ public interface Unit {
         unit.getTargetGoal().setTarget(null);
         unit.getMoveGoal().stopMoving();
         if (unit.getReturnResourcesGoal() != null)
-            unit.getReturnResourcesGoal().stopReturning();
+            unit.getReturnResourcesGoal().cancelReturning();
         unit.setFollowTarget(null);
         unit.setHoldPosition(false);
         if (unit.canGarrison())

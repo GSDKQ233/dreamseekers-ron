@@ -1,122 +1,26 @@
 {
-  "release": "API65-repair2",
+  "release": "API65-repair3.1",
+  "status": "work-in-progress source; automated and dedicated-server acceptance passed; packaged dual-client acceptance deferred; no binary release",
   "runtime_change": true,
-  "baseline_archive": "API65-repair1-source.zip",
-  "baseline_sha256": "a680d639adbf9d84ca883875f53883b21a42ea6b51078533e504a10833ea612a",
-  "baseline_members": 3341,
+  "baseline_archive": "API65-repair3-source.zip",
+  "baseline_sha256": "226856fca5f3e9eb7da58f1e190e8863dbba77036480d59a4149c9bf71ea5ef2",
+  "baseline_members": 3405,
   "reviewed_new_members": [
-    "addons/dreamseekers/src/gametest/java/com/dreamseekers/Repair2CargoRestartGameTests.java",
-    "addons/dreamseekers/src/gametest/java/com/dreamseekers/Repair2TrainingGameTests.java",
-    "addons/dreamseekers/src/gametest/java/com/dreamseekers/SurvivalBeaconGameTests.java",
-    "addons/dreamseekers/src/gametest/resources/data/api65_repair2_beacon/structures/dreamseekers_test_arena.nbt",
-    "addons/dreamseekers/src/gametest/resources/data/api65_repair2_cargo/structures/unit_isolation_arena.nbt",
-    "addons/dreamseekers/src/gametest/resources/data/api65_repair2_training/structures/ore_mine_test_arena.nbt",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/DreamseekersFaction.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamBuildingMilestones.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamSurvivalBeaconButton.java",
-    "docs/dreamseekers/REPAIR2.zh-CN.md",
-    "src/gametest/java/com/solegendary/reignofnether/hero/repair2/cycle/FallenHeroWorldGameTests.java",
-    "src/gametest/java/com/solegendary/reignofnether/hero/repair2/cycle/HeroWorldCycle.java",
-    "src/gametest/java/com/solegendary/reignofnether/hero/repair2/mixin/GameTestServerExitMixin.java",
-    "src/gametest/java/com/solegendary/reignofnether/startpos/LobbySnapshotGameTests.java",
-    "src/gametest/java/com/solegendary/reignofnether/survival/SurvivalCheckpointRestartGameTests.java",
-    "src/gametest/resources/data/api65_repair2_hero/structures/ore_mine_test_arena.nbt",
-    "src/gametest/resources/data/api65_repair2_lobby/structures/ore_mine_test_arena.nbt",
-    "src/gametest/resources/data/api65_repair2_survival/structures/ore_mine_test_arena.nbt",
-    "src/gametest/resources/repair2-hero-cycle.mixins.json",
-    "src/main/java/com/solegendary/reignofnether/building/production/ProductionPause.java",
-    "src/main/java/com/solegendary/reignofnether/faction/SurvivalBeaconFaction.java",
-    "src/main/java/com/solegendary/reignofnether/startpos/StartPosCountdown.java",
-    "src/main/java/com/solegendary/reignofnether/startpos/StartPosSnapshotPacket.java",
-    "src/main/java/com/solegendary/reignofnether/survival/WaveCursor.java",
-    "src/main/java/com/solegendary/reignofnether/unit/units/villagers/VillagerCargoSaveData.java",
-    "src/test/java/com/solegendary/reignofnether/building/production/ProductionPauseTest.java",
-    "src/test/java/com/solegendary/reignofnether/startpos/LobbySnapshotTest.java",
-    "src/test/java/com/solegendary/reignofnether/survival/WaveCheckpointTest.java"
+    "COLLABORATION.md",
+    "docs/dreamseekers/REPAIR3.1.zh-CN.md"
   ],
   "modified_or_added_members": [
     "CHANGELOG.zh-CN.md",
+    "COLLABORATION.md",
     "README.md",
     "addons/dreamseekers/build.gradle",
-    "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosTrainingGameTests.java",
-    "addons/dreamseekers/src/gametest/java/com/dreamseekers/Repair2CargoRestartGameTests.java",
-    "addons/dreamseekers/src/gametest/java/com/dreamseekers/Repair2TrainingGameTests.java",
-    "addons/dreamseekers/src/gametest/java/com/dreamseekers/SurvivalBeaconGameTests.java",
-    "addons/dreamseekers/src/gametest/resources/data/api65_repair2_beacon/structures/dreamseekers_test_arena.nbt",
-    "addons/dreamseekers/src/gametest/resources/data/api65_repair2_cargo/structures/unit_isolation_arena.nbt",
-    "addons/dreamseekers/src/gametest/resources/data/api65_repair2_training/structures/ore_mine_test_arena.nbt",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/DreamseekersFaction.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/DreamseekersMod.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/aaroncos/AaroncosTraining.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamBuildingMilestones.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamSurvivalBeaconButton.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamProductionPlacement.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamUnitProduction.java",
-    "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamUnitReceipts.java",
     "addons/dreamseekers/src/main/resources/META-INF/mods.toml",
-    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/en_us.json",
-    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/zh_cn.json",
-    "addons/dreamseekers/src/test/java/com/dreamseekers/production/DreamProductionTooltipTest.java",
     "build.gradle",
-    "docs/dreamseekers/FEATURES.zh-CN.md",
-    "docs/dreamseekers/INSTALL.zh-CN.txt",
-    "docs/dreamseekers/REPAIR2.zh-CN.md",
-    "docs/dreamseekers/VALIDATION.zh-CN.md",
-    "gradle/gametest-plan.gradle",
-    "gradle/verify-api65-gametest.gradle",
-    "src/gametest/java/com/solegendary/reignofnether/hero/repair2/cycle/FallenHeroWorldGameTests.java",
-    "src/gametest/java/com/solegendary/reignofnether/hero/repair2/cycle/HeroWorldCycle.java",
-    "src/gametest/java/com/solegendary/reignofnether/hero/repair2/mixin/GameTestServerExitMixin.java",
-    "src/gametest/java/com/solegendary/reignofnether/startpos/LobbySnapshotGameTests.java",
-    "src/gametest/java/com/solegendary/reignofnether/survival/SurvivalCheckpointRestartGameTests.java",
-    "src/gametest/resources/data/api65_repair2_hero/structures/ore_mine_test_arena.nbt",
-    "src/gametest/resources/data/api65_repair2_lobby/structures/ore_mine_test_arena.nbt",
-    "src/gametest/resources/data/api65_repair2_survival/structures/ore_mine_test_arena.nbt",
-    "src/gametest/resources/repair2-hero-cycle.mixins.json",
+    "docs/dreamseekers/REPAIR3.1.zh-CN.md",
+    "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
     "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
-    "src/main/java/com/solegendary/reignofnether/building/BuildingAction.java",
     "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java",
-    "src/main/java/com/solegendary/reignofnether/building/BuildingProductionServerboundPacket.java",
-    "src/main/java/com/solegendary/reignofnether/building/NativeBuildingAvailability.java",
-    "src/main/java/com/solegendary/reignofnether/building/buildings/neutral/Beacon.java",
-    "src/main/java/com/solegendary/reignofnether/building/buildings/placements/ProductionPlacement.java",
-    "src/main/java/com/solegendary/reignofnether/building/production/ActiveProduction.java",
-    "src/main/java/com/solegendary/reignofnether/building/production/ProductionItem.java",
-    "src/main/java/com/solegendary/reignofnether/building/production/ProductionPause.java",
-    "src/main/java/com/solegendary/reignofnether/faction/SurvivalBeaconFaction.java",
-    "src/main/java/com/solegendary/reignofnether/hero/HeroClientEvents.java",
-    "src/main/java/com/solegendary/reignofnether/hero/HeroServerEvents.java",
-    "src/main/java/com/solegendary/reignofnether/hud/GlobalProductionQueueRenderer.java",
-    "src/main/java/com/solegendary/reignofnether/hud/HudClientEvents.java",
-    "src/main/java/com/solegendary/reignofnether/hud/ProductionProgressLabel.java",
-    "src/main/java/com/solegendary/reignofnether/items/ItemServerEvents.java",
-    "src/main/java/com/solegendary/reignofnether/matchstart/MatchStartClientEvents.java",
-    "src/main/java/com/solegendary/reignofnether/player/RTSPlayer.java",
-    "src/main/java/com/solegendary/reignofnether/player/RTSPlayerSaveData.java",
-    "src/main/java/com/solegendary/reignofnether/registrars/PacketHandler.java",
-    "src/main/java/com/solegendary/reignofnether/research/economy/ResearchQueueClient.java",
-    "src/main/java/com/solegendary/reignofnether/research/economy/ResearchQueueClientboundPacket.java",
-    "src/main/java/com/solegendary/reignofnether/rtsmap/RTSMapInfo.java",
-    "src/main/java/com/solegendary/reignofnether/startpos/StartPosClientEvents.java",
-    "src/main/java/com/solegendary/reignofnether/startpos/StartPosClientboundPacket.java",
-    "src/main/java/com/solegendary/reignofnether/startpos/StartPosCountdown.java",
-    "src/main/java/com/solegendary/reignofnether/startpos/StartPosServerEvents.java",
-    "src/main/java/com/solegendary/reignofnether/startpos/StartPosSnapshotPacket.java",
-    "src/main/java/com/solegendary/reignofnether/survival/SurvivalClientEvents.java",
-    "src/main/java/com/solegendary/reignofnether/survival/SurvivalSaveData.java",
-    "src/main/java/com/solegendary/reignofnether/survival/SurvivalServerEvents.java",
-    "src/main/java/com/solegendary/reignofnether/survival/WaveCursor.java",
-    "src/main/java/com/solegendary/reignofnether/survival/WavePortal.java",
-    "src/main/java/com/solegendary/reignofnether/time/TimeClientEvents.java",
-    "src/main/java/com/solegendary/reignofnether/unit/UnitServerEvents.java",
-    "src/main/java/com/solegendary/reignofnether/unit/units/villagers/VillagerCargoSaveData.java",
-    "src/main/java/com/solegendary/reignofnether/unit/units/villagers/VillagerUnit.java",
-    "src/main/resources/assets/reignofnether/lang/en_us.json",
-    "src/main/resources/assets/reignofnether/lang/zh_cn.json",
-    "src/test/java/com/solegendary/reignofnether/building/production/ProductionPauseTest.java",
-    "src/test/java/com/solegendary/reignofnether/startpos/LobbySnapshotTest.java",
-    "src/test/java/com/solegendary/reignofnether/survival/SurvivalWaveWiringTest.java",
-    "src/test/java/com/solegendary/reignofnether/survival/WaveCheckpointTest.java"
+    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java"
   ],
   "manifest_self_excluded": true,
   "hash_rule": "SHA256 of each uncompressed member, excluding this manifest.",
@@ -130,8 +34,12 @@
       "sha256": "aa8e97ff7a23dbb3cb74a9ef59c54205cffe5d8a3d20217287d7d8623d5e6b80"
     },
     "CHANGELOG.zh-CN.md": {
-      "bytes": 3353,
-      "sha256": "9548bdbe58d80172b76e31ebede3f2027169d48f84203281138be2eaf619a045"
+      "bytes": 3767,
+      "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
+    },
+    "COLLABORATION.md": {
+      "bytes": 3197,
+      "sha256": "3391681deaad811ba9240a081b26fc681b2d96093af6ecb07f7d3dca004503f1"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -142,12 +50,12 @@
       "sha256": "9152d90f20557128a640c659ad1b5f6ee16c43c155719bee92c1d885f97bb35d"
     },
     "README.md": {
-      "bytes": 5460,
-      "sha256": "69c565bc062e21b5d6a7b3a3bad5b4eeb92e12038078096620d786279378803b"
+      "bytes": 6243,
+      "sha256": "3b3a2c471d541f0ea1d30edd55374d8363309d2db756ec581324fe12da6560a0"
     },
     "addons/dreamseekers/build.gradle": {
-      "bytes": 70552,
-      "sha256": "3b5758ccf4498ab91ca44a001a217c77a277ee83e699c3e235fdcc728d526272"
+      "bytes": 71330,
+      "sha256": "e16e5333ba75ac8052cc931c3b779bb352eb252cf959ee034076da46223bc74e"
     },
     "addons/dreamseekers/dependencies.lock.json": {
       "bytes": 2212,
@@ -170,8 +78,8 @@
       "sha256": "9489ba9e6f9ea1b3087bcba9f12cef1df64736560e164f56c3f41762336ac624"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosCombatFogGameTests.java": {
-      "bytes": 6357,
-      "sha256": "0474aff30227acae58f19ca1f1af58837e08aef622109df57f8538a1b4c43e5a"
+      "bytes": 7611,
+      "sha256": "0d4fc25070a80eedfad6163b80f7d3c1e65b98f65057820d5ddcbac81b9b5a58"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosCombatGameTests.java": {
       "bytes": 8334,
@@ -570,12 +478,12 @@
       "sha256": "42a63c72269a80a429f78b22efaee23df3bc8ce4ee691ca49f7a7feb38e9a2ca"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamShellFunctionGameTests.java": {
-      "bytes": 36214,
-      "sha256": "a7b1ba3cf44039bc3ef5f4e76637e7e66d561b1f1e3b3a3ee81b5df903e19f47"
+      "bytes": 36763,
+      "sha256": "119bc9426b77e2b837504741a4b936b77ac94b326edb6423bd68d236288d9c75"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamSpecialistGameTests.java": {
-      "bytes": 17909,
-      "sha256": "43a126bc47653c91364ff3a303c622e6012780388b09eb9d2b905040ef3a10eb"
+      "bytes": 18590,
+      "sha256": "4ba13d24493d39fc87333573f499264e116a4611db752831dc3323f967c1b79b"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamSpecialistRestartGameTests.java": {
       "bytes": 18351,
@@ -774,8 +682,8 @@
       "sha256": "616b3afaf0fff4faf701f05e0e4e6b67ca5e54f1e3c5595b04a09bbec65fdb9f"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/JellyFlowSkillGameTests.java": {
-      "bytes": 39376,
-      "sha256": "95efa77a22f0737bbea095484879673dd2645a4cc91d6b37d740099d85e1af91"
+      "bytes": 40907,
+      "sha256": "013cd18e7afa58a995f5570c9e0f5a3ae1fa9569f1546213559549436a31c8f6"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/JellyFlowSkillRestartGameTests.java": {
       "bytes": 13071,
@@ -926,12 +834,12 @@
       "sha256": "963e6491b9df4b3b8df31a0c5a58c8e7c68d82de0e8f1e5a11a43d9db118f874"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/PinkSlimeSafetyGameTests.java": {
-      "bytes": 22507,
-      "sha256": "4072afa83f948342143a6e84db56fc018f8495f111007c6985d999ec965cab32"
+      "bytes": 25450,
+      "sha256": "1e2df238f5c00dee34c6faa92a7e015b7eeac6478da6a624ed5bcdd7b043b67b"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/Repair2CargoRestartGameTests.java": {
-      "bytes": 13957,
-      "sha256": "aa8a93b631d72f5b38212ee1d914cbc98acd4c0c2acb4956d7f6ff53618c1609"
+      "bytes": 17519,
+      "sha256": "646658820cf7405c770a79d26d4bbb8e77ac17d89e3b227eab6e867c2be408dc"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/Repair2TrainingGameTests.java": {
       "bytes": 15042,
@@ -1362,8 +1270,8 @@
       "sha256": "79a42f71676db4383eba6b5889b9195eecd4e4a570bce529a5fc94027f15e658"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WindDashSkillGameTests.java": {
-      "bytes": 100660,
-      "sha256": "06fd99abd8d210723674e84521cba9f6c466df50033f49fcd21d155fd61bd81c"
+      "bytes": 101429,
+      "sha256": "6af94f7cdf804e790e30c018f56f38f1dbea139be4aa599ca6c9cf1e248c3552"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WindDashSkillRestartGameTests.java": {
       "bytes": 17421,
@@ -2658,8 +2566,8 @@
       "sha256": "122b179995f45de797e8b9de976a0c84ba403796c6c8f6ed34bed0967603c0dd"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamProductionPages.java": {
-      "bytes": 7216,
-      "sha256": "cb61b3cdff6d84eb3a8c16cd08245ec042df2ecdd789aefd7e10720967bb1315"
+      "bytes": 7269,
+      "sha256": "9617afb18b3710e13db8d41e76192705456c9f704c30493f120c9401cbca4d44"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamSurvivalBeaconButton.java": {
       "bytes": 1743,
@@ -2684,6 +2592,10 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/ShadowHudPresentation.java": {
       "bytes": 708,
       "sha256": "62f69bf6f8ee0340ec2e517f492d3b943942e04b1e9a585230df1f27a9650baa"
+    },
+    "addons/dreamseekers/src/main/java/com/dreamseekers/client/TargetModeButtons.java": {
+      "bytes": 573,
+      "sha256": "ac60467752f6ff89d71e2593a1745dac73230e7b7184254bdfd5999c29ba1c0b"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/ecologyworkposts/EcologyClient.java": {
       "bytes": 10805,
@@ -2734,8 +2646,8 @@
       "sha256": "cc256cdb762470f088b8f1dfa0dd04fd53dffbca944d310d529d6d3e26d2056e"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/economy/DreamPassiveIncomePublication.java": {
-      "bytes": 2187,
-      "sha256": "24d4e08cf23c7f06b97e00f27a4f4bd1dde924e541a1d0f56cb08707767578f7"
+      "bytes": 2063,
+      "sha256": "3ab14fd61ec6241e3c76e5783e8264460c6c7e4cc5fdb645fefdd92299e85a37"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/economy/DreamResearchMath.java": {
       "bytes": 1290,
@@ -2758,8 +2670,8 @@
       "sha256": "0fc18c0d3c2707512a276d0639629cd5662418836e1ccba68df23aa627e0b7e0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/encounter/EncounterClient.java": {
-      "bytes": 8038,
-      "sha256": "b9ca2e6bc6aeef382bba49402a55d32aef3c0031a522d0ad2a3d8dcce9bc6320"
+      "bytes": 8392,
+      "sha256": "ef28abd5952583ad29053c3bf89eaadbeb07c5b1724d4e3810400325a5d53ec5"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/encounter/EncounterLedger.java": {
       "bytes": 2309,
@@ -2822,8 +2734,8 @@
       "sha256": "8894e0d86aa27405810e62de58deab685e916f0edbd7e80fc3cda77d59a7af0a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractClient.java": {
-      "bytes": 8444,
-      "sha256": "df015ab90772e93ac481c072e434e03c739a0b4880f72bb7faf83053ca1e9f6c"
+      "bytes": 8994,
+      "sha256": "7069b4f50b59efc93565e49f7950f43d49dc6afb2f48e92d81a0379addaa07db"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractLedger.java": {
       "bytes": 4257,
@@ -2850,8 +2762,8 @@
       "sha256": "c30e613bb0af09b642715b164c37520b7acbbc57df78203b7ffe94ac8bd02ef0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamProductionPlacement.java": {
-      "bytes": 17389,
-      "sha256": "f8766bdea1166f0306d2075291f1c7467a04ad3334ddd6786255fa09466bbd7c"
+      "bytes": 17045,
+      "sha256": "22781d045668a7d460ae4641f50b42906929330e97ede5a8e835f601d964fe83"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamUnitProduction.java": {
       "bytes": 17731,
@@ -2862,8 +2774,8 @@
       "sha256": "9eaf714df660eba8a5d2655cb2aab57a6b82292eaf446f7f57205d3ef22406f9"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/pagination/ProductionPageState.java": {
-      "bytes": 2484,
-      "sha256": "cc0a2844dc67c13141c815a9fcf9f1a37e71c5b5ddc06db538b9df5c74dd8085"
+      "bytes": 3534,
+      "sha256": "d3bee0b080e35f1b68ab911d84d4053bab360eb2992f425268f41bb1a2c75948"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/progression/DreamRepeatProductionList.java": {
       "bytes": 3284,
@@ -2922,16 +2834,16 @@
       "sha256": "84dcd7069d04c6c54f9561d88054f44f58e50b92447e7ed69a9bf08ea6ea011e"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/scout/ScoutMarkAbility.java": {
-      "bytes": 2346,
-      "sha256": "3abcb487a0ddbeb5cd005926a3de60007e83814c77269720b52d563668b4e7af"
+      "bytes": 2460,
+      "sha256": "19ac7c99c14362ca8e5ad3ae3fc615e586ebf0a35153ed2bbc65e8679c9d25cd"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/scout/ScoutMarkClient.java": {
-      "bytes": 11866,
-      "sha256": "3fdf9b7dd0b993862e2f66bce58eb5996434044a0b32ac45d9418752c6ca784c"
+      "bytes": 12795,
+      "sha256": "93bbd918bbc54f2da7f8bb7c79a2e93c1c521ee37b2c4a4ed8cd765c1b94ef58"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/scout/ScoutMarkLifecycle.java": {
-      "bytes": 897,
-      "sha256": "44138a81e39fb47a3a6a77ccf146c6d6238df3dab1d3bf647ac43190d5cd2960"
+      "bytes": 911,
+      "sha256": "0706610e073c6a6695099bd4d194c5bc52958a43050cc522036d340dcf02f8fa"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/scout/ScoutMarkNetwork.java": {
       "bytes": 5287,
@@ -3094,8 +3006,8 @@
       "sha256": "3a8b8ed3ffee2c0c71252a54eb2d6f2d538549468d365553d411e30e25870ea3"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/FireflyRush.java": {
-      "bytes": 7403,
-      "sha256": "d6f0d457091dc3c763211a8397f45e21cdc9830c0c0a5fef1b442a5b4fd4bb6c"
+      "bytes": 7394,
+      "sha256": "c5f9b414fde906100300deb027807a95f60972273701fb201b753e3f1a6b5c56"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/FriendlyDebtContract.java": {
       "bytes": 23584,
@@ -3162,8 +3074,8 @@
       "sha256": "07d24768c71946a8f5f23362613760c3ec0dc31667a867f9e1d99ac413ba18de"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillClient.java": {
-      "bytes": 19535,
-      "sha256": "2fdcb400383b72e609df690fb6f0432cce74a65319b47ece144273cd5c8e3802"
+      "bytes": 19613,
+      "sha256": "71389f32ac350e0c1cfe2cabb7440b8fab3f3fb7d8f402e3b32aa17edf59427f"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillEffects.java": {
       "bytes": 53558,
@@ -3178,8 +3090,8 @@
       "sha256": "a06943bcb52e2dbf8eed73417f6d55e1c06e5cf5b89f1859738b6524b233c53d"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillLifecycle.java": {
-      "bytes": 2861,
-      "sha256": "2b0ec9244a2eaa787f64d76412fca6f7f243c888eba194fe9b5730a6302354ab"
+      "bytes": 2941,
+      "sha256": "5e3dc62d2bd7f3cf91445f6d8ae2b7a8df4326b1c219d756c843d765ebd44c87"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillNetwork.java": {
       "bytes": 15818,
@@ -3188,6 +3100,10 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillPotencyView.java": {
       "bytes": 1082,
       "sha256": "677177c4287c7cf195b96860e6b4219eb83438f4ca63865053cb6a34ff623ee7"
+    },
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillReadiness.java": {
+      "bytes": 1204,
+      "sha256": "17600edcdffc8abb2504ae860889c1aeac95022a74913688519bf6bc71e787bf"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillRequest.java": {
       "bytes": 351,
@@ -3198,8 +3114,8 @@
       "sha256": "78984b314b2ec14d2ee29061abd92696ac2b4c4d088e1a2c214e5f4d9e591f7a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillService.java": {
-      "bytes": 24924,
-      "sha256": "006842914595bccb46e5a59227dd31dcbeec1dad9e536098359204df81dc44e6"
+      "bytes": 24929,
+      "sha256": "63daf25a80cdf4a89c29cb42bf1a4111b7b1d64f7c9e736f935aa4429beb29aa"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillState.java": {
       "bytes": 5231,
@@ -3225,6 +3141,10 @@
       "bytes": 1568,
       "sha256": "3ee8988f4a74197f218d390879cd3d0f007ef5525db5cf4a7e1c7addf03a8e3c"
     },
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SnapshotSkillButton.java": {
+      "bytes": 1402,
+      "sha256": "8053f300eccb2a18a2d9d255115e9477a24f832d6238c1bd3d89622b25a70a10"
+    },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SquealSuppressionWave.java": {
       "bytes": 20271,
       "sha256": "31fe1ed9a98c302fce0db1ff0d24e21b62567a0701fdb264fe364c14e78c3668"
@@ -3242,12 +3162,12 @@
       "sha256": "22e477184db6ffc0fb581a5ea8dd93bbe19f9bb141c7abf1491a6074e9f16e92"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/UnitSkillAbility.java": {
-      "bytes": 10058,
-      "sha256": "b1de3edae666fbf00f161963d4bb6553fce18df9065b491b6ee6e8ea3dcddb75"
+      "bytes": 10124,
+      "sha256": "72d0eddf0e2b04ba03536e51f492d9ac85ac7dedcd64103b1677785aeabc9008"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/WindDash.java": {
-      "bytes": 23249,
-      "sha256": "1d468bb2ae5a3c2e19cbe74d614b1f55c6282655db8025b853d1c3b899073bb3"
+      "bytes": 25214,
+      "sha256": "2ec1eebf88e236c94921ad6486416066b4fec7b63344c61647e4e1187463ae8b"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/WindFangDamage.java": {
       "bytes": 6703,
@@ -3346,12 +3266,12 @@
       "sha256": "cadeeb0029c11a325c8c5aa949e1578838d10d62381e8251a097dacace3f8c8c"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/DreamNoncombatUnit.java": {
-      "bytes": 5677,
-      "sha256": "43b089abc6c0b6bfca034fd3c7262c7a352389251b483e24bda9488da67fcc9c"
+      "bytes": 4625,
+      "sha256": "804593139965e961f6605e5bc7b218d2ca1598198b7f0f44340edc62a4dfe08c"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/DreamRtsUnit.java": {
-      "bytes": 7801,
-      "sha256": "f65959a4e33dccca06523116a67832f97909a8701b03f836d5ad93d5276d5861"
+      "bytes": 6749,
+      "sha256": "d5cfb45c6432a62d7ca56dea66060d071d15df536f62f8e7ce5006291e80c97d"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/DreamScoutUnit.java": {
       "bytes": 382,
@@ -3426,12 +3346,12 @@
       "sha256": "5dc7981fa672f6b2e804ebbc1c61afa5576cbde041818453aab3cad9c4f695ef"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/TeamSafeBuildingAttackGoal.java": {
-      "bytes": 2497,
-      "sha256": "03d33b8540ff392619bc233d26786ffae0032916c9f20b4f7f72b05dcad321bb"
+      "bytes": 2350,
+      "sha256": "215891ce4c33b3aa53ff7661830cb3fe1f28be594fd8f7ebab42d2dc90889f1a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/TeamSafeCombatUnit.java": {
-      "bytes": 2353,
-      "sha256": "ad0900f0c7eafbb9330b22b11a633c13ee201437c6a2b331b44e43c039b83253"
+      "bytes": 2880,
+      "sha256": "7d5c7b2a3ed2053ffd7f2fa536feb63625f9a9a8ee96d5e78e4a619e524979f8"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/TeamSafeMeleeAttackGoal.java": {
       "bytes": 1641,
@@ -3470,8 +3390,8 @@
       "sha256": "9cd47fa5593e7189245a134ffdf64c0c4686c83858da8c7c2c3f7af14a88f494"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/flight/FlyingReturnResourcesGoal.java": {
-      "bytes": 2289,
-      "sha256": "25e156c43614d04f163de4c96ecbaa24c21a5ee14507b1b268f608490bbb84be"
+      "bytes": 1707,
+      "sha256": "7909ae40672299158d05de43314f61f7acf54fea22ae9b8aae11da287274d151"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/flight/FlyingUsePortalGoal.java": {
       "bytes": 833,
@@ -3982,8 +3902,8 @@
       "sha256": "9152d90f20557128a640c659ad1b5f6ee16c43c155719bee92c1d885f97bb35d"
     },
     "addons/dreamseekers/src/main/resources/META-INF/mods.toml": {
-      "bytes": 1652,
-      "sha256": "451a37860c98904becf056199da8a0adf4977ef36f8339a5f9b04c9cd66a20e1"
+      "bytes": 1656,
+      "sha256": "e25bf38ceb0ce9f8a35713e346b282237c4782a7dcb2abdcb68045a5ae00be64"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/blockstates/decorative_garden_wheat.json": {
       "bytes": 735,
@@ -4374,8 +4294,8 @@
       "sha256": "92996f6c4d283550b02b19d73e4404bf196340656a872301d62af8ba66988158"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/ActiveClientClockWiringTest.java": {
-      "bytes": 7572,
-      "sha256": "cf2bf38481dd13f3067a4adfe826507e1c6e32457f8c532e89781d9b666b7235"
+      "bytes": 7792,
+      "sha256": "f7c7104cef21804e9b4ea10df81d678789ee1d8ac0696914256f61b879bff8db"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/BuildingIntegrationMetadataTest.java": {
       "bytes": 5726,
@@ -4405,6 +4325,10 @@
       "bytes": 4420,
       "sha256": "20a0c6f711b72986b6725f3f8e085e8b86eaa70548430c553215eca61fff6a49"
     },
+    "addons/dreamseekers/src/test/java/com/dreamseekers/client/TargetModeButtonsTest.java": {
+      "bytes": 797,
+      "sha256": "ec80222f7534cbb768b3cc451999760e234f3e36aa49ac493ddc1400b54d3b30"
+    },
     "addons/dreamseekers/src/test/java/com/dreamseekers/economy/DreamEconomyTooltipTest.java": {
       "bytes": 3225,
       "sha256": "d66d47a9fd62f72ba8c2dd16abf14cb226f6c2daea71a893d4a7d2c6bbefa57f"
@@ -4418,8 +4342,8 @@
       "sha256": "f40ac8e91dc4287c3e75f21ab637aa8ff2bc9647c46e92f7031f49c222dc9c1a"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/production/ProductionPageStateTest.java": {
-      "bytes": 8116,
-      "sha256": "d724b43707b2ff80b366ca49860cbbfe7cf709ea2e2a318ded67421ee13dd5a2"
+      "bytes": 9053,
+      "sha256": "9c5ef8587d767094ccf882743c9609c9169d6c9ca6040aff079a1b3df72a05b4"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/progression/LaboratoryResearchSlotStateTest.java": {
       "bytes": 3873,
@@ -4441,9 +4365,13 @@
       "bytes": 4352,
       "sha256": "6a548ea30e423be724b24a9a4bccdeb7b85c908ff58ae52c82aa1b4da440b7a6"
     },
+    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillReadinessTest.java": {
+      "bytes": 1235,
+      "sha256": "5d7c42165d640cb9a436054710f5f8701497434585102a4b45ea4750beca8a86"
+    },
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillTargetRangeTest.java": {
-      "bytes": 3904,
-      "sha256": "201089d15afc3cfb24807743a2b21fe92d094f6c39981a85b15c305df0f36d5a"
+      "bytes": 4181,
+      "sha256": "e3b1c6456376fe3993175d29323b48f220de634600e59b3a7add462857675c42"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillTooltipLayoutTest.java": {
       "bytes": 3123,
@@ -4477,9 +4405,13 @@
       "bytes": 32794,
       "sha256": "9f2016a5fd69ec77b350be1c87771766a88111b97fc1a4fe29920d98bf147233"
     },
+    "addons/dreamseekers/verify_paired_mods.py": {
+      "bytes": 2489,
+      "sha256": "3002790ece117f0e7907cfee0373f37d21d2d0d8b2edfa970f179a541d5405b9"
+    },
     "build.gradle": {
-      "bytes": 11362,
-      "sha256": "c31e80d0cc8dd4b8543bd2ba1eb3ac48a5dae6d38c69f8589c1de8c0ccc3ec9c"
+      "bytes": 11364,
+      "sha256": "90ce05d55a0f702933241ad0cff8760b835c9ccde84c656597d9737447427b97"
     },
     "crowdin.yml": {
       "bytes": 169,
@@ -4490,8 +4422,8 @@
       "sha256": "60894ae2d0672cf438ee725adff94abaa1dfca9a283ada66f840e8c2244371c4"
     },
     "docs/dreamseekers/INSTALL.zh-CN.txt": {
-      "bytes": 4928,
-      "sha256": "15a15cd369847197c4b7a87663a19501550be1d72e3618bcd31656b41dd43ce9"
+      "bytes": 4972,
+      "sha256": "49e0bc41d5063df879650e649fdaa0aa21e0c559bd09256bbcdf9ebbd8b4bea8"
     },
     "docs/dreamseekers/REPAIR1.zh-CN.md": {
       "bytes": 4651,
@@ -4501,17 +4433,25 @@
       "bytes": 4721,
       "sha256": "eab8b2bd9412d82e338f80d6a51adfa3494d0c288825ae2734f63b977546aa89"
     },
+    "docs/dreamseekers/REPAIR3.1.zh-CN.md": {
+      "bytes": 3792,
+      "sha256": "c25846110cc515a7ed083ff6f6fdc05fcd32440b9a6362d3033e60e6b8c1aad6"
+    },
+    "docs/dreamseekers/REPAIR3.zh-CN.md": {
+      "bytes": 7402,
+      "sha256": "ea9da63bd304f57beffe8420f55890c3c61bff2de139713e75767b0815f4f1b8"
+    },
     "docs/dreamseekers/VALIDATION.zh-CN.md": {
-      "bytes": 6719,
-      "sha256": "df3d741fc95fba9c8ab78202247d09d82d87f5bf1c344262d15c91821d606b04"
+      "bytes": 7388,
+      "sha256": "db6b3cc0cc93d62741612d433fbb80e4ad34b06ecf1a1b58be756b672734072e"
     },
     "gradle.properties": {
       "bytes": 266,
       "sha256": "afe45b8c5ecaf916c287fd90db7d91f6dfac7d38f0a2623c9aac101b6346c2cc"
     },
     "gradle/gametest-plan.gradle": {
-      "bytes": 16868,
-      "sha256": "e21d2ed367ebd63e2be56e2117480f9b53d99e36adb0cbde79a112c1b37f96ff"
+      "bytes": 17697,
+      "sha256": "9ce04cfdff98479bc865acca2464ad1b7d484fe4a33923926977e7d7428851a3"
     },
     "gradle/repository-test-inputs.gradle": {
       "bytes": 1893,
@@ -4562,8 +4502,8 @@
       "sha256": "90af9cb375846a106ecdcdbdf60a20e40a553ffd0f522468f6492e44d1b64071"
     },
     "src/gametest/java/com/solegendary/reignofnether/auth/AuthExtendedGameTests.java": {
-      "bytes": 14220,
-      "sha256": "a764a98a1b4f647f8420f72a2859b7bb53a7a98d36d4f57e5304fb743669bfec"
+      "bytes": 15060,
+      "sha256": "ab701deb0fdf76bf88e1c209119912624cc232808f901bff320335b36f9d1794"
     },
     "src/gametest/java/com/solegendary/reignofnether/auth/AuthFinalPathGameTests.java": {
       "bytes": 8748,
@@ -4641,9 +4581,13 @@
       "bytes": 12171,
       "sha256": "7ec512336dfd47c5730fc3c434033cdd2670838408040f60607646cb0f15a03e"
     },
+    "src/gametest/java/com/solegendary/reignofnether/building/Repair3OpaqueBuildingGameTests.java": {
+      "bytes": 4229,
+      "sha256": "ea06ddd7c449ab7afeb437e9a61f63f915b2100498f869c778ec64083ef94ecc"
+    },
     "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java": {
-      "bytes": 16958,
-      "sha256": "74c8ba9e9122f074aea2371a8c9b49c85ffce8a6e87430c5979a0b8390dd6afc"
+      "bytes": 19767,
+      "sha256": "44b35c8895c9058e7b145500cf734eba1cb99e88f6c56238bffed4853ce35b18"
     },
     "src/gametest/java/com/solegendary/reignofnether/commands/Api65AdminBuildingCommandGameTests.java": {
       "bytes": 12055,
@@ -4661,6 +4605,10 @@
       "bytes": 4842,
       "sha256": "83f2127a608ceaf9b23a8dac5952309c809d49cc25ed65400647ad08ee6ab6ec"
     },
+    "src/gametest/java/com/solegendary/reignofnether/fogofwar/Repair3CapitolFogGameTests.java": {
+      "bytes": 2148,
+      "sha256": "ef2ded3d246a8cdd2d81059f2575dc11f49f912c0880e4a0a42b0773745f6743"
+    },
     "src/gametest/java/com/solegendary/reignofnether/hero/repair2/cycle/FallenHeroWorldGameTests.java": {
       "bytes": 9103,
       "sha256": "9062927e0be14c74d45f855af9a2b4dde0946f206d6c12e1f066f948cd0f091e"
@@ -4674,12 +4622,16 @@
       "sha256": "b7ee51287ded9457faa1f623d3b8ab4038c3cf1ed421444bdcde391ad4a291fc"
     },
     "src/gametest/java/com/solegendary/reignofnether/player/MatchResultsDataGameTests.java": {
-      "bytes": 8985,
-      "sha256": "4980d6579d26128078ac712834ed13fe611884912088fae66e5d113f30ab248d"
+      "bytes": 10716,
+      "sha256": "b38f5b5551c0c05a8a561482587b6359b7d8717e174378dc783dc0eab1b452c7"
     },
     "src/gametest/java/com/solegendary/reignofnether/player/MatchResultsRestartGameTests.java": {
-      "bytes": 6716,
-      "sha256": "40cfddc951b5d73c5cf0a2bfc92b979bfedb0b7eb93ecf40a0bdabc54d6f7f75"
+      "bytes": 6994,
+      "sha256": "0ce186bace092a434ad828d4a44688c4fa1132154184bc028632d20fb0acef91"
+    },
+    "src/gametest/java/com/solegendary/reignofnether/player/Repair3ScenarioPublicationGameTests.java": {
+      "bytes": 7443,
+      "sha256": "8100351ec255d14a446fac0c69cda53991345dcadbcd6fcaf84e7ba0d4558b51"
     },
     "src/gametest/java/com/solegendary/reignofnether/research/ResearchCompatibilityGameTests.java": {
       "bytes": 12790,
@@ -4742,8 +4694,8 @@
       "sha256": "3ea870bb49e82e5fbee98971f1178b19217cab5a5d40123b480a38e7066a0d9e"
     },
     "src/gametest/java/com/solegendary/reignofnether/research/economy/RepairGameplayGameTests.java": {
-      "bytes": 14277,
-      "sha256": "565672779a62c9efcfb5c8b913766987e2c08afa59aa75916d95067d5b1df938"
+      "bytes": 19271,
+      "sha256": "282eb196ef9bf05c6a902ecb171fe0d03d186665a69f2763dfca9a318b9aefb8"
     },
     "src/gametest/java/com/solegendary/reignofnether/research/economy/ResearchEconomyFixtures.java": {
       "bytes": 13646,
@@ -4838,24 +4790,28 @@
       "sha256": "4276ead115a441682833d17cc044df1705fc5c9a4aff9fc2e3f6838f41064504"
     },
     "src/gametest/java/com/solegendary/reignofnether/startpos/LobbySnapshotGameTests.java": {
-      "bytes": 9615,
-      "sha256": "e10003bba124eb45a0f40a6067445a2b7db6896f446bb7fff8be04f462a5dd93"
+      "bytes": 18144,
+      "sha256": "52c127ba9cac71cf6d0c45c919b565781bf4f20c9867afe536f8edb03c970ab0"
     },
     "src/gametest/java/com/solegendary/reignofnether/survival/SurvivalCheckpointRestartGameTests.java": {
-      "bytes": 13028,
-      "sha256": "91936c37f4a7f67257cf990088c35c9558ed6fe0ac722b71de3316b5a971568f"
+      "bytes": 14156,
+      "sha256": "1c605107419bfaf1d6b7089c98fd90b7fc9db5b55e5c59171c322d866ab9ab5a"
+    },
+    "src/gametest/java/com/solegendary/reignofnether/survival/SurvivalResultRestartGameTests.java": {
+      "bytes": 16832,
+      "sha256": "dbfa10ca33bb3021f8a7d7809e2c6b859f91a93f28a0885a6a93d1a4c94bb237"
     },
     "src/gametest/java/com/solegendary/reignofnether/survival/SurvivalSequenceGameTests.java": {
       "bytes": 6634,
       "sha256": "33adf3a06476808e3e3e35602e6d7c9432941c3a32e03943a1d9f3a3f95599eb"
     },
     "src/gametest/java/com/solegendary/reignofnether/unit/Api65UnitDimensionGameTests.java": {
-      "bytes": 7804,
-      "sha256": "e77b07b53af4cc42b45225818583975a4ad8e843554bf9c18a62f7acbb484b2f"
+      "bytes": 10226,
+      "sha256": "9da22bddbc2d97a6b4df6de8039966d69ae0043b2ae774b4ec437bf1574fe6c8"
     },
     "src/gametest/java/com/solegendary/reignofnether/unit/Api65UnitLifecycleGameTests.java": {
-      "bytes": 17038,
-      "sha256": "a568acc3a83a966a2e0761933a583e0a703475dbfb1e6bc664f21ea00ac65a60"
+      "bytes": 19243,
+      "sha256": "ddf0a159c28cf73ee3bddd5fd4ab3cc82b071ee66bf7ee1f901a1d0167430587"
     },
     "src/gametest/java/com/solegendary/reignofnether/unit/Api65UnitSafetyGameTests.java": {
       "bytes": 11492,
@@ -5005,6 +4961,14 @@
       "bytes": 114,
       "sha256": "cd0bdce03111e8bf6e7e7c847cfc29e146b3f41e6fe7520299563337520be10b"
     },
+    "src/gametest/resources/data/api65_repair3_scenario/structures/ore_mine_test_arena.nbt": {
+      "bytes": 114,
+      "sha256": "cd0bdce03111e8bf6e7e7c847cfc29e146b3f41e6fe7520299563337520be10b"
+    },
+    "src/gametest/resources/data/api65_repair3_survival_result/structures/ore_mine_test_arena.nbt": {
+      "bytes": 114,
+      "sha256": "cd0bdce03111e8bf6e7e7c847cfc29e146b3f41e6fe7520299563337520be10b"
+    },
     "src/gametest/resources/data/api65_repair_play/structures/ore_mine_test_arena.nbt": {
       "bytes": 114,
       "sha256": "cd0bdce03111e8bf6e7e7c847cfc29e146b3f41e6fe7520299563337520be10b"
@@ -5138,8 +5102,8 @@
       "sha256": "03ba8ca167cc8ad9a904b9ffc9a8408a9d32080f81c069fd0814339ff1683096"
     },
     "src/main/java/com/solegendary/reignofnether/ReignOfNether.java": {
-      "bytes": 14344,
-      "sha256": "580c40535e72c8dcacaf0287ba83ec9f1c09bac2b9afb66152581319252bded0"
+      "bytes": 14346,
+      "sha256": "82e1f74b1647f0e70539e4accd733a4c3c1613e33db0fecea8d7dc752210dfc7"
     },
     "src/main/java/com/solegendary/reignofnether/ability/Abilities.java": {
       "bytes": 3208,
@@ -5522,28 +5486,36 @@
       "sha256": "b1225de767bf490b9deeba8b64762ff11b83eb68f5a3d454fd1940c434bb6e14"
     },
     "src/main/java/com/solegendary/reignofnether/alliance/AllianceClientboundPacket.java": {
-      "bytes": 4721,
-      "sha256": "8c7bab596b0895ed0bddce3f77431a5c7c8ae41e622c9b02c6cccc61fac8f6d5"
+      "bytes": 5570,
+      "sha256": "e13166fbc7da68d59db69b5b779bde8c16eaf3a19d160f65bafeba04887bb1eb"
+    },
+    "src/main/java/com/solegendary/reignofnether/alliance/AllianceEdges.java": {
+      "bytes": 1170,
+      "sha256": "02e1cddd121ab5dd15ef3d0e50b1428b27f0d828acde8ed93b8d9258d8636d4f"
     },
     "src/main/java/com/solegendary/reignofnether/alliance/AllianceSaveData.java": {
       "bytes": 2721,
       "sha256": "7b45c76da51d5a26f64201db75723298e14efdcfdfda0c6de0c70ef98df5003a"
     },
     "src/main/java/com/solegendary/reignofnether/alliance/AllianceServerboundPacket.java": {
-      "bytes": 3027,
-      "sha256": "11bc7d4cba0bb9f878b7fb2b05341c7f4739a81ad7b38fe7f7f38b6828bd8071"
+      "bytes": 3022,
+      "sha256": "7aedfd0c20b7722e4e3a68a8bbd611eb178a078f3993bc071fd683d259f30222"
     },
     "src/main/java/com/solegendary/reignofnether/alliance/AlliancesClient.java": {
-      "bytes": 3953,
-      "sha256": "9f4984d07dd0903bcf509105d9a1d15679d86c00a6ba4492c15d5038436a1015"
+      "bytes": 4246,
+      "sha256": "c68ded70ad9613695c98fe4c72b7f0adc257c443a6f7ace420cc6a7a80b338b0"
     },
     "src/main/java/com/solegendary/reignofnether/alliance/AlliancesServerEvents.java": {
-      "bytes": 7893,
-      "sha256": "0c1077e95d72ad6653a5c6804db805b616796e4af96d99b1e81317bf88b78987"
+      "bytes": 8431,
+      "sha256": "852bc28df463d5c33fa418c751951f22531fad27f77cc4d7787bbfc99b82ba56"
     },
     "src/main/java/com/solegendary/reignofnether/alliance/AllyCommand.java": {
-      "bytes": 13029,
-      "sha256": "a64a40e9ec73e213d618b99898369ade94dd27bfa5ff265a3f4f59024a5c00d0"
+      "bytes": 13799,
+      "sha256": "5feeed44e939fcf73399666bb4f37e07ef2e98e4cb14a10cad6f76589604474c"
+    },
+    "src/main/java/com/solegendary/reignofnether/alliance/DirectedInvitations.java": {
+      "bytes": 1056,
+      "sha256": "8f6b4ca362399abc57e56095121e2f2c3d3156c73252e492ee46e00cdef44d06"
     },
     "src/main/java/com/solegendary/reignofnether/api/BuildingUnitOrderHooks.java": {
       "bytes": 1836,
@@ -5714,8 +5686,8 @@
       "sha256": "0f31fdc9f0fb4b69af9e9b67488e702684145904e2f88123b02a0b94bb73c288"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingAction.java": {
-      "bytes": 1819,
-      "sha256": "db537667eb1906946b84cd47c5fdd016a58b5adf85082746cdbd833a0a0a3812"
+      "bytes": 1928,
+      "sha256": "2cbc9d2ffc76bf3427b2b1d28b55bb6629dcf70a98a44398d4d51fda647a055e"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingBlock.java": {
       "bytes": 3890,
@@ -5726,12 +5698,12 @@
       "sha256": "3233c21396819eb469b79c4b2c3fcefa1d44c482b9953faf5bf04e6a93609ebd"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingClientEvents.java": {
-      "bytes": 47071,
-      "sha256": "1fb55b1858b36c5d322f8360124ae47d0faec252ebc22857d10c34ae864c9830"
+      "bytes": 47194,
+      "sha256": "decec76e54458da97eda30b08e800538db0edf321ebdffd87d5719591f6d2658"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingClientboundPacket.java": {
-      "bytes": 18700,
-      "sha256": "d40a1f057aec888afc41eca36de50cdac5f86c08e79ac65739d048d39c3ad64a"
+      "bytes": 20569,
+      "sha256": "b358693146880a0723d831c57013a1c012dee0ff561df94e3fbae2b8da33fd68"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingCommand.java": {
       "bytes": 6251,
@@ -5746,32 +5718,32 @@
       "sha256": "77b8f3323f7976a3bd1ea62b4c9f80389f417b94b3b100f8eda285a7b8514ef2"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingPlacement.java": {
-      "bytes": 78776,
-      "sha256": "7527397733a569dcd161bc24dce93de730ff5a1f07661bb3d78dbecccdc79fb7"
+      "bytes": 78841,
+      "sha256": "f63c1f2ad784cbdb665501cd4773e51a7a101056c6a4d5b776e5aded8be80de6"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingPlacementWorkerAccess.java": {
       "bytes": 969,
       "sha256": "e56841fb8d356bc8058b1fd7a9289ce966d33f67c57f2efb6cd9f0068f87d131"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java": {
-      "bytes": 17261,
-      "sha256": "ecbc282c755bab158045930e6beaae53260ff916dd5eb7fbed5958ec2b94b2cd"
+      "bytes": 18938,
+      "sha256": "afc739699c02e7e94aba50fc52d59d83dc95890c3d065a0ea1ce5a45e6e2ad10"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingProductionServerboundPacket.java": {
-      "bytes": 10302,
-      "sha256": "64f27104c38378cdee3cd084418919fc7cd6efc873ad28881faeed6bc01e4077"
+      "bytes": 8951,
+      "sha256": "a627ca12b8f8321cc56b1dbc63f3063d1a0032d67de34c18bc56f6b15d6b51b4"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingSave.java": {
-      "bytes": 2166,
-      "sha256": "7b3a167d3e36ce72dd8c9c700fc4e283519f4cc934b16e79f9385a98050d0d76"
+      "bytes": 2434,
+      "sha256": "163ce3fd547674dc1aaf892009f0bd9cef6de6f1bcb51b21aee4f776bd9d3866"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingSaveData.java": {
-      "bytes": 11536,
-      "sha256": "3e2e88ad72431ab4f4cc6c87c55081b0fc50e1bd3210f594b14518ad308ba621"
+      "bytes": 14730,
+      "sha256": "56bb274d7dbc360788419c2a17727590358e37bd60d34665725906a7d73347cd"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingServerEvents.java": {
-      "bytes": 51570,
-      "sha256": "79b7e4063a9479a01a57b904b6a29974623f6ea40451ebbdfc61903f29c3cb7d"
+      "bytes": 51826,
+      "sha256": "77ad95a1ac6a916a5da773e23ce5a189e2151fb140a3a5a8b704f0d3d153562c"
     },
     "src/main/java/com/solegendary/reignofnether/building/BuildingServerboundPacket.java": {
       "bytes": 18493,
@@ -5813,6 +5785,10 @@
       "bytes": 838,
       "sha256": "b105ee471eca3798fc6326c187b26c11b47b10ffda04477173575f8108eff7a1"
     },
+    "src/main/java/com/solegendary/reignofnether/building/ProductionQueueAddress.java": {
+      "bytes": 1197,
+      "sha256": "ea9e858a49ca006e52f581e2c96bf03fce5a833546c4f731e3d589d5f9d202f8"
+    },
     "src/main/java/com/solegendary/reignofnether/building/addon/BuildingAddon.java": {
       "bytes": 90,
       "sha256": "12031f890bec49633bdfcfd1c40d42ceaf486cfcc48adca25dbb3352835371a4"
@@ -5846,8 +5822,8 @@
       "sha256": "0be1a95873783d6fa858134750c4b0a561df480e24cf306ac6e21b6be4432c8c"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/monsters/Dungeon.java": {
-      "bytes": 4256,
-      "sha256": "3649f6741c913801513522420e0ccd4b250a9fa70e55ccd07a9db761434fde71"
+      "bytes": 4227,
+      "sha256": "e148de2437f26b54379bf7cfc200ff0d5a56ae2e530bcc0d9401b577691c0475"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/monsters/Graveyard.java": {
       "bytes": 5409,
@@ -5934,8 +5910,8 @@
       "sha256": "6cc195c60aa5ece70d787f776e5cd424b8b0905e90e42d0ae35e90c0040c61de"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/piglins/CentralPortal.java": {
-      "bytes": 5409,
-      "sha256": "a677557f6371fd18e49e05dc6528f31ae117d33f6fe348311ef54c408760a8c0"
+      "bytes": 5380,
+      "sha256": "c9ad4669f23c939c4c22b41d47ec418dd4d6f3c4ab13156a4bff50008def6e10"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/piglins/FlameSanctuary.java": {
       "bytes": 4229,
@@ -5994,16 +5970,16 @@
       "sha256": "33ef61a7ab1e6204663b5a4a9587193a60614dc5b76360259d55211c609ca9ce"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/CustomBuildingPlacement.java": {
-      "bytes": 7372,
-      "sha256": "2cc95286aa7b303c97a70a945231560b88d140a6e129d5c66b890ca207bcaab3"
+      "bytes": 7387,
+      "sha256": "eb2f453c484ce5382e94281e852db34a2c7a3184b2e0a36fd2343396ee17c31e"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/FarmPlacement.java": {
       "bytes": 9741,
       "sha256": "006d5b4ba2cd0a5ee590a4bfbf8e6faa08ff82228409077c5d73f508b432a5b9"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/GraveyardPlacement.java": {
-      "bytes": 11906,
-      "sha256": "d884643896b09e2afb41d8483e3a1760320953b97b1c1bbef179eb819d7cf18d"
+      "bytes": 13436,
+      "sha256": "fdff1978e5675c446dadf1523cb00f1a20cfea141a5a21f25fc2310085dfaeac"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/HealingFountainPlacement.java": {
       "bytes": 2806,
@@ -6013,21 +5989,25 @@
       "bytes": 5301,
       "sha256": "fc611b5623ee7a448d7a26dfd0ae2bf0e6a70b1121a094345dfefcc82f400c50"
     },
+    "src/main/java/com/solegendary/reignofnether/building/buildings/placements/ManualChestDeposit.java": {
+      "bytes": 1617,
+      "sha256": "73f5b37180c56395dce76445611c19723522cefa419c144da33968ed576443e7"
+    },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/PortalPlacement.java": {
-      "bytes": 7127,
-      "sha256": "10edb626eb5f628cefbf280412b712fbd4b89818e1e26a65c05dd66a34f83b01"
+      "bytes": 5202,
+      "sha256": "c35958732ae933b323319fdb3bd45f739f13aabdeac28b9523e2fbc29491d3a2"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/ProductionPlacement.java": {
-      "bytes": 20516,
-      "sha256": "8a70cd2a9a780e92310ba9d3235046b5d4a8c3955d71300e7905e0759e4f7497"
+      "bytes": 20384,
+      "sha256": "47f8435d579eaa9a55d124696d382a972e8835a3f73f02c45133a4a0db1fb645"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/SculkCatalystPlacement.java": {
       "bytes": 7937,
       "sha256": "256f8e091d02878095f35a30aa76b622d27f98e6e54491cbb9d85b8d56660228"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/StockpilePlacement.java": {
-      "bytes": 6499,
-      "sha256": "0172ecea3dd4d8dbeab2f0695facf59e2543036444b3337eb9d68cc17dcf5a8e"
+      "bytes": 4321,
+      "sha256": "d6912e722c8b928eabb9f634d04a331b6a64198fa8500cb8073d0062ac0ab2a6"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/placements/TownCentrePlacement.java": {
       "bytes": 1917,
@@ -6058,8 +6038,8 @@
       "sha256": "30a74c1186a7b164070853d5c346e0e364b551495fa2139f9a737280d88748cd"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/villagers/ArcaneTower.java": {
-      "bytes": 3884,
-      "sha256": "7e186f164310faef5547b93a05e63ba2d14706426e64a2d7646b08af26d63f50"
+      "bytes": 3855,
+      "sha256": "f66bb679d862d1f4ef4b05b55f4e0c1b42ae0c197039ae26239fc5f17ce28309"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/villagers/Barracks.java": {
       "bytes": 3324,
@@ -6090,8 +6070,8 @@
       "sha256": "b9f03491e54cd562502df7964f1f1e4d25218b8abe195a7b75af8cbafc67938b"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/villagers/ShrineOfProsperity.java": {
-      "bytes": 4453,
-      "sha256": "a139ce0719c25867fd35e2d049d3286d78924085ac70385bfdd7b276a064eb79"
+      "bytes": 4424,
+      "sha256": "4d66e0e94b16cbe7000659d7528580f59143ad1b8d75b74e46e283d2e7b01d00"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/villagers/TownCentre.java": {
       "bytes": 6010,
@@ -6114,12 +6094,12 @@
       "sha256": "5438b4de5d9d6ab4e5f8d5c2993df5159f1e5cf1a5cd0de7c2056c357ba6efb7"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/villagers/WitchHut.java": {
-      "bytes": 4171,
-      "sha256": "7ef4572c4648e712a10413fd056c049a1440440fb92a36b0935b824354f24c70"
+      "bytes": 4142,
+      "sha256": "d156fd83695418862b0da02d8b55389d0cae820e0055b4706abb02fdce2eb83d"
     },
     "src/main/java/com/solegendary/reignofnether/building/custombuilding/CustomBuilding.java": {
-      "bytes": 29713,
-      "sha256": "e376c8b8bd0e2da55f3c82ba93af8031d7463716c6b6bd00ed43a989547eb7b5"
+      "bytes": 29662,
+      "sha256": "3e5f10f3d1bf8c05f907d5a6757b22add2bd8f2b4535af040a3aaa257807a8bd"
     },
     "src/main/java/com/solegendary/reignofnether/building/custombuilding/CustomBuildingAction.java": {
       "bytes": 742,
@@ -6154,8 +6134,8 @@
       "sha256": "d66f659b6c2c0496b318f2be4443b77798e43a1421c47cfb6977f55c3743c08a"
     },
     "src/main/java/com/solegendary/reignofnether/building/data/DataStorage.java": {
-      "bytes": 2518,
-      "sha256": "b39b1d2e4749b491266636f35cce6a0f7206ffdf614bbf2f55cfd382d3046960"
+      "bytes": 3500,
+      "sha256": "88fb94dd668869051928e9bf885cdfbbaad26333ab62f4933e3bdbd31e18d4e8"
     },
     "src/main/java/com/solegendary/reignofnether/building/data/DataType.java": {
       "bytes": 1605,
@@ -6194,12 +6174,12 @@
       "sha256": "7ba5ff75c28671056132f4b985232634d523dfd57017e5ca013d68cc36f53dc8"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/ActiveProduction.java": {
-      "bytes": 3439,
-      "sha256": "7a1dc86d36b62e461d2aa01b8a186103ba86f6453d3194cc7b79fa1ec93534c2"
+      "bytes": 3980,
+      "sha256": "59172708a9c80c4a5a65fa6267425b33a2563dff4d8af0d86e11e2b59614cf72"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/CustomProductionItem.java": {
-      "bytes": 2884,
-      "sha256": "e558de4c83a7c0d811e659020b8c42996b6024414e00aa5e863c2342bd68eb06"
+      "bytes": 3612,
+      "sha256": "4d8dbbdcfdc37a2f557a688e48923ed9fa5a32b610f3430710c6fc8da20f4418"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/GraveyardUnitProductionItem.java": {
       "bytes": 2236,
@@ -6213,9 +6193,13 @@
       "bytes": 207,
       "sha256": "3ab73a0f167d6a62a20b744377c0a5c96730f532c425abe89a5d69f43f07322e"
     },
+    "src/main/java/com/solegendary/reignofnether/building/production/IndoorSpawnSearch.java": {
+      "bytes": 738,
+      "sha256": "0a1584244da5b16ee231cdb2972b359d61bcc105f16737dffaf5e3495bf93372"
+    },
     "src/main/java/com/solegendary/reignofnether/building/production/NativeProductionCompletion.java": {
-      "bytes": 7477,
-      "sha256": "7b692e437dd967eaf2dea2027a7bf9c1b326214b2a08c6601ba3f8d6c2ab0ae0"
+      "bytes": 8519,
+      "sha256": "9daaa8910ee4ced37e3900ecb95ca053f6f1ce5b0a057b9d45e05ed8ffa9ed08"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/NativeProductionEligibility.java": {
       "bytes": 6975,
@@ -6230,12 +6214,12 @@
       "sha256": "a17fd3997c5d2e3151faf94accb42ca6d0445092a8535a6916dae9f5750a71c6"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/ProductionBuilding.java": {
-      "bytes": 1734,
-      "sha256": "44dac2e078e31cb85741de754e78a8195ffed939914859e8834c90e480f2ca3b"
+      "bytes": 2246,
+      "sha256": "0858d66d85913e340ed704d3df39e3506901a80232bea08e9e03646f6b48fd8c"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/ProductionItem.java": {
-      "bytes": 10141,
-      "sha256": "97d9405ffe1a22282edac0921656b4f90871a345e0b197721d2ae198d01ead5c"
+      "bytes": 10584,
+      "sha256": "f11b2b3355d946a5f6a72d21e92dec1de33dccb643f92b37be7f38b52f4f9a48"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/ProductionItemList.java": {
       "bytes": 1457,
@@ -6256,6 +6240,10 @@
     "src/main/java/com/solegendary/reignofnether/building/production/ProductionWorkRates.java": {
       "bytes": 1385,
       "sha256": "96b18bf3a10df95528453d46ab308c8e9fa69e48a921d00abfccf9183ae6df36"
+    },
+    "src/main/java/com/solegendary/reignofnether/building/production/RecipeSpawnTemplate.java": {
+      "bytes": 714,
+      "sha256": "688c8623b98ac94442b8b5e2f35fe3bd053bc75d3bd9046e48d8dba2da2220c4"
     },
     "src/main/java/com/solegendary/reignofnether/building/production/ReviveHeroProductionItem.java": {
       "bytes": 8605,
@@ -6394,8 +6382,12 @@
       "sha256": "11a4d56f60d8e0597f072f299833c15a13db2c2134e32a7754ad1818388b0c12"
     },
     "src/main/java/com/solegendary/reignofnether/cursor/CursorClientEvents.java": {
-      "bytes": 32890,
-      "sha256": "3c8be2dea0cc648418f4d79e5e6ac3cf792e7f1172cec055a484e2da54351542"
+      "bytes": 34159,
+      "sha256": "0c1933993cb809b1213e9109f31f9264cc7a77c3828a74ff2e02fb15b20d8401"
+    },
+    "src/main/java/com/solegendary/reignofnether/cursor/PressTargetSampler.java": {
+      "bytes": 812,
+      "sha256": "43a5f40a4386026fedf93f5d20cde1337c255d57c314ed9957192bce1138c10a"
     },
     "src/main/java/com/solegendary/reignofnether/debug/RtsDebugChunksClientboundPacket.java": {
       "bytes": 1570,
@@ -6569,6 +6561,10 @@
       "bytes": 553,
       "sha256": "b700ded0de2f61f346c98a25f42c3908cfc8c7a12fc25860015c82ad12889ece"
     },
+    "src/main/java/com/solegendary/reignofnether/fogofwar/CapitolFogRule.java": {
+      "bytes": 654,
+      "sha256": "f79761da39605465f060c977c260beb2719977bc6bbb704e52dd5bb71bc70537"
+    },
     "src/main/java/com/solegendary/reignofnether/fogofwar/FogChunkSnapshot.java": {
       "bytes": 9874,
       "sha256": "b7b8c171f8874904824ae0f21518e18a1a8f566d8d4e5ce566da523857b3dd5a"
@@ -6594,8 +6590,8 @@
       "sha256": "fa4b81d954fcc0808d447d79a500c0b0bec325cbb4f454e6f6bee02a3c983a24"
     },
     "src/main/java/com/solegendary/reignofnether/fogofwar/FogOfWarServerEvents.java": {
-      "bytes": 36311,
-      "sha256": "7715ed1d083bd0b754ffaabc5dd8b6eabcf55e433c490dbd45917a87971fb959"
+      "bytes": 37246,
+      "sha256": "5d3a2d74b6bb017a3509a4452679e2ab22bcc7ac35533c834a158d50a1c56e36"
     },
     "src/main/java/com/solegendary/reignofnether/fogofwar/FogOfWarServerboundPacket.java": {
       "bytes": 2066,
@@ -6650,8 +6646,8 @@
       "sha256": "b3624c88d05c2d2560af13917ab97d859960c8e7fb87c6684edcea91aabdc302"
     },
     "src/main/java/com/solegendary/reignofnether/gamemode/GameModeServerEvents.java": {
-      "bytes": 10852,
-      "sha256": "4ead297051173720690e3561f859885162ad6fc5141e4f2e1328a3672623fa77"
+      "bytes": 11753,
+      "sha256": "5ba3a68576b88f4f38194f88d604943b85fa72944aa8a1feaa2d7c2e8cc7e137"
     },
     "src/main/java/com/solegendary/reignofnether/gamemode/GameModeServerboundPacket.java": {
       "bytes": 1442,
@@ -6742,16 +6738,16 @@
       "sha256": "f2d64afb350fdc8e6baaad6c9bfec7e5d7e774dbe411ce5b4a5c8a40d7847427"
     },
     "src/main/java/com/solegendary/reignofnether/hud/GlobalProductionQueueRenderer.java": {
-      "bytes": 6904,
-      "sha256": "3a0f1b558822f429834caff870140ff05ab2bedbed524edea78bf7bc32292e03"
+      "bytes": 6948,
+      "sha256": "e7101fb42f57374c743594b34745ca75e95676a72d44dcdbfdcaf2416424d6bd"
     },
     "src/main/java/com/solegendary/reignofnether/hud/HudBuildingButtonRows.java": {
       "bytes": 472,
       "sha256": "d5df36febca27b870222f488b353d7fad94287cc86d178621930651d9e9d29dd"
     },
     "src/main/java/com/solegendary/reignofnether/hud/HudClientEvents.java": {
-      "bytes": 115457,
-      "sha256": "de788270d67a7b4474d9330e2671046c14058c82a235bdd5fa3f21613c9edf76"
+      "bytes": 116288,
+      "sha256": "8653e4b8e656b98a024eab4c8c9b336e77a9db4aadfb933249367bce1ba345c7"
     },
     "src/main/java/com/solegendary/reignofnether/hud/HudClientboundPacket.java": {
       "bytes": 2882,
@@ -6902,8 +6898,8 @@
       "sha256": "4e832534a262a89516655caff45f105db9d878556c10faa22c681c0c80690e9c"
     },
     "src/main/java/com/solegendary/reignofnether/hud/playerdisplay/DiplomacyPlayerDisplay.java": {
-      "bytes": 18141,
-      "sha256": "1645b3609e5e3971bfe1b65d19e5618ff50a54a44a9c164a3c4af6a81f616150"
+      "bytes": 17989,
+      "sha256": "a99d6003fadfa428599f92b1bcbbfa444a040f005d15d441ed33efdc39277caf"
     },
     "src/main/java/com/solegendary/reignofnether/hud/playerdisplay/ObserverPlayerDisplay.java": {
       "bytes": 7437,
@@ -6938,8 +6934,8 @@
       "sha256": "7f2578e93ec17c4c493917eb9ac11270878687f0db40192f3cd92926d9f26b47"
     },
     "src/main/java/com/solegendary/reignofnether/items/ItemServerEvents.java": {
-      "bytes": 14770,
-      "sha256": "8033dff1e1f4d966028ebe195238d18ba3e811048ebbe12b823160fe636e2939"
+      "bytes": 17109,
+      "sha256": "b0f71189f13c6ae95fc1c3efd68404223a8b838550198336e18f8ce9d407f0b9"
     },
     "src/main/java/com/solegendary/reignofnether/items/ItemServerboundPacket.java": {
       "bytes": 8325,
@@ -7509,6 +7505,10 @@
       "bytes": 1464,
       "sha256": "d1655cb21fc04b3877eb35c1331bad687e78b880e8f93597be9b5f18546da8ef"
     },
+    "src/main/java/com/solegendary/reignofnether/player/MatchResetPolicy.java": {
+      "bytes": 1038,
+      "sha256": "2c6a5c16350fbacb232417078131fa918ee43dcfbffb52a629d414d10a7924b5"
+    },
     "src/main/java/com/solegendary/reignofnether/player/MatchResultTeams.java": {
       "bytes": 1383,
       "sha256": "f9dfe4c81ffefe097bc97c811287743a55d5fadf9fd121c5675fcc7b447f22be"
@@ -7522,36 +7522,36 @@
       "sha256": "3a13590cce58424f5898e53405f80ce0b8d2b634973c39cc8a2d513101d35bc5"
     },
     "src/main/java/com/solegendary/reignofnether/player/PlayerClientEvents.java": {
-      "bytes": 23674,
-      "sha256": "92fb9a026ea07754336e097c15036aa34aef3fe343832baaf01290b438c9f21a"
+      "bytes": 24366,
+      "sha256": "0167c5e694bb1aa802644f578455b90f0e1f1845710f93670f5c5cd94fda5f08"
     },
     "src/main/java/com/solegendary/reignofnether/player/PlayerClientboundPacket.java": {
-      "bytes": 10534,
-      "sha256": "79d6ccd67f9ac250d6369365d4dd59e6743b58984d655a4f83ac24fe390dec09"
+      "bytes": 11533,
+      "sha256": "7eb9f50b0dc7cee82184256186f862f09d701c29acea099e0f63265ad33241c3"
     },
     "src/main/java/com/solegendary/reignofnether/player/PlayerColors.java": {
       "bytes": 11966,
       "sha256": "03ff51fc8f30e96cb84fc2fe275d89cfadf1a257571b7c275e8a1bbf74d2b49b"
     },
     "src/main/java/com/solegendary/reignofnether/player/PlayerServerEvents.java": {
-      "bytes": 73070,
-      "sha256": "78e49d4c7045d0f7727da3d04f34cab3ec7f7d01b683de2f465165ad305dfcbc"
+      "bytes": 77551,
+      "sha256": "0785761253cb74d5ecf762f5403ffe63ff116ed4dd23f387f3d15c028d675aff"
     },
     "src/main/java/com/solegendary/reignofnether/player/PlayerServerboundPacket.java": {
       "bytes": 16730,
       "sha256": "f59d293cf82c14b95eb3eb1a812122d0abc46cb68e2bd86d0be72ddde86bd2f3"
     },
     "src/main/java/com/solegendary/reignofnether/player/RTSPlayer.java": {
-      "bytes": 8570,
-      "sha256": "6ba2c81c6f4af40cd9b86d883999c13857384727286a11b19e4bf9fd91b1a851"
+      "bytes": 8749,
+      "sha256": "cbab9e5cfc410de326479f9dbe8bdc76e27bff627892de9c0ec1543eb644498a"
     },
     "src/main/java/com/solegendary/reignofnether/player/RTSPlayerSaveData.java": {
-      "bytes": 7961,
-      "sha256": "b534b857dadad56078c568251a22506cd3369169d79cb49d03d998323b7bec4f"
+      "bytes": 10022,
+      "sha256": "b8189976cefa99c06afaf5bd9bcffbfdc30d3320a87d478755b7a1442ef48d61"
     },
     "src/main/java/com/solegendary/reignofnether/player/RTSPlayerScores.java": {
-      "bytes": 2253,
-      "sha256": "cb4bb9f3b2d8b9e9b46bd3332d4dcf58075169b02e53542a1130b00a75a30e5c"
+      "bytes": 2659,
+      "sha256": "20de43389a6f40c4ef856562fdadb3f78ef148609a2f4250a4a4ba1e486b8cd8"
     },
     "src/main/java/com/solegendary/reignofnether/player/RTSPlayerScoresCommand.java": {
       "bytes": 3327,
@@ -7560,6 +7560,10 @@
     "src/main/java/com/solegendary/reignofnether/player/RTSPlayerScoresEnum.java": {
       "bytes": 289,
       "sha256": "8b5affdaacd89a03fc3a34e4deb9a0cc530f70afc40db0aa336c00879ca68932"
+    },
+    "src/main/java/com/solegendary/reignofnether/player/ReadiedStart.java": {
+      "bytes": 13471,
+      "sha256": "ad6c8a405db06656daed67b175777c27512fca4d1ba153db1c87ebf8314a2417"
     },
     "src/main/java/com/solegendary/reignofnether/player/ServerPlayerRequest.java": {
       "bytes": 1176,
@@ -7615,7 +7619,7 @@
     },
     "src/main/java/com/solegendary/reignofnether/registrars/PacketHandler.java": {
       "bytes": 32554,
-      "sha256": "6be40f37e058541fb7fe986cc64aaa8da44cc010df1ed58e0ee1a9a68fe529ea"
+      "sha256": "bda1d019c5bc9734464fb55702804b2ccd6fc77ed82a53b3af335842928c7959"
     },
     "src/main/java/com/solegendary/reignofnether/registrars/ParticleRegistrar.java": {
       "bytes": 2912,
@@ -7674,8 +7678,8 @@
       "sha256": "4cb017ba8e3594e390f5e9a9460648ce46456006d05c90d6552dd25460d9d458"
     },
     "src/main/java/com/solegendary/reignofnether/research/economy/EconomyIncomeStatistics.java": {
-      "bytes": 1225,
-      "sha256": "a1b4e9cbacddd23d9a2bc86357c5a5b48b7473111b7fccf4ffa80ecf661ecb73"
+      "bytes": 1086,
+      "sha256": "c1f8b4cdf0a4a1a4b02c57a60d960409189381c89ffaddcf250b7a60b1e932ef"
     },
     "src/main/java/com/solegendary/reignofnether/research/economy/EconomyRequestSessions.java": {
       "bytes": 1676,
@@ -7710,8 +7714,8 @@
       "sha256": "507ea597258733cfe4f358281793da8e255e9ec32509eb78125dd42fcfe3d7fd"
     },
     "src/main/java/com/solegendary/reignofnether/research/economy/ReceiptBackedResearchItem.java": {
-      "bytes": 7059,
-      "sha256": "12e61f1d2c6dd6e3435a8823d1063035085188fccd5ee952c0d3595675e2da7c"
+      "bytes": 7650,
+      "sha256": "e27b6b6b99ed9dbbfdb1d824a43db8ff81cfacae83860c5ab7dbf0109bbc7bdb"
     },
     "src/main/java/com/solegendary/reignofnether/research/economy/ReceiptResearchBinding.java": {
       "bytes": 305,
@@ -7730,8 +7734,8 @@
       "sha256": "a1e9c838c6b470d04f90bb541a4b6a9054e286278e5432ac40a5ae288477ea1e"
     },
     "src/main/java/com/solegendary/reignofnether/research/economy/ResearchQueueClient.java": {
-      "bytes": 8651,
-      "sha256": "b60792d385475d929913d21d3825330421879055393ac48ea770bc1c0fbdb13b"
+      "bytes": 9116,
+      "sha256": "4614c3373511fdac41b827a87bbd725d07180741cfe800a53854c7d156d5e47d"
     },
     "src/main/java/com/solegendary/reignofnether/research/economy/ResearchQueueClientboundPacket.java": {
       "bytes": 4819,
@@ -8038,8 +8042,8 @@
       "sha256": "25cf46a66becce9be3f7d100008ada56e127c51c62aeb9582a64f2192f033450"
     },
     "src/main/java/com/solegendary/reignofnether/resources/Resources.java": {
-      "bytes": 7675,
-      "sha256": "6ec6380d41f72777ba87073ba06d853cef6fa751aa89aebca28df546ac426c84"
+      "bytes": 8642,
+      "sha256": "2ef94d7a2eb2ea69805b4300715a4f50406680340dd49d2a83bd3ac5d696560f"
     },
     "src/main/java/com/solegendary/reignofnether/resources/ResourcesAction.java": {
       "bytes": 559,
@@ -8064,6 +8068,10 @@
     "src/main/java/com/solegendary/reignofnether/resources/ResourcesServerboundPacket.java": {
       "bytes": 3435,
       "sha256": "d5ad357c40605dbacb6dd1edff18abb9d509865de83ac09b26310c297cdc9c8a"
+    },
+    "src/main/java/com/solegendary/reignofnether/resources/UnitCargoSaveData.java": {
+      "bytes": 2573,
+      "sha256": "b776f6adda77e31c64fc6aeb1a774f376cc75900c7c3d1d55dc39b161d2d2182"
     },
     "src/main/java/com/solegendary/reignofnether/resources/kill/ConfirmedRtsKillEvent.java": {
       "bytes": 3863,
@@ -8214,8 +8222,8 @@
       "sha256": "c00816e6ee93ab9be0c7a06c235f0c510051528e48d9cdd1919830db5f6d6c29"
     },
     "src/main/java/com/solegendary/reignofnether/scenario/ScenarioClientEvents.java": {
-      "bytes": 15724,
-      "sha256": "29197f128efb523f1c69901c74357cbdf9d4754662aac5055dddefefda97d9a9"
+      "bytes": 15589,
+      "sha256": "ef2d55bacb8683f1956ce86bdf069712e228c148e63d2ddd6644ba98d54833e6"
     },
     "src/main/java/com/solegendary/reignofnether/scenario/ScenarioClientboundPacket.java": {
       "bytes": 1987,
@@ -8286,12 +8294,12 @@
       "sha256": "f4d1b9bf48a5ed4b5fee331207fc9f28a8e407fa3e7c2c2fd18ee4c865000fb9"
     },
     "src/main/java/com/solegendary/reignofnether/startpos/StartPosSaveData.java": {
-      "bytes": 2555,
-      "sha256": "f8697f798a9d29198d66424b30edef03438473563d731812f2b6edfd949537a3"
+      "bytes": 2749,
+      "sha256": "04419faec7b1648dce3a10c16721e87e0b3c240618edd26b371247638236610f"
     },
     "src/main/java/com/solegendary/reignofnether/startpos/StartPosServerEvents.java": {
-      "bytes": 14656,
-      "sha256": "88f6a881d17302cb3360ab20bc894c7a6f2c2b1289571512ff463ac0f7a68acf"
+      "bytes": 16834,
+      "sha256": "5e51f76d5a8fef8b08c127225d91dd86ce62daadcc57aee6328394053b499ec1"
     },
     "src/main/java/com/solegendary/reignofnether/startpos/StartPosServerboundPacket.java": {
       "bytes": 6952,
@@ -8302,20 +8310,24 @@
       "sha256": "f6aa714e2c7d318460be9af8591b5b166e66fbc510f871b7a952ffbf33334dd3"
     },
     "src/main/java/com/solegendary/reignofnether/survival/SurvivalClientEvents.java": {
-      "bytes": 14046,
-      "sha256": "c6ab7290784728226a2f37b4c5240d709de167ed3d7dee16414bec0be5528049"
+      "bytes": 14441,
+      "sha256": "3c45da772e11ba20549a10c0fff25615e619952e4261e02f393eac92aa4a3679"
     },
     "src/main/java/com/solegendary/reignofnether/survival/SurvivalClientboundPacket.java": {
       "bytes": 2765,
       "sha256": "e8cb6708b7fde8b088990b84b4d36fb3f5176aff0f688028acd5bb6a9d2ef58b"
     },
+    "src/main/java/com/solegendary/reignofnether/survival/SurvivalResult.java": {
+      "bytes": 1648,
+      "sha256": "ca3e57fea6b6b251ca04f1521639cf9ddc0995cb2c00d17c689465c2164cc344"
+    },
     "src/main/java/com/solegendary/reignofnether/survival/SurvivalSaveData.java": {
-      "bytes": 4874,
-      "sha256": "54e4fc4a42e483efb361fc32b6fbf00918faf51268962ca953121b0c3804873f"
+      "bytes": 7040,
+      "sha256": "4f7c8d358940d6e141b506803283956d5f1f86610ad7312a8cb6afe38cac4729"
     },
     "src/main/java/com/solegendary/reignofnether/survival/SurvivalServerEvents.java": {
-      "bytes": 21087,
-      "sha256": "24042d881fde6294af2ebe79406ef935a7339affc5d415768c9c80a3ebbb5b28"
+      "bytes": 32018,
+      "sha256": "f12063242ac49f2b7de16c2cade57aeadd6070dba1f58a1f27d78d3e2fdb234f"
     },
     "src/main/java/com/solegendary/reignofnether/survival/SurvivalServerboundPacket.java": {
       "bytes": 2672,
@@ -8330,8 +8342,8 @@
       "sha256": "baf4981860b964fc08a3be3944bd4c88529c152674a24bd4690dbceb6c0cb237"
     },
     "src/main/java/com/solegendary/reignofnether/survival/WaveCursor.java": {
-      "bytes": 1186,
-      "sha256": "ab9d553a62d40d841ee87611aea018ef1da67e233c71ac364b7d663d5b00b082"
+      "bytes": 1459,
+      "sha256": "39fc81abfee05298de8d44b5b511b0e4fee7743ca13cdb52183ead3936f9e50a"
     },
     "src/main/java/com/solegendary/reignofnether/survival/WaveDifficulty.java": {
       "bytes": 138,
@@ -8421,6 +8433,10 @@
       "bytes": 1605,
       "sha256": "0bfdf845e10d58acc47270168b89e56ee2cd2986389e609dab1ce87d80169f06"
     },
+    "src/main/java/com/solegendary/reignofnether/unit/ConfirmedLivingDeathEvent.java": {
+      "bytes": 883,
+      "sha256": "2c01235f7837f5128af117cc4ab46ca4edba6928e3631f29c8286e332f988a5e"
+    },
     "src/main/java/com/solegendary/reignofnether/unit/EnemySearchBehaviour.java": {
       "bytes": 169,
       "sha256": "2505e705266324c90555160ac730bbb2b774412eb573336a38e046d8c65ad67c"
@@ -8466,8 +8482,8 @@
       "sha256": "acf20d7eb25d850da60191a0fc2dc02cd9b16065cead4d3e80b08d04bbe4cd8a"
     },
     "src/main/java/com/solegendary/reignofnether/unit/UnitActionItem.java": {
-      "bytes": 32483,
-      "sha256": "6df14a01164f699ae541d1dc0374f23d3a3800dc7b08390a4ba4551e1987f2e5"
+      "bytes": 32484,
+      "sha256": "cc631a1303bd3e290af55f1d9fe7da2ca84a94285f848e667017037cb79d7a4f"
     },
     "src/main/java/com/solegendary/reignofnether/unit/UnitAnimationAction.java": {
       "bytes": 368,
@@ -8482,8 +8498,8 @@
       "sha256": "72170ff33cbda9141d23c1b64738a70cb75bb2783f34709679121fb561b5f964"
     },
     "src/main/java/com/solegendary/reignofnether/unit/UnitServerEvents.java": {
-      "bytes": 87163,
-      "sha256": "a5709407abb2052a522d0ab137e3ac4da3df931f7878402492d90e9ecf1bc120"
+      "bytes": 89413,
+      "sha256": "4bf880a0a914b7fc1472a68540998bd9cb2b402749c89e4325a15562ceb8a76a"
     },
     "src/main/java/com/solegendary/reignofnether/unit/UnitStatType.java": {
       "bytes": 153,
@@ -8546,8 +8562,8 @@
       "sha256": "1da1ebb0d097bb8b6b8f4bced859af3961bcaad99c2ed6dca406cef41a254c82"
     },
     "src/main/java/com/solegendary/reignofnether/unit/goals/GatherResourcesGoal.java": {
-      "bytes": 32139,
-      "sha256": "c35b444bf32a42e84852dd84529fcfdba758df8e3aeb9dc4b87ed506c809dbbc"
+      "bytes": 32512,
+      "sha256": "45280048811599f9afefa026e4d23895c990509f9689260940098afaddf0f31f"
     },
     "src/main/java/com/solegendary/reignofnether/unit/goals/GenericTargetedSpellGoal.java": {
       "bytes": 11117,
@@ -8606,8 +8622,8 @@
       "sha256": "2d896ddee2923532ca9eb23b6f6b298d32e6e688cdb894e8757f624b3b98be93"
     },
     "src/main/java/com/solegendary/reignofnether/unit/goals/ReturnResourcesGoal.java": {
-      "bytes": 6125,
-      "sha256": "dd4569b8b06162f4a7908d6b615e69e8e9824d51405bb1f0d998854d40a63166"
+      "bytes": 9616,
+      "sha256": "e8fe95e9fee3f02d29cb10761689da982a1d7b90d3f258999c7077d26dbae3ba"
     },
     "src/main/java/com/solegendary/reignofnether/unit/goals/SelectedTargetGoal.java": {
       "bytes": 2183,
@@ -8650,8 +8666,8 @@
       "sha256": "154fb97f2f28e69a09a74c9cd76f47206d40a716d4f12833a38902a726979895"
     },
     "src/main/java/com/solegendary/reignofnether/unit/interfaces/AttackerUnit.java": {
-      "bytes": 25110,
-      "sha256": "a7f6fc26c668ad0c71f16530ee36ab0561ed55203c57f442385702aed748d93f"
+      "bytes": 25541,
+      "sha256": "de04c5bc6213d4e3db97d755f5d366a4e52ffd57a20da89addbc4ed72a373672"
     },
     "src/main/java/com/solegendary/reignofnether/unit/interfaces/CollisionFlyingWorker.java": {
       "bytes": 432,
@@ -8674,12 +8690,12 @@
       "sha256": "9864e48a363bd240674b617851265f53fd8c1cfc99f2ae32c62893d3ee9afd6b"
     },
     "src/main/java/com/solegendary/reignofnether/unit/interfaces/Unit.java": {
-      "bytes": 50262,
-      "sha256": "c0141f8fa1191519977875580aff822c68b3ac5c48517474888b36e636ede5c3"
+      "bytes": 50612,
+      "sha256": "7064da61eeacd67e89abafd8104c888dc8cc8e571b8cff4db4d7a708e019589a"
     },
     "src/main/java/com/solegendary/reignofnether/unit/interfaces/WorkerUnit.java": {
-      "bytes": 7059,
-      "sha256": "6e9def3be7633e9a1f227024489918cd436b073cae0be10b7382a47617c134ef"
+      "bytes": 7213,
+      "sha256": "ca60e561706f97628ec3c7cc479dee2c2861e050f2c0eed811c2fb6c5f22bd0d"
     },
     "src/main/java/com/solegendary/reignofnether/unit/modelling/animations/EnchanterAnimations.java": {
       "bytes": 76771,
@@ -8958,8 +8974,8 @@
       "sha256": "a254ff85e6d6fce042f398f69be2ddade82344647c5210b21f24b7eb8a204803"
     },
     "src/main/java/com/solegendary/reignofnether/unit/packets/UnitSyncClientboundPacket.java": {
-      "bytes": 8965,
-      "sha256": "cd46024a24b9a0b242d218c93d235f9d7a3c11691ead68589df2d255255b665a"
+      "bytes": 10006,
+      "sha256": "713933fef95b1feacbc73f698af7da57b71a23f36e45f75317fc9bfd441a055a"
     },
     "src/main/java/com/solegendary/reignofnether/unit/packets/UnitSyncMobEffectsClientboundPacket.java": {
       "bytes": 2794,
@@ -9442,8 +9458,8 @@
       "sha256": "8994ef91fbf7bc0e7cb085a0df4b4ce2a8a8f101051712641c2c469101e69b42"
     },
     "src/main/java/com/solegendary/reignofnether/unit/units/villagers/VillagerCargoSaveData.java": {
-      "bytes": 2720,
-      "sha256": "1f0cc1832066c199021fff8fbe711c6a400c6b247cf1e204eb3de988e8b212d9"
+      "bytes": 939,
+      "sha256": "12e71f39ad2df9b8eba83962165af97fb60f48365dfbfeeb408d41fc750c60d5"
     },
     "src/main/java/com/solegendary/reignofnether/unit/units/villagers/VillagerProd.java": {
       "bytes": 4377,
@@ -9494,8 +9510,8 @@
       "sha256": "447b66a463bf43343641efc057f8098f6850bf5598758acc9a3effc696a59b81"
     },
     "src/main/java/com/solegendary/reignofnether/util/MiscUtil.java": {
-      "bytes": 46249,
-      "sha256": "6f8ed64eb5a271c9b3db773854ddf1d85b4664d2b61c5191fd4c0d73f019a846"
+      "bytes": 46679,
+      "sha256": "51ba95ac68b31aa87674ff98b95773594d25b08a28baeea11cb3944b91c19a89"
     },
     "src/main/java/com/solegendary/reignofnether/util/MyMath.java": {
       "bytes": 8790,
@@ -9610,12 +9626,12 @@
       "sha256": "3530cafc505fe8267e4b7122479252d63e27caa849cfd084866d52028ffcb2e9"
     },
     "src/main/resources/assets/reignofnether/blockstates/bogged_skull.json": {
-      "bytes": 746,
-      "sha256": "cd3afb6f9e8a57051458e477f01c28fc9c2d4502b29e8ec2a8497e375420474b"
+      "bytes": 90,
+      "sha256": "50af4f74d2518508b2118ab2d9c41ed8fc398eedaf88b0a0c842cc152d1cfd64"
     },
     "src/main/resources/assets/reignofnether/blockstates/bogged_wall_skull.json": {
-      "bytes": 786,
-      "sha256": "3c247bff7dfbef4d7c7c469c3898439835739f3aa057f6dc6c6885f0dff479e5"
+      "bytes": 747,
+      "sha256": "aa1a0c7da0647e3655ba723e83d187c6a57bb05ca8496cf94346ce2544359c08"
     },
     "src/main/resources/assets/reignofnether/blockstates/decayable_nether_wart_block.json": {
       "bytes": 90,
@@ -9626,12 +9642,12 @@
       "sha256": "8e0d7cd79646cb062af6663a24b27db10b39da1c498ed121c575507a9296a346"
     },
     "src/main/resources/assets/reignofnether/blockstates/drowned_head.json": {
-      "bytes": 786,
-      "sha256": "151d989ff6765e13bd5dca0781823b341a4069cbf9938b18c27576b7bf1ea719"
+      "bytes": 90,
+      "sha256": "97dea6917f2678ed99cfb0af3da496face383c143328bdf19068d6313e3f59dd"
     },
     "src/main/resources/assets/reignofnether/blockstates/drowned_wall_head.json": {
-      "bytes": 746,
-      "sha256": "dcd90db92ecb76ec6fc7bcfb0d78dd272caaf9360d350cfcf0b2cc9d6f780e95"
+      "bytes": 747,
+      "sha256": "3eb45d7bdfb9be8c53e1197231f7cffa9c0ffcf4a85574a1af718a2370aae2c1"
     },
     "src/main/resources/assets/reignofnether/blockstates/falling_acacia_log.json": {
       "bytes": 290,
@@ -9690,12 +9706,12 @@
       "sha256": "693eb602fbfef156ecb811836db6a971bb2828556fdedcfb563082cc5e775753"
     },
     "src/main/resources/assets/reignofnether/blockstates/husk_head.json": {
-      "bytes": 722,
-      "sha256": "48c8aa82d1c94ce9ddcf0823207ac2303983acf2e54dfe2125fcd98e20c6781d"
+      "bytes": 87,
+      "sha256": "335abe0a18ed051986302807e03b4dec61fc87888351ecbdc9fa5984ce604d17"
     },
     "src/main/resources/assets/reignofnether/blockstates/husk_wall_head.json": {
-      "bytes": 762,
-      "sha256": "de0ab7eb37e57454a7f50762bde24bb36c27b56737724de878bec8000111400a"
+      "bytes": 723,
+      "sha256": "7ab46295689a7ec0e0f910f4e61d6d98d9317927e20170ed384711ca2f29b26d"
     },
     "src/main/resources/assets/reignofnether/blockstates/production_spawn_block.json": {
       "bytes": 117,
@@ -9774,12 +9790,12 @@
       "sha256": "63ea68aa8c357e5f17999d5104a8dce09057fa26d5724fef5e2d921212acf6e7"
     },
     "src/main/resources/assets/reignofnether/blockstates/stray_skull.json": {
-      "bytes": 738,
-      "sha256": "dfa38bee5a644d5e8d9513538baf9afe1ddb52c1cbe9f10c615f2293c22dd648"
+      "bytes": 89,
+      "sha256": "fbe46c45a523876004b74e5dfc4b51c88ca6d38c050ad167e35910d644c7e1f3"
     },
     "src/main/resources/assets/reignofnether/blockstates/stray_wall_skull.json": {
-      "bytes": 778,
-      "sha256": "1c45bd77637b18ebba384070918e94588dbe51e6225f9fa60d4ff4a043b3ee01"
+      "bytes": 739,
+      "sha256": "7dd9c0ea4c2802a05b02d2d71083a5ee19f2de8634167eb9ab1ab54125a8e1e3"
     },
     "src/main/resources/assets/reignofnether/blockstates/temporary_walkable_magma_block.json": {
       "bytes": 84,
@@ -9802,88 +9818,88 @@
       "sha256": "872c708ea676784b7b88a9e45af056632c403a1b1ce037f3b5069d4f2847fe4c"
     },
     "src/main/resources/assets/reignofnether/lang/da_dk.json": {
-      "bytes": 64621,
-      "sha256": "dbd944a6c02db7e5ab7c4aa47ab8d5189f42fea04acbc60ba5ac7967b59c5490"
+      "bytes": 64686,
+      "sha256": "8735ff06e45690bad6af179e3288c09a68e5a60f675f821f0c6f44e2226451f7"
     },
     "src/main/resources/assets/reignofnether/lang/en_us.json": {
-      "bytes": 193025,
-      "sha256": "fc15c7035e1bdbb5edd1555b215bcac6eaf80863a2d7f7a1b1f60c3952e7b137"
+      "bytes": 194405,
+      "sha256": "028bb674f568a67e26a163388caab6e1aeab8f4547812b930d688f0fb17cc8e0"
     },
     "src/main/resources/assets/reignofnether/lang/es_ar.json": {
-      "bytes": 170190,
-      "sha256": "045dc1ed75aceb7ca003b3afa3ed5097bb142668d8a03bc1282a41ad11264d7d"
+      "bytes": 170496,
+      "sha256": "f04c3e9dfe88e64dc49bdbe46e1a4cdcbaf16c59581e33ffcdf37d45c5ffbe93"
     },
     "src/main/resources/assets/reignofnether/lang/es_cl.json": {
-      "bytes": 170190,
-      "sha256": "045dc1ed75aceb7ca003b3afa3ed5097bb142668d8a03bc1282a41ad11264d7d"
+      "bytes": 170496,
+      "sha256": "f04c3e9dfe88e64dc49bdbe46e1a4cdcbaf16c59581e33ffcdf37d45c5ffbe93"
     },
     "src/main/resources/assets/reignofnether/lang/es_ec.json": {
-      "bytes": 170190,
-      "sha256": "045dc1ed75aceb7ca003b3afa3ed5097bb142668d8a03bc1282a41ad11264d7d"
+      "bytes": 170496,
+      "sha256": "f04c3e9dfe88e64dc49bdbe46e1a4cdcbaf16c59581e33ffcdf37d45c5ffbe93"
     },
     "src/main/resources/assets/reignofnether/lang/es_es.json": {
-      "bytes": 170190,
-      "sha256": "045dc1ed75aceb7ca003b3afa3ed5097bb142668d8a03bc1282a41ad11264d7d"
+      "bytes": 170496,
+      "sha256": "f04c3e9dfe88e64dc49bdbe46e1a4cdcbaf16c59581e33ffcdf37d45c5ffbe93"
     },
     "src/main/resources/assets/reignofnether/lang/es_mx.json": {
-      "bytes": 170190,
-      "sha256": "045dc1ed75aceb7ca003b3afa3ed5097bb142668d8a03bc1282a41ad11264d7d"
+      "bytes": 170496,
+      "sha256": "f04c3e9dfe88e64dc49bdbe46e1a4cdcbaf16c59581e33ffcdf37d45c5ffbe93"
     },
     "src/main/resources/assets/reignofnether/lang/es_uy.json": {
-      "bytes": 170190,
-      "sha256": "045dc1ed75aceb7ca003b3afa3ed5097bb142668d8a03bc1282a41ad11264d7d"
+      "bytes": 170496,
+      "sha256": "f04c3e9dfe88e64dc49bdbe46e1a4cdcbaf16c59581e33ffcdf37d45c5ffbe93"
     },
     "src/main/resources/assets/reignofnether/lang/es_ve.json": {
-      "bytes": 170190,
-      "sha256": "045dc1ed75aceb7ca003b3afa3ed5097bb142668d8a03bc1282a41ad11264d7d"
+      "bytes": 170496,
+      "sha256": "f04c3e9dfe88e64dc49bdbe46e1a4cdcbaf16c59581e33ffcdf37d45c5ffbe93"
     },
     "src/main/resources/assets/reignofnether/lang/fa_ir.json": {
-      "bytes": 155516,
-      "sha256": "925ef6ba1ba827ae412276ae667a50f0a328bae528f66c1013576555f1ac982b"
+      "bytes": 155941,
+      "sha256": "3f6db95fa2d75f8ccbf7a340186ec94b3c75e2bc32f56bea548f544adb45a899"
     },
     "src/main/resources/assets/reignofnether/lang/fr_fr.json": {
-      "bytes": 134961,
-      "sha256": "1664d128c40969db8f15ad69d22f12c28ad9802f2d19437b4b4985f4e94c96f5"
+      "bytes": 135285,
+      "sha256": "0af5f20da5fb0ea1f9906ad7df9c0d91a8b2b819fd4ac631a30752719a62dca6"
     },
     "src/main/resources/assets/reignofnether/lang/ja_jp.json": {
       "bytes": 2980,
       "sha256": "1280d0b4569178638df62cdd873966e3fe396b25b43c5514499717da2d42c72f"
     },
     "src/main/resources/assets/reignofnether/lang/ko_kr.json": {
-      "bytes": 117404,
-      "sha256": "7996ca3c1e16149e1c39566e520eab928f4aecf392d379f3d1ca1b8dbdf99fd5"
+      "bytes": 117790,
+      "sha256": "e4db950c1fb4f54ae20de433fd3f1b153f2b31eb895b0d31916e3eabafae12eb"
     },
     "src/main/resources/assets/reignofnether/lang/pl_pl.json": {
-      "bytes": 78717,
-      "sha256": "9db1750f0342ccd402304f9fa00d33b2d02a4bc82826860507d0aefc25cb7e95"
+      "bytes": 78776,
+      "sha256": "e110f908344f6f9814b1ab57cd1029b227cd55a3bf2c8983fcb93542758cbfb8"
     },
     "src/main/resources/assets/reignofnether/lang/pt_br.json": {
-      "bytes": 70146,
-      "sha256": "8fc24688c120edce5674d9b2c89805673f27e38b3919797c5361839a541d9940"
+      "bytes": 70218,
+      "sha256": "c77495c478aec368ad725481bfb1489581fe1c5cbed2fac6b3a7c551db25c59b"
     },
     "src/main/resources/assets/reignofnether/lang/ru_ru.json": {
-      "bytes": 256214,
-      "sha256": "adbe067070241d6ba66eb6d74e671b8afce91b1aff1b4b2996c5a1e59ede7277"
+      "bytes": 256614,
+      "sha256": "de30faa78bb4729f633b3b1e47f72cb83b34f91c763773d17f67ce739d02e415"
     },
     "src/main/resources/assets/reignofnether/lang/tr_tr.json": {
-      "bytes": 112109,
-      "sha256": "1afd18353f62950dbbb5260a0b7e2275da8805ceb7acfbeef672b099ddacca8c"
+      "bytes": 112394,
+      "sha256": "2a11e7ab920d809d2a596dc8f9ccb4dd1fe1830a950068fa46383553cb5e2c3f"
     },
     "src/main/resources/assets/reignofnether/lang/uk_ua.json": {
-      "bytes": 139216,
-      "sha256": "da4262def8de18d4e174d04ca46b7ea6862166c5b53ede1e1044d274d63b8d40"
+      "bytes": 139615,
+      "sha256": "d777bd964ca7f3a9d12b7febd6679848ccc384efe2836caa483ab077f13569fd"
     },
     "src/main/resources/assets/reignofnether/lang/vi_vn.json": {
-      "bytes": 126042,
-      "sha256": "1e6c2e87e2b332cf357d04a89444b6cab20ffb859f7651950500e55c85a5c413"
+      "bytes": 126363,
+      "sha256": "ca2088944ec2dd0c13f681f4c5da18a7e0c26a345db6cd1121cd610b559417c9"
     },
     "src/main/resources/assets/reignofnether/lang/zh_cn.json": {
-      "bytes": 196099,
-      "sha256": "2b3b5f8a9a5119a3207746f233e16eca2cd4326ec2b456a761c8410ca6206cf8"
+      "bytes": 201113,
+      "sha256": "18604c10da2aa085f9d1acf52383934089782bc8b27048dd4d4c395bf14dcd90"
     },
     "src/main/resources/assets/reignofnether/lang/zh_tw.json": {
-      "bytes": 109664,
-      "sha256": "9b3b37c4bceab1e9e29a96e6b5196db1eaed9cb1470f11c5c17d67b47607dc39"
+      "bytes": 109894,
+      "sha256": "5c8292dcb74129de435b2fb75df12f215cf366f154e57ac818d796c191598725"
     },
     "src/main/resources/assets/reignofnether/models/block/bogged_skull.json": {
       "bytes": 41,
@@ -13345,6 +13361,10 @@
       "bytes": 3162,
       "sha256": "75687a286ab69a8394221ceeb463310d0981d73ea7a7cb47888e27ffb09743c0"
     },
+    "src/test/java/com/solegendary/reignofnether/alliance/AllianceRosterTest.java": {
+      "bytes": 1854,
+      "sha256": "8cf7bb7709c7c7c76fe3e2d4b1521954d1fa1d0c61c1c53a74766359eb5c9f12"
+    },
     "src/test/java/com/solegendary/reignofnether/blocks/ChunkLifecycleWiringTest.java": {
       "bytes": 1726,
       "sha256": "f358ae0e83ff227db382690d7330777f3581452030549fa3c735009ec6b10129"
@@ -13406,8 +13426,8 @@
       "sha256": "9a77414abde4695db8291e26e99b2ee7037fd701a2345535f4bcc39c7d46ff6b"
     },
     "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java": {
-      "bytes": 3488,
-      "sha256": "681fbf2633ed891706071de882935f77a69c13a04364f01b71d21d0a578abd6f"
+      "bytes": 6509,
+      "sha256": "cc5503c977b699d7d01ed3c76d5794f099ad9e6ad4a9dfc3fba916f9b08a6867"
     },
     "src/test/java/com/solegendary/reignofnether/commands/CommandFeedbackWiringTest.java": {
       "bytes": 2228,
@@ -13416,6 +13436,10 @@
     "src/test/java/com/solegendary/reignofnether/cursor/CursorSelectionAabbTest.java": {
       "bytes": 1453,
       "sha256": "c48f1dee4058b3f87c9bf14fce523d687d1f8126259a69420b6954f39c86861b"
+    },
+    "src/test/java/com/solegendary/reignofnether/cursor/PressTargetSamplerTest.java": {
+      "bytes": 1433,
+      "sha256": "85a035b4edec0d7755c9cafd3a09ca760c4b0420a15b4830e4fed1cc940c415a"
     },
     "src/test/java/com/solegendary/reignofnether/faction/RandomStartFactionSelectionTest.java": {
       "bytes": 5520,
@@ -13450,8 +13474,8 @@
       "sha256": "5dbcf85d615f1ed4893895aa528fe86e57b14eccbeac874f78602d4b758505cc"
     },
     "src/test/java/com/solegendary/reignofnether/matchstart/MatchResultsPresentationTest.java": {
-      "bytes": 7297,
-      "sha256": "fe6907aa617830acadf765f4e44c6faa51b14ceaa932edd614e69f7c6cefec9b"
+      "bytes": 7308,
+      "sha256": "089c46eac770adb9132e95447ca40e9a62720bf227d95cc53e3fc8fd50dda4a8"
     },
     "src/test/java/com/solegendary/reignofnether/matchstart/MatchStartInputPolicyTest.java": {
       "bytes": 2945,
@@ -13472,6 +13496,14 @@
     "src/test/java/com/solegendary/reignofnether/player/MatchResultTeamsTest.java": {
       "bytes": 2539,
       "sha256": "f3075976af88a3138fcbac2cb691c39eb9494abda78c1ae8ab466501bf16e6b3"
+    },
+    "src/test/java/com/solegendary/reignofnether/player/Repair3ScenarioPolicyTest.java": {
+      "bytes": 300,
+      "sha256": "72a69d1171afef8d53de0dc4c8414e9bad37bb3d96e14734451d274266352b2f"
+    },
+    "src/test/java/com/solegendary/reignofnether/player/Repair3ScenarioRulesProof.java": {
+      "bytes": 3333,
+      "sha256": "0b5265453e39a663dec5e5bbc92e8696f85d05da7f3841a244aa4c5c8f4d0021"
     },
     "src/test/java/com/solegendary/reignofnether/research/economy/EconomyActionClientJUnitTest.java": {
       "bytes": 6100,
@@ -13541,6 +13573,10 @@
       "bytes": 2329,
       "sha256": "a5d571051b8dfff79f878a2c22d83b9380186981e76751cf2d3af2df50b86c9b"
     },
+    "src/test/java/com/solegendary/reignofnether/startpos/LobbySessionWiringTest.java": {
+      "bytes": 2333,
+      "sha256": "ac4dd94c3359b8409f68c12ac95434226c3c9474a0b7cac2ffba64569b20b57b"
+    },
     "src/test/java/com/solegendary/reignofnether/startpos/LobbySnapshotTest.java": {
       "bytes": 2899,
       "sha256": "8e9339934013a2885ba03854a228aa47522943de14c493f2a11536cabf22200b"
@@ -13548,6 +13584,10 @@
     "src/test/java/com/solegendary/reignofnether/startpos/StartPosResetWiringTest.java": {
       "bytes": 1115,
       "sha256": "47837bd607d1837bd26b94f0470c58f663e05ef7db68cf4b69e91f38baa0e67a"
+    },
+    "src/test/java/com/solegendary/reignofnether/survival/SurvivalSettlementPolicyTest.java": {
+      "bytes": 3626,
+      "sha256": "c6f552a65c3cdfeb863d5eb25afdb69c522040ba294c6a81d007a1a85edfe2bd"
     },
     "src/test/java/com/solegendary/reignofnether/survival/SurvivalWaveWiringTest.java": {
       "bytes": 3533,
@@ -13589,9 +13629,25 @@
       "bytes": 826,
       "sha256": "411f17aa8053dc66a01740d590f02750cd9f3a768b9ff66e3d9a7bebbc3d651b"
     },
+    "src/test/scripts/fixtures/LogisticsProbe.java.in": {
+      "bytes": 18991,
+      "sha256": "126d21217c9385050cd17d8b60493f177517496a24d3452ad34bc3be2cb5d91c"
+    },
+    "src/test/scripts/repair3_logistics_regression.py": {
+      "bytes": 2602,
+      "sha256": "2e138deed62c4e3a9f45bdedfccfada732c83bff012a152d1668e2c6652f142c"
+    },
+    "src/test/scripts/repair3_production_regression.py": {
+      "bytes": 14609,
+      "sha256": "35233f59bb16c679faacc4655cf94a0bc22baafbd22c411e0f97072d616f4a6b"
+    },
     "src/test/scripts/repair_gameplay_regression.py": {
-      "bytes": 14579,
-      "sha256": "2f7f2f227ddac209d7738bdd37a8b0e481771f21e85416bf07a76210942852c8"
+      "bytes": 16343,
+      "sha256": "677e7d4146a3ed16733d57c9a0b150a69f342ae17689e04da71ef88e88f504c7"
+    },
+    "src/test/scripts/verify_paired_mods_test.py": {
+      "bytes": 2995,
+      "sha256": "c522686863b01b4d98399057ba7ca3103b404a288140d116eae1ab0d2a67ab89"
     }
   }
 }

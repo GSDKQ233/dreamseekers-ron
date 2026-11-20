@@ -29,6 +29,7 @@ res = core / "resources/Resources.java"
 build = core / "unit/goals/BuildRepairGoal.java"
 place = core / "building/buildings/placements/ProductionPlacement.java"
 source = '''import java.util.*;
+import java.util.function.*;
 public class GameplayRepairProbe {
   static int checks; static void check(boolean value,String label){checks++;if(!value)throw new AssertionError(label);}
   enum ResourceName { FOOD,WOOD,ORE,EMERALD,NONE }
@@ -47,7 +48,7 @@ public class GameplayRepairProbe {
     int[] amounts(){return new int[]{food,wood,ore,emerald};}
 ''' + ''.join(method(res, x) for x in (
     "public int getTotalValue()", "public void changeInstantly(", "private void addItemValue(",
-    "public static Resources getTotalResourcesFromItems(", "public Resources depositCarriedItems(")) + '''
+    "public static Resources getTotalResourcesFromItems(", "public Resources depositCarriedItems(", "private Resources depositItemSlots(")) + '''
   }
   static class ExtendedResourcesSync{static Resources bank;static Resources account(String owner){return bank!=null&&owner.equals(bank.ownerName)?bank:null;}}
   enum RTSPlayerScoresEnum{TOTAL_RESOURCES_HARVESTED,FOOD_HARVESTED,WOOD_HARVESTED,ORES_HARVESTED}
@@ -60,13 +61,13 @@ public class GameplayRepairProbe {
   static class Entity{}static class LivingEntity extends Entity{}static class Mob extends LivingEntity{Level level(){return serverLevel;}Object getOnPos(){return null;}}
   static class Level {Map<Integer,Entity> mobs=new HashMap<>();boolean isClientSide(){return false;}Entity getEntity(int id){return mobs.get(id);}}
   static final Level serverLevel=new Level();
-  interface Unit{List<ItemStack> getItems();String getOwnerName();void resetBehaviours();}
+  interface Unit{default ReturnGoal getReturnResourcesGoal(){return null;}List<ItemStack> getItems();String getOwnerName();void resetBehaviours();}
   static class Worker extends Mob implements Unit,WorkerUnit {
      List<ItemStack> cargo = new ArrayList<>();BuildGoal goal=new BuildGoal(this);int resets;
      public List<ItemStack>getItems(){return cargo;}public String getOwnerName(){return "owner";}
      public void resetBehaviours(){resets++;}public BuildGoal getBuildRepairGoal(){return goal;}public Gather getGatherResourceGoal(){return new Gather();}
   }
-  static class ReturnGoal{Mob mob;Object moveTarget;boolean valid=true;boolean hasValidDepositTarget(){return valid;}void stopReturning(){valid=false;}
+  static class ReturnGoal{Mob mob;Object moveTarget;boolean valid=true;boolean hasReturnOrder(){return valid;}void cancelReturning(){stopReturning();}boolean hasValidDepositTarget(){return valid;}void stopReturning(){valid=false;}
 ''' + method(core/"unit/goals/ReturnResourcesGoal.java", "public void depositItems()") + '''
   }
   static class Gather{void stopGathering(){}}
@@ -125,20 +126,22 @@ public class GameplayRepairProbe {
     a.available=false;b.available=false;check(w1.goal.startNextQueuedBuilding()&&w2.goal.startNextQueuedBuilding()&&w1.goal.buildingTarget==c&&w2.goal.buildingTarget==c,"destroyed work skipped");
     assignBuilderUnits(new int[]{1,2},false,d);check(w1.goal.queuedBuildings.isEmpty()&&w2.goal.queuedBuildings.isEmpty()&&w1.goal.buildingTarget==d&&w2.goal.buildingTarget==d,"immediate order still replaces");
   }
-  static class Cost{int food=2,wood=3,ore=4,ticks=5;}
-  static class ProductionItem{Cost getCost(boolean client,String owner){return new Cost();}}
+  static class Cost{int food=2,wood=3,ore=4,emerald=7,ticks=5;}
+  static class ProductionItem{final Cost cost=new Cost();Cost getCost(boolean client,String owner){return cost;}}
   static class Research extends ProductionItem implements com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem{}
   static class DreamUnitProduction extends ProductionItem{}
-  static class ActiveProduction{UUID queueEntryId=UUID.randomUUID();boolean completed;Object receiptResearch;ProductionItem item;float ticksLeft=5;ActiveProduction(ProductionItem i){item=i;}}
-  static class ResourcesServerEvents{static int refunds;static void addSubtractResources(Resources r){refunds++;}}
+  record NativeQuote(String payer,int food,int wood,int ore,int emerald){}
+  static class ActiveProduction{UUID queueEntryId=UUID.randomUUID();boolean completed;Object receiptResearch;ProductionItem item;float ticksLeft=5;final NativeQuote nativeQuote;
+    ActiveProduction(ProductionItem i){item=i;var c=i.getCost(false,"owner");nativeQuote=new NativeQuote("owner",c.food,c.wood,c.ore,c.emerald);}}
+  static class ResourcesServerEvents{static int refunds;static Resources last;static void addSubtractResources(Resources r){last=r;refunds++;}}
   static class ProductionPlacement{List<ActiveProduction> productionQueue=new ArrayList<>();String ownerName="owner";Level level=serverLevel;Level getLevel(){return level;}
-''' + method(place, "public final boolean cancelObservedHead(")+method(place,"public boolean cancelProductionItem(")+'''
+''' + "".join(method(place, key) for key in ("public final boolean cancelObservedHead(", "public final boolean cancelObservedEntry(", "public boolean cancelProductionItem(", "protected boolean cancelExactProduction("))+'''
   }
   static class Binding{int work(){return 5;}}
   static class DreamPlacement extends ProductionPlacement{boolean completingUnit,retireHead;Object tickingUnit;Map<ActiveProduction,Binding> unitReceipts=new IdentityHashMap<>();
     boolean onProductionServerThread(){return true;}boolean reconcileUnitReceipts(){if(retireHead){retireHead=false;productionQueue.remove(0);return true;}return false;}
     boolean detachUnitAndRefund(ActiveProduction a){boolean removed=productionQueue.remove(a);if(removed)ResourcesServerEvents.refunds++;return removed;}
-''' + method(addon/"production/DreamProductionPlacement.java","public boolean cancelProductionItem(").replace("com.solegendary.reignofnether.building.production.ProductionItem","ProductionItem") + '''
+''' + method(addon/"production/DreamProductionPlacement.java","protected boolean cancelExactProduction(").replace("com.solegendary.reignofnether.building.production.ActiveProduction","ActiveProduction") + '''
   }
   static void cancellationCases(){
     for(boolean dream:List.of(false,true)){
@@ -151,6 +154,17 @@ public class GameplayRepairProbe {
       check(!p.cancelObservedHead(x,b.queueEntryId)&&ResourcesServerEvents.refunds==before+1,"replay no refund");
       var research=new ActiveProduction(new Research());research.receiptResearch=new Object();p.productionQueue.add(research);
       check(!p.cancelObservedHead(research.item,research.queueEntryId)&&p.productionQueue.get(0)==research,"ordinary cancel cannot detach research");
+      p.productionQueue.clear();
+      var first=new ActiveProduction(x);var mid=new ActiveProduction(x);var tail=new ActiveProduction(x);p.productionQueue.addAll(List.of(first,mid,tail));
+      int old=ResourcesServerEvents.refunds;
+      x.cost.food=200;x.cost.emerald=700;
+      check(!p.cancelObservedEntry(x,first.queueEntryId,false)&&!p.cancelObservedEntry(x,tail.queueEntryId,true),"front/back intent cannot change roles");
+      check(p.cancelObservedEntry(x,tail.queueEntryId,false)&&p.productionQueue.equals(List.of(first,mid)),"cancel exact unstarted last among identical rows");
+      check(!p.cancelObservedEntry(x,tail.queueEntryId,false)&&ResourcesServerEvents.refunds==old+1,"replayed tail cannot refund a second time");
+      if(!dream)check("owner".equals(ResourcesServerEvents.last.ownerName)&&Arrays.equals(ResourcesServerEvents.last.amounts(),new int[]{2,3,4,7}),"original four-component quote refunded, not changed recipe");
+      p.productionQueue.remove(first);
+      check(!p.cancelObservedEntry(x,mid.queueEntryId,false)&&p.productionQueue.equals(List.of(mid)),"now-promoted row requires a fresh head click");
+      before=ResourcesServerEvents.refunds-1;
       if(dream){var d=(DreamPlacement)p;d.productionQueue.clear();a=new ActiveProduction(x);b=new ActiveProduction(x);p.productionQueue.addAll(List.of(a,b));
         d.retireHead=true;check(!p.cancelObservedHead(x,a.queueEntryId)&&p.productionQueue.equals(List.of(b))&&ResourcesServerEvents.refunds==before+1,"reconciliation retires A without touching B");}
     }

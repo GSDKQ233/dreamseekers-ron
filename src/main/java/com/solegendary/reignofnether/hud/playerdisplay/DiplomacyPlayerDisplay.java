@@ -319,12 +319,10 @@ public class DiplomacyPlayerDisplay extends AbstractPlayerDisplay {
             return;
         }
         AllianceServerboundPacket.doAllianceAction(AllianceAction.REQUEST, playerName);
-        AlliancesClient.outboundPendingAlliances.add(playerName);
     }
 
     private void cancelAllianceRequest() {
         AllianceServerboundPacket.doAllianceAction(AllianceAction.CANCEL_REQUEST, playerName);
-        AlliancesClient.outboundPendingAlliances.removeIf(p -> p.equals(playerName));
     }
 
     private void acceptAllianceRequest() {

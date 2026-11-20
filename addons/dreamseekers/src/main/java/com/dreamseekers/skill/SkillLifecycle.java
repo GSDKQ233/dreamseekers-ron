@@ -6,7 +6,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import com.solegendary.reignofnether.unit.ConfirmedLivingDeathEvent;
 import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -24,7 +24,7 @@ public final class SkillLifecycle {
             if(event.getEntity() instanceof net.minecraft.world.entity.projectile.Projectile projectile)OrdinarySkillHit.projectileJoined(projectile);
         }
     }
-    @SubscribeEvent(priority=EventPriority.LOWEST) public static void death(LivingDeathEvent event) {
+    @SubscribeEvent(priority=EventPriority.LOWEST) public static void death(ConfirmedLivingDeathEvent event) {
         if(!event.getEntity().level().isClientSide())SkillEffects.clearForDeath(event.getEntity(),event.getSource());
     }
     @SubscribeEvent public static void leave(EntityLeaveLevelEvent event) {
@@ -39,7 +39,10 @@ public final class SkillLifecycle {
         }
     }
     @SubscribeEvent public static void logout(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
-        if(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)CoordinatedMark.playerLeft(player);
+        if(event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            CoordinatedMark.playerLeft(player);
+            WindDash.playerLeft(player);
+        }
     }
     @SubscribeEvent public static void stopped(ServerStoppedEvent event) { SkillEffects.stop(); }
 }

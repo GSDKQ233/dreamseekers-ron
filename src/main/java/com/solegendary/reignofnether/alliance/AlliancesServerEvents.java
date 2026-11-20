@@ -58,7 +58,9 @@ public class AlliancesServerEvents {
 
     public static void addAlliance(String owner1, String owner2) {
         if (!owner1.equals(owner2)) {
-            alliances.computeIfAbsent(owner1, k -> new HashSet<>()).add(owner2);
+            clearPending(owner1, owner2);
+            clearPending(owner2, owner1);
+            if (!alliances.computeIfAbsent(owner1, k -> new HashSet<>()).add(owner2)) return;
             alliances.computeIfAbsent(owner2, k -> new HashSet<>()).add(owner1);
             persistAlliances();
             AllianceClientboundPacket.addAlliance(owner1, owner2);
@@ -88,9 +90,7 @@ public class AlliancesServerEvents {
 
     /** Consume the directed recipient <- requester invitation, including its client mirror. */
     public static boolean clearPending(String recipient, String requester) {
-        Set<String> pending = pendingAlliances.get(recipient);
-        if (pending == null || !pending.remove(requester)) return false;
-        if (pending.isEmpty()) pendingAlliances.remove(recipient);
+        if (!DirectedInvitations.remove(pendingAlliances, recipient, requester)) return false;
         AllianceClientboundPacket.cancelPendingAlliance(recipient, requester);
         return true;
     }
@@ -125,8 +125,6 @@ public class AlliancesServerEvents {
     }
 
     public static void applyScenarioAlliances() {
-        alliances.clear();
-        persistAlliances();
         Map<String, Integer> nameAndTeam = new HashMap<>();
         for (ScenarioRole role : ScenarioServerEvents.scenarioRoles) {
             nameAndTeam.put(role.name, role.teamNumber);
@@ -137,60 +135,57 @@ public class AlliancesServerEvents {
                 nameAndTeam.put(rtsPlayer.name, role.teamNumber);
         }
 
-        for (String name1 : nameAndTeam.keySet()) {
-            int team1 = nameAndTeam.get(name1);
+        replaceModeGraph(AllianceEdges.withEqualTeams(nameAndTeam));
+    }
 
-            for (String name2 : nameAndTeam.keySet()) {
-                int team2 = nameAndTeam.get(name2);
-
-                if (!name1.equals(name2)) {
-                    if (team1 == team2 &&
-                        !AlliancesServerEvents.isAllied(name1, name2)) {
-                        addAlliance(name1, name2);
-                    } else if (team1 != team2 &&
-                        AlliancesServerEvents.isAllied(name1, name2)) {
-                        removeAlliance(name1, name2);
-                    }
-                }
-            }
-        }
+    private static void replaceModeGraph(Set<AllianceEdges.Edge> wanted) {
+        Set<AllianceEdges.Edge> previous = AllianceEdges.fromGraph(alliances);
+        for (var edge : previous)
+            if (!wanted.contains(edge)) removeAlliance(edge.first(), edge.second());
+        for (var edge : wanted)
+            if (!previous.contains(edge)) addAlliance(edge.first(), edge.second());
     }
 
     // ally all RTS players, unless they have an NPC scenario role
     public static void applyCoopAlliances() {
-        alliances.clear();
-        persistAlliances();
-
-        List<String> eligiblePlayers = new ArrayList<>();
+        Map<String, Integer> teams = new HashMap<>();
 
         for (RTSPlayer rtsPlayer : PlayerServerEvents.rtsPlayers) {
             ScenarioRole role = ScenarioUtils.getScenarioRole(false, rtsPlayer.scenarioRoleIndex);
             if (role == null || !role.isNpc)
-                eligiblePlayers.add(rtsPlayer.name);
+                teams.put(rtsPlayer.name, 0);
         }
-        for (String player1 : eligiblePlayers)
-            for (String player2 : eligiblePlayers)
-                if (!player1.equals(player2))
-                    addAlliance(player1, player2);
+        replaceModeGraph(AllianceEdges.withEqualTeams(teams));
     }
 
     public static void resetAllAlliances() {
         alliances.clear();
+        pendingAlliances.clear();
+        playersWithAlliedControl.clear();
         persistAlliances();
         AllianceClientboundPacket.resetAlliances();
     }
 
+    /** Replace just this connection's public graph, session grants and its own directed invitations. */
+    public static void syncAlliances(net.minecraft.server.level.ServerPlayer player) {
+        String name = player.getGameProfile().getName();
+        AllianceClientboundPacket.sendTo(player, AllianceAction.DISBAND, "", "", true);
+        for (var edge : AllianceEdges.fromGraph(alliances))
+            AllianceClientboundPacket.sendTo(player, AllianceAction.ACCEPT_REQUEST, edge.first(), edge.second(), true);
+        for (String owner : playersWithAlliedControl)
+            AllianceClientboundPacket.sendTo(player, AllianceAction.SET_ALLY_CONTROL, owner, "", true);
+        DirectedInvitations.forViewer(pendingAlliances, name, (to, from) ->
+                AllianceClientboundPacket.sendTo(player, AllianceAction.REQUEST, to, from, true));
+    }
+
+    /** Compatibility entry point for an explicit whole-server resync; never used as the login path. */
     public static void syncAlliances() {
-        for (String player1 : alliances.keySet())
-            for (String player2 : alliances.get(player1))
-                AllianceClientboundPacket.addAlliance(player1, player2);
+        var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server != null) server.getPlayerList().getPlayers().forEach(AlliancesServerEvents::syncAlliances);
     }
 
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent evt) {
-        syncAlliances();
-        for (String playerName : playersWithAlliedControl) {
-            AllianceClientboundPacket.setAllyControl(playerName, true);
-        }
+        if (evt.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) syncAlliances(player);
     }
 }

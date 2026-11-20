@@ -315,7 +315,7 @@
 
     "commands.reignofnether.toggle_fow": "%s - Przełącz mgłę wojenną dla wszystkich graczy",
     "commands.reignofnether.surrender": "%s - Poddaj się",
-    "commands.reignofnether.reset": "%s - Usuń wszystkie jednostki/budynki, ustaw tryb wszystkich graczy na widza",
+    "commands.reignofnether.reset": "%s - Zresetuj mecz i przełącz graczy w tryb obserwatora. W scenariuszu i aktywnej piaskownicy jednostki i budynki pozostają na mapie.",
     "commands.reignofnether.lock": "%s - Przełącz możliwość dołączania graczy do meczu RTS",
     "commands.reignofnether.ally": "%s - Wyślij prośbę o sojusz do innego gracza",
     "commands.reignofnether.disband": "%s - Rozwiąż sojusz z innym graczem",

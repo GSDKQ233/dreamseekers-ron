@@ -1,6 +1,9 @@
 package com.solegendary.reignofnether.resources;
 
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -159,15 +162,29 @@ public class Resources {
      */
     @javax.annotation.Nullable
     public Resources depositCarriedItems(List<ItemStack> cargo) {
+        return depositItemSlots(cargo.size(), cargo::get, cargo::remove, true);
+    }
+
+    /** Fixed vanilla chest slots: clear only successfully priced slots and dirty the chest
+     * once. Filtering does not compact rejected or empty slots. Portals do not buy emeralds. */
+    @javax.annotation.Nullable
+    public Resources depositChestItems(ChestBlockEntity chest, boolean acceptEmeralds) {
+        Resources credit = depositItemSlots(chest.getContainerSize(), chest::getItem, chest::removeItemNoUpdate, acceptEmeralds);
+        if (credit != null) chest.setChanged();
+        return credit;
+    }
+
+    @javax.annotation.Nullable
+    private Resources depositItemSlots(int slots, IntFunction<ItemStack> read, IntConsumer consume, boolean acceptEmeralds) {
         Resources credit = new Resources(ownerName, 0, 0, 0, 0);
         BitSet paidSlots = new BitSet();
         long total = 0;
-        for (int i = 0; i < cargo.size(); i++) {
-            ItemStack stack = cargo.get(i);
+        for (int i = 0; i < slots; i++) {
+            ItemStack stack = read.apply(i);
             if (stack.isEmpty()) continue;
             ResourceSource source = ResourceSources.getFromItem(stack.getItem());
             if (source == null || source.resourceName == null || source.resourceName == ResourceName.NONE
-                    || source.resourceValue <= 0) continue;
+                    || (!acceptEmeralds && source.resourceName == ResourceName.EMERALD) || source.resourceValue <= 0) continue;
             long value = (long) source.resourceValue * stack.getCount();
             total += value;
             if (total > Integer.MAX_VALUE) return null;
@@ -180,7 +197,7 @@ public class Resources {
 
         changeInstantly(credit.food, credit.wood, credit.ore, credit.emerald);
         for (int i = paidSlots.length() - 1; i >= 0; i = paidSlots.previousSetBit(i - 1))
-            cargo.remove(i);
+            consume.accept(i);
         return credit;
     }
 }

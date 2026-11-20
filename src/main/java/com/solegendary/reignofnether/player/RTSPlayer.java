@@ -6,7 +6,7 @@ import com.solegendary.reignofnether.building.BuildingServerEvents;
 import com.solegendary.reignofnether.building.buildings.neutral.Beacon;
 import com.solegendary.reignofnether.building.buildings.placements.BeaconPlacement;
 import com.solegendary.reignofnether.faction.Faction;
-import com.solegendary.reignofnether.fogofwar.FogOfWarClientboundPacket;
+import com.solegendary.reignofnether.fogofwar.CapitolFogRule;
 import com.solegendary.reignofnether.fogofwar.FogOfWarServerEvents;
 import com.solegendary.reignofnether.items.ItemUtil;
 import com.solegendary.reignofnether.items.UnitItem;
@@ -23,6 +23,8 @@ public class RTSPlayer {
     public int id; // current connection entity id; for AI, always negative
     /** Stable identity, absent for bots and legacy saves until authenticated name migration. */
     public UUID playerUuid;
+    /** Positive evidence of this seat's temporarily unavailable units, never a population/asset grant. */
+    public final Set<UUID> unavailableUnitIds = new HashSet<>();
     public int ticksWithoutCapitol = 0;
     public Faction faction;
     public int beaconOwnerTicks = 0; // ticks owning a beacon - will win upon reaching
@@ -34,6 +36,8 @@ public class RTSPlayer {
     public int itemsDropped = 0;
     // Positions consumed by wave rewards, separate from creep thresholds and score.
     public int survivalRewardDraws = 0;
+    // Each position reserves one upcoming deterministic draw for this seat, not a player name.
+    public final ArrayDeque<net.minecraft.world.phys.Vec3> pendingSurvivalRewards = new ArrayDeque<>();
     public int creepScore = 0; // value of neutral enemies killed, for credit towards item drops
     public Long itemSeed = 0L;
     public Long raritySeed = 0L;
@@ -121,8 +125,8 @@ public class RTSPlayer {
         this.itemsDropped = itemsDropped;
         this.itemSeed = itemSeed;
         this.raritySeed = raritySeed;
-        this.itemDropQueue = ItemUtil.getRandomItemDropsList(itemSeed, raritySeed);
-        for (int i = 0; i < itemsDropped; i++)
+        if (itemSeed >= 0) this.itemDropQueue = ItemUtil.getRandomItemDropsList(itemSeed, raritySeed);
+        for (int i = 0; i < itemsDropped && !this.itemDropQueue.isEmpty(); i++)
             this.itemDropQueue.pollFirst();
 
         System.out.println("");
@@ -147,29 +151,18 @@ public class RTSPlayer {
     }
 
     public void serverTick() {
-        int numBuildingsOwned = 0;
-        for (BuildingPlacement buildingPlacement : BuildingServerEvents.getBuildings()) {
-            if (buildingPlacement.ownerName.equals(this.name)) numBuildingsOwned++;
-        }
-        int numCapitolsOwned = 0;
+        boolean ownsBuilding = false, ownsCapitol = false;
         for (BuildingPlacement b : BuildingServerEvents.getBuildings()) {
-            if (b.ownerName.equals(this.name) && b.isCapitol) numCapitolsOwned++;
+            if (b.level != PlayerServerEvents.serverLevel || !name.equals(b.ownerName)) continue;
+            ownsBuilding = true;
+            if (b.isCapitol) { ownsCapitol = true; break; }
         }
-
-        if (numBuildingsOwned > 0 && numCapitolsOwned == 0) {
-            if (ticksWithoutCapitol < TICKS_TO_REVEAL) {
-                this.ticksWithoutCapitol += 1;
-                if (ticksWithoutCapitol == TICKS_TO_REVEAL) {
-                    if (FogOfWarServerEvents.isEnabled()) {
-                        PlayerServerEvents.sendMessageToAllPlayers("server.reignofnether.revealed", false, this.name);
-                    }
-                    if (!ScenarioUtils.isScenarioNpc(false, scenarioRoleIndex))
-                        FogOfWarClientboundPacket.revealOrHidePlayer(true, this.name);
-                }
-            }
-        } else {
-            this.ticksWithoutCapitol = 0;
-        }
+        int previous = ticksWithoutCapitol;
+        ticksWithoutCapitol = CapitolFogRule.nextTicks(previous, TICKS_TO_REVEAL, ownsBuilding, ownsCapitol);
+        // A restored mature timer still grants vision. Only a real threshold crossing announces it.
+        if (previous < TICKS_TO_REVEAL && ticksWithoutCapitol == TICKS_TO_REVEAL && FogOfWarServerEvents.isEnabled()
+                && !ScenarioUtils.isScenarioNpc(false, scenarioRoleIndex))
+            PlayerServerEvents.sendMessageToAllPlayers("server.reignofnether.revealed", false, name);
 
         for (BuildingPlacement building : BuildingServerEvents.getBuildings()) {
             if (building instanceof BeaconPlacement beacon && beacon.isBuilt && building.ownerName.equals(this.name)) {

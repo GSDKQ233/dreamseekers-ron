@@ -142,7 +142,7 @@ public final class DreamShellFunctionGameTests {
                 h.assertTrue(f.level.noCollision(worker),"worker delivery did not clip geometry");f.pass("DEPOT_NATIVE_SINGLE_DELIVERY");
             });
     }
-    @GameTest(template="dreamseekers_test_arena",batch=BATCH,timeoutTicks=500)
+    @GameTest(template="dreamseekers_test_arena",batch=BATCH,timeoutTicks=1200)
     public static void actualDepotRejectsUnfinishedForeignAndRemovedTargets(GameTestHelper h) {
         var f=new ShellNativeFixture(h,"DepotReject");var origin=f.at(12,1,12);f.prepare(origin);
         var depot=f.install(DreamseekersMod.DREAM_DEPOT,origin,Rotation.NONE);depot.isBuilt=false;
@@ -152,7 +152,7 @@ public final class DreamShellFunctionGameTests {
         FireflyWorker worker=f.spawn(DreamseekersMod.FIREFLY_WORKER.get(),origin.offset(3,2,-2));worker.getItems().add(new ItemStack(Items.WHEAT,2));
         int food=Resources.getTotalResourcesFromItems(worker.getItems()).food;
         h.startSequence().thenWaitUntil(()->f.ready(worker)).thenExecute(()->f.command(UnitAction.RETURN_RESOURCES,worker,depot.originPos))
-            .thenWaitUntil(()->h.assertTrue(worker.getReturnResourcesGoal().getBuildingTarget()==depot,"one-shot native return command admitted exact depot target before rejection observation"))
+            .thenWaitUntil(()->h.assertTrue(worker.getReturnResourcesGoal().hasReturnOrder() && worker.getReturnResourcesGoal().getBuildingTarget()==null,"native return command retained, but an incomplete depot is not an active destination"))
             .thenIdle(70).thenExecute(()->{
                 h.assertTrue(!depot.isBuilt&&f.account.food==0&&Resources.getTotalResourcesFromItems(worker.getItems()).food==food,"real incomplete depot cannot credit cargo");
                 depot.isBuilt=true;depot.setOwnerNameFromServerEditor(f.owner+"Foreign");
@@ -161,7 +161,12 @@ public final class DreamShellFunctionGameTests {
                 BuildingServerEvents.getBuildings().remove(depot);depot.setOwnerNameFromServerEditor(f.owner);
             }).thenIdle(30).thenExecute(()->{
                 h.assertTrue(f.account.food==0&&Resources.getTotalResourcesFromItems(worker.getItems()).food==food,"removed target cannot credit stale native return order");
-                f.pass("DEPOT_NATIVE_REJECT_GATES");
+                f.install(DreamseekersMod.DREAM_DEPOT,origin.offset(-12,0,-8),Rotation.NONE);
+            }).thenWaitUntil(()->h.assertTrue(f.account.food==food && worker.getItems().isEmpty(),
+                    "same pending order finds the new owned depot and flies there without a second player command"))
+            .thenIdle(30).thenExecute(()->{
+                h.assertTrue(f.account.food==food && !worker.getReturnResourcesGoal().hasReturnOrder(),"new depot credited exactly once");
+                f.pass("DEPOT_NATIVE_REJECT_AND_REDIRECT");
             });
     }
     @GameTest(template="dreamseekers_test_arena",batch=BATCH,timeoutTicks=1200)

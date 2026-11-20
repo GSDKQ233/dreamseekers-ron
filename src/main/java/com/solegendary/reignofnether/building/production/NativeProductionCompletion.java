@@ -58,8 +58,27 @@ public final class NativeProductionCompletion {
         return a!=null && a.placement==p && a.active==active && a.valid()
                 && active.item.nativeCompletionItem()==recipe;
     }
+    /** No recipe can borrow another queued recipe's template, even if both spawn the same entity type. */
+    public static net.minecraft.nbt.CompoundTag copyCustomSpawnTemplate(ProductionPlacement p, net.minecraft.world.entity.EntityType<?> type) {
+        Attempt a = CURRENT.get();
+        return a != null && a.placement == p && a.valid() && a.active.item instanceof CustomProductionItem custom
+                ? custom.copySpawnTemplate(type) : null;
+    }
+
+    private static final String NO_INDOOR_SPAWN = "building.reignofnether.indoor_spawn_blocked";
+    static final int INDOOR_RETRY_TICKS = 20;
+
+    public static void holdForIndoorSpawn(ProductionPlacement p) {
+        Attempt a = CURRENT.get();
+        if (a == null || a.placement != p) return;
+        a.failed = true;
+        a.active.nextIndoorSpawnAttempt = p.getLevel().getGameTime() + INDOOR_RETRY_TICKS;
+        a.active.pauseBecause(NO_INDOOR_SPAWN);
+    }
+
     public static boolean complete(ProductionPlacement p, ActiveProduction active) {
         if (!(p.getLevel() instanceof ServerLevel level) || !level.getServer().isSameThread() || CURRENT.get()!=null) return false;
+        if (level.getGameTime() < active.nextIndoorSpawnAttempt) return active.pauseBecause(NO_INDOOR_SPAWN);
         Attempt attempt=new Attempt(p,active);
         if (!attempt.valid()) return false;
         CURRENT.set(attempt);

@@ -229,6 +229,58 @@ public class CursorClientEvents {
         );
         evt.getGuiGraphics().pose().translate(0,0,-2500);
 
+        pickAt(evt.getMouseX(), evt.getMouseY(), false);
+
+        // *******************************
+        // Calculate box-preselected units
+        // *******************************
+        // weird bug when downPos == dragPos makes random entities get selected by this algorithm
+        float dist = cursorLeftClickDownPos.distanceToSqr(cursorLeftClickDragPos);
+
+        if (leftClickDown && dist > 0 && !Keybindings.altMod.isDown()) {
+
+            // can't use AABB here as it's always axis-aligned (ie. no camera-rotation)
+            // instead, improvise our own quad
+            // https://math.stackexchange.com/questions/1472049/check-if-a-point-is-inside-a-rectangular-shaped-area-3d
+
+            List<LivingEntity> entitiesInRange = MiscUtil.getEntitiesWithinRange(cursorWorldPos, 100, LivingEntity.class, MC.level);
+
+            ArrayList<Vec3> uvwp = MyMath.prepIsPointInsideRect3d(MC,
+                    (int) cursorLeftClickDownPos.x, (int) cursorLeftClickDownPos.y, // top left
+                    (int) cursorLeftClickDownPos.x, (int) cursorLeftClickDragPos.y, // bottom left
+                    (int) cursorLeftClickDragPos.x, (int) cursorLeftClickDragPos.y // bottom right
+            );
+            for (LivingEntity entity : entitiesInRange) {
+                if (MyMath.isPointInsideRect3d(uvwp, entity.getBoundingBox().getCenter()) &&
+                        entity.getId() != MC.player.getId() &&
+                        !UnitClientEvents.getPreselectedUnits().contains(entity))
+                    UnitClientEvents.addPreselectedUnit(entity);
+            }
+        }
+    }
+
+
+    private static final PressTargetSampler PRESSES = new PressTargetSampler();
+    private static final PressTargetSampler.Picker CLICK_PICKER = new PressTargetSampler.Picker() {
+        @Override public boolean overHud(int x, int y) {
+            // HUD controls have positions from the displayed frame, but input uses this press's
+            // position. The native and addon listeners see the very same coordinates.
+            HudClientEvents.mouseX = x;
+            HudClientEvents.mouseY = y;
+            return HudClientEvents.isMouseOverAnyButtonOrHud();
+        }
+        @Override public void pickWorld(int x, int y) { pickAt(x, y, true); }
+    };
+
+    /** Native and HIGHEST addon listeners may enter in either registration order. */
+    @SubscribeEvent(priority=net.minecraftforge.eventbus.api.EventPriority.HIGHEST)
+    public static void preparePress(ScreenEvent.MouseButtonPressed.Pre event) {
+        if (event.getScreen() != MC.screen || !(MC.screen instanceof TopdownGui)
+                || !OrthoviewClientEvents.isEnabled() || MC.level == null || MC.player == null) return;
+        PRESSES.sample(event, event.getMouseX(), event.getMouseY(), CLICK_PICKER);
+    }
+
+    private static void pickAt(int mouseX, int mouseY, boolean force) {
         // ***********************************************
         // Convert cursor on-screen 2d pos to world 3d pos
         // ***********************************************
@@ -237,7 +289,7 @@ public class CursorClientEvents {
                 cursorWorldPos.y,
                 cursorWorldPos.z
         );
-        cursorWorldPos = MiscUtil.screenPosToWorldPos(MC, evt.getMouseX(), evt.getMouseY());
+        cursorWorldPos = MiscUtil.screenPosToWorldPos(MC, mouseX, mouseY);
 
         // calc near and far cursorWorldPos to get a cursor line vector
         Vector3d lookVector = MiscUtil.getPlayerLookVector(MC);
@@ -245,7 +297,7 @@ public class CursorClientEvents {
         Vector3d cursorWorldPosFar = MyMath.addVector3d(cursorWorldPos, lookVector, 200);
 
         // only spend time doing refining calcs for if we actually moved the cursor (or if this is the first time)
-        if (cursorWorldPos.x != cursorWorldPosLast.x || cursorWorldPos.y != cursorWorldPosLast.y || cursorWorldPos.z != cursorWorldPosLast.z) {
+        if (force || cursorWorldPos.x != cursorWorldPosLast.x || cursorWorldPos.y != cursorWorldPosLast.y || cursorWorldPos.z != cursorWorldPosLast.z) {
 
             Vec3 hitPos = getRefinedCursorWorldPos(cursorWorldPosNear, cursorWorldPosFar);
             cursorWorldPos = new Vector3d(hitPos.x, hitPos.y, hitPos.z);
@@ -304,7 +356,7 @@ public class CursorClientEvents {
                 entityaabb = entityaabb.setMaxY(entityaabb.maxY + 0.6f);
             }
 
-            if (MyMath.rayIntersectsAABBCustom(cursorWorldPosNear, MiscUtil.getPlayerLookVector(MC), entityaabb)) {
+            if (MyMath.rayIntersectsAABBCustom(cursorWorldPosNear, lookVector, entityaabb)) {
                 UnitClientEvents.addPreselectedUnit(entity);
                 if (UnitClientEvents.getPreselectedUnits().size() > 0)
                     break; // only allow one moused-over unit at a time
@@ -323,39 +375,11 @@ public class CursorClientEvents {
             // inflate by set amount to improve click accuracy
             AABB entityaabb = itemEntity.getBoundingBox().inflate(0.25);
             entityaabb = entityaabb.setMaxY(entityaabb.maxY + 0.75d);
-            if (MyMath.rayIntersectsAABBCustom(cursorWorldPosNear, MiscUtil.getPlayerLookVector(MC), entityaabb)) {
+            if (MyMath.rayIntersectsAABBCustom(cursorWorldPosNear, lookVector, entityaabb)) {
                 ItemClientEvents.addPreselectedItem(itemEntity);
             }
         }
-
-        // *******************************
-        // Calculate box-preselected units
-        // *******************************
-        // weird bug when downPos == dragPos makes random entities get selected by this algorithm
-        float dist = cursorLeftClickDownPos.distanceToSqr(cursorLeftClickDragPos);
-
-        if (leftClickDown && dist > 0 && !Keybindings.altMod.isDown()) {
-
-            // can't use AABB here as it's always axis-aligned (ie. no camera-rotation)
-            // instead, improvise our own quad
-            // https://math.stackexchange.com/questions/1472049/check-if-a-point-is-inside-a-rectangular-shaped-area-3d
-
-            List<LivingEntity> entitiesInRange = MiscUtil.getEntitiesWithinRange(cursorWorldPos, 100, LivingEntity.class, MC.level);
-
-            ArrayList<Vec3> uvwp = MyMath.prepIsPointInsideRect3d(MC,
-                    (int) cursorLeftClickDownPos.x, (int) cursorLeftClickDownPos.y, // top left
-                    (int) cursorLeftClickDownPos.x, (int) cursorLeftClickDragPos.y, // bottom left
-                    (int) cursorLeftClickDragPos.x, (int) cursorLeftClickDragPos.y // bottom right
-            );
-            for (LivingEntity entity : entitiesInRange) {
-                if (MyMath.isPointInsideRect3d(uvwp, entity.getBoundingBox().getCenter()) &&
-                        entity.getId() != MC.player.getId() &&
-                        !UnitClientEvents.getPreselectedUnits().contains(entity))
-                    UnitClientEvents.addPreselectedUnit(entity);
-            }
-        }
     }
-
 
     public static boolean isBoxSelecting() {
         return cursorLeftClickDownPos.x >= 0 &&

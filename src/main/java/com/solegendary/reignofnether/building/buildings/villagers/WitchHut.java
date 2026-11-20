@@ -75,7 +75,7 @@ public class WitchHut extends ProductionBuilding {
     }
 
     @Override
-    public BlockPos getIndoorSpawnPoint(ServerLevel level, BuildingPlacement placement) {
-        return super.getIndoorSpawnPoint(level, placement).offset(0,0,0);
+    protected BlockPos adjustIndoorSpawnPoint(BlockPos grounded, BuildingPlacement placement) {
+        return grounded.offset(0,0,0);
     }
 }

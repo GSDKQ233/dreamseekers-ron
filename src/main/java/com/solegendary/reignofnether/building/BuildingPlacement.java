@@ -219,6 +219,7 @@ public class BuildingPlacement {
     public final DataStorage getConstructionPaymentStorage() { return dataStorage; }
 
     DataStorage dataStorage = new DataStorage();
+    CompoundTag extraSaveFields = new CompoundTag();
     public Set<String> tags = Sets.newHashSet();
     public ArrayList<BuildingCommand> commands = new ArrayList<>();
     
@@ -543,7 +544,7 @@ public class BuildingPlacement {
     }
     public BlockPos getClosestGroundPos(BlockPos bpTarget, int radiusOffset, boolean avoidAllBuildings) {
         radiusOffset = Math.max(1, radiusOffset);
-        float minDist = 999999;
+        double minDist = Double.POSITIVE_INFINITY;
         BlockPos minPos = this.minCorner;
         int minX = minPos.getX() - radiusOffset;
         int minY = minPos.getY();
@@ -558,7 +559,7 @@ public class BuildingPlacement {
                 if (!(getBuilding() instanceof AbstractBridge) && avoidAllBuildings ? BuildingUtils.isPosInsideAnyBuilding(level, bp) : isPosInsideBuilding(bp))
                     continue;
 
-                float dist = (float) bpTarget.distToCenterSqr(bp.getX(), bp.getY(), bp.getZ());
+                double dist = bpTarget.distToCenterSqr(bp.getX(), bp.getY(), bp.getZ());
                 BlockState bs = level.getBlockState(bp);
                 BlockState bsBelow = level.getBlockState(bp.below());
                 if (!bs.getFluidState().isEmpty() || !bsBelow.getFluidState().isEmpty())

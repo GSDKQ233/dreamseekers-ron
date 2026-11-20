@@ -152,6 +152,9 @@ public final class SkillService {
                         ||state.cooldownTicks(request.skill())>0||disabled(source))return false;
                 state.commit(request.skill());return true;
             });
+        } else if(request.skill()==UnitSkill.WIND_DASH) {
+            result=WindDash.start(sender,(WindKnightUnit)source,target);
+            if(result==SkillResult.SUCCESS)source.rts().skills().commit(UnitSkill.WIND_DASH);
         } else if(request.skill()==UnitSkill.STONE_HEAVY_SHOT) {
             result=StoneHeavyShot.start(sender,(com.dreamseekers.unit.StoneSpiritThrowerUnit)source,target);
             if(result==SkillResult.SUCCESS)source.rts().skills().commit(UnitSkill.STONE_HEAVY_SHOT);
@@ -252,11 +255,6 @@ public final class SkillService {
             return result;
         }
         if(skill==UnitSkill.FOX_BLESSING)return castBlessing(source,target);
-        if(skill==UnitSkill.WIND_DASH) {
-            SkillResult result=WindDash.start((WindKnightUnit)source,target);
-            if(result==SkillResult.SUCCESS)state.commit(skill);
-            return result;
-        }
         if(target==body||level.getEntity(target.getUUID())!=target||target.isSpectator()
                 ||!SkillEffects.friendly(body,target))return SkillResult.INVALID_TARGET;
         if(body.distanceToSqr(target)>(double)skill.range()*skill.range())return SkillResult.RANGE;

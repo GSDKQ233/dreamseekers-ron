@@ -52,6 +52,7 @@ public final class MatchResultsRestartGameTests {
         h.assertTrue(PlayerServerEvents.getRTSPlayer(D)==null&&PlayerServerEvents.rtsPlayers.size()==3
                 &&PlayerServerEvents.postGameRtsPlayers.size()==1&&PlayerServerEvents.postGameRtsPlayers.get(0).name.equals(D),"actual ordinary defeat transfers player to history without ending match");
         PlayerServerEvents.rtsGameTicks=4321;
+        PlayerServerEvents.setRTSLock(true, true);
         MinecraftForge.EVENT_BUS.register(new StopWitness());
         System.out.println("API60_RESULTS_PREPARE_PASS jvmStart="+jvm()+" realDefeat=true");h.succeed();
     }
@@ -61,7 +62,10 @@ public final class MatchResultsRestartGameTests {
         System.out.println("API60_RESULTS_RESTART_OBSERVED priorJvm="+tag.getLong("jvmStart")+" currentJvm="+jvm()+" active="+PlayerServerEvents.rtsPlayers.size()+" historical="+PlayerServerEvents.postGameRtsPlayers.size()+" ticks="+PlayerServerEvents.rtsGameTicks);
         return tag;
     }
-    private static void active(GameTestHelper h){witness(h);h.assertTrue(PlayerServerEvents.getRTSPlayer(D)==null&&PlayerServerEvents.rtsPlayers.size()==3
+    private static void active(GameTestHelper h){witness(h);
+        h.assertTrue(PlayerServerEvents.rtsLocked && RTSPlayerSaveData.getInstance(h.getLevel()).admissionLocked,
+                "explicitly locked preparation restores both the saved field and live admission lock");
+        h.assertTrue(PlayerServerEvents.getRTSPlayer(D)==null&&PlayerServerEvents.rtsPlayers.size()==3
             &&PlayerServerEvents.getRTSPlayer(A)!=null&&PlayerServerEvents.getRTSPlayer(B)!=null&&PlayerServerEvents.getRTSPlayer(E)!=null,"only original active participants restore; defeat is not reversed");h.succeed();}
     private static void history(GameTestHelper h){witness(h);var records=PlayerServerEvents.postGameRtsPlayers;
         h.assertTrue(records.size()==1&&records.get(0).name.equals(D)&&records.get(0).scores.scoreList.get(RTSPlayerScoresEnum.TOTAL_UNITS_PRODUCED)==19

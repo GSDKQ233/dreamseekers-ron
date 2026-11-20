@@ -1,0 +1,246 @@
+// Production code is inserted at the marked locations by repair3_logistics_regression.py.
+// The doubles implement only interfaces exercised by these scenarios; no mod loader or game world.
+import java.util.*;
+import java.util.function.*;
+
+class LogisticsProbe {
+    static int checks;
+    static void check(boolean ok, String label) { if(!ok) throw new AssertionError(label); checks++; }
+    @interface Nullable {}
+    enum ResourceName {FOOD, WOOD, ORE, EMERALD, NONE}
+    record ResourceSource(ResourceName resourceName, int resourceValue) {}
+    static class ResourceSources {
+        static ResourceSource getFromItem(String item) { return switch(item) {
+            case "wheat" -> new ResourceSource(ResourceName.FOOD,4);
+            case "stick" -> new ResourceSource(ResourceName.WOOD,1);
+            case "ore" -> new ResourceSource(ResourceName.ORE,1);
+            case "gem" -> new ResourceSource(ResourceName.EMERALD,1);
+            case "sand" -> new ResourceSource(ResourceName.FOOD,0);
+            case "none" -> new ResourceSource(ResourceName.NONE,99);
+            case "huge" -> new ResourceSource(ResourceName.ORE,Integer.MAX_VALUE);
+            default -> null;
+        };}
+    }
+    static class CompoundTag { String item, tag; int n; }
+    static class ListTag extends ArrayList<CompoundTag> { CompoundTag getCompound(int i){return get(i);} }
+    static class ItemStack {
+        final String item; int n; String tag;
+        ItemStack(String i,int count,String t){item=i;n=count;tag=t;}
+        String getItem(){return item;} int getCount(){return n;} boolean isEmpty(){return n<=0;}
+        ItemStack copy(){return new ItemStack(item,n,tag);}
+        ItemStack split(int amount){var s=copy();s.n=Math.min(n,amount);n-=s.n;return s;}
+        CompoundTag save(CompoundTag t){t.item=item;t.tag=tag;t.n=n;return t;}
+        static ItemStack of(CompoundTag t){return new ItemStack(t.item,t.n,t.tag);}
+    }
+    static ItemStack stack(String i,int n){return new ItemStack(i,n,i+" metadata");}
+    static class ChestBlockEntity {
+        ItemStack[] slots=new ItemStack[8]; int dirtied;
+        ChestBlockEntity(){Arrays.setAll(slots,i->stack("empty",0));}
+        int getContainerSize(){return slots.length;} ItemStack getItem(int i){return slots[i];}
+        ItemStack removeItemNoUpdate(int i){var s=slots[i];slots[i]=stack("empty",0);return s;}
+        void setChanged(){dirtied++;}
+    }
+    static class Resources {
+        String ownerName;int food,wood,ore,emerald,foodToAdd,woodToAdd,oreToAdd,emeraldToAdd;
+        Resources(String s,int f,int w,int o,int e){ownerName=s;food=f;wood=w;ore=o;emerald=e;}
+        /*PRICING*/
+    }
+    static class ResourcesServerEvents { static List<Resources> resourcesList=new ArrayList<>(); }
+    static class ExtendedResourcesSync { /*ACCOUNT*/ }
+    static class ManualChestDeposit { /*MANUAL*/ }
+    static /*CODEC*/
+    static class ResourcesClientboundPacket {
+        static int published;
+        static void addSubtractResources(Resources r){published++;}
+        static void showFloatingText(Resources r,BlockPos p){}
+    }
+    record BlockPos(int getX,int getY,int getZ) {
+        double distSqr(BlockPos other){double x=getX-other.getX,y=getY-other.getY,z=getZ-other.getZ;return x*x+y*y+z*z;}
+        BlockPos below(int n){return new BlockPos(getX,getY-n,getZ);}
+        BlockPos offset(BlockPos p){return new BlockPos(getX+p.getX,getY+p.getY,getZ+p.getZ);} BlockPos above(){return below(-1);}
+    }
+    static class Block {
+        BlockState defaultBlockState(){return new BlockState(this);} static int getId(BlockState b){return 1;}
+    }
+    static class AbstractSkullBlock extends Block{} static class WallSkullBlock extends AbstractSkullBlock{}
+    static class Blocks {static Block CHEST=new Block(),AIR=new Block(),COBBLESTONE=new Block();}
+    record BlockState(Block getBlock){boolean is(Block b){return b==getBlock;}}
+    record BuildingBlock(BlockState getBlockState,BlockPos getBlockPos){}
+    static class Level {
+        long time; Map<BlockPos,BlockState> blocks=new HashMap<>();List<ItemEntity> items=new ArrayList<>();boolean mutable=true;
+        boolean isClientSide(){return false;} long getGameTime(){return time;}
+        List<ItemEntity> getEntitiesOfClass(Class<ItemEntity> cls,Box b){return List.copyOf(items);}
+        BlockState getBlockState(BlockPos p){return blocks.getOrDefault(p,Blocks.AIR.defaultBlockState());}
+        boolean setBlockAndUpdate(BlockPos p,BlockState s){if(!mutable)return false;blocks.put(p,s);return true;}
+        void levelEvent(int a,BlockPos p,int b){}
+    }
+    static class ServerLevel extends Level {
+        ChestBlockEntity chest=new ChestBlockEntity();boolean loaded=true;
+        ServerLevel getServer(){return this;} boolean isSameThread(){return true;} boolean hasChunkAt(BlockPos p){return loaded;}
+        Object getBlockEntity(BlockPos p){return chest;}
+    }
+    static class BuildingPlacement {
+        Level level;String ownerName="owner";BlockPos minCorner,maxCorner,centrePos,originPos;
+        boolean isBuilt=true,isDestroyedServerside,canAcceptResources=true;
+        BuildingPlacement(Level l,int x){level=l;centrePos=maxCorner=minCorner=originPos=new BlockPos(x,0,0);}
+        Level getLevel(){return level;} BuildingPlacement getBuilding(){return this;}
+        BlockPos getClosestGroundPos(BlockPos p,int i){return centrePos;}
+        boolean isPosInsideBuilding(BlockPos p){return p.equals(centrePos);}
+        List<BuildingBlock> getBlocks(){return List.of(new BuildingBlock(Blocks.CHEST.defaultBlockState(),centrePos));}
+    }
+    enum Relationship{OWNED,HOSTILE}
+    static class Depots extends ArrayList<BuildingPlacement>{
+        int scans; @Override public Iterator<BuildingPlacement> iterator(){scans++;return super.iterator();}
+    }
+    static class BuildingServerEvents {
+        static Depots depots=new Depots();static Depots getBuildings(){return depots;}
+        static Relationship getUnitToBuildingRelationship(Unit u,BuildingPlacement b){return u.getOwnerName().equals(b.ownerName)?Relationship.OWNED:Relationship.HOSTILE;}
+    }
+    static class Box {Box inflate(int x,int y,int z){return this;}}
+    static class LivingEntity {
+        void onItemPickup(ItemEntity i){}void take(ItemEntity i,int n){}BlockPos blockPosition(){return new BlockPos(0,0,0);}
+    }
+    static class Mob extends LivingEntity {
+        Level world;BlockPos pos=new BlockPos(0,0,0);Mob(Level l){world=l;}
+        Level level(){return world;} BlockPos getOnPos(){return pos;}
+        boolean canPickUpLoot(){return true;}Box getBoundingBox(){return new Box();}
+        boolean removed;boolean isAlive(){return !removed;}boolean isRemoved(){return removed;}boolean isAddedToWorld(){return !removed;}
+    }
+    static class ItemEntity {
+        ItemStack item;boolean removed;
+        ItemEntity(ItemStack s){item=s;}ItemStack getItem(){return item;}boolean isRemoved(){return removed;}
+        void discard(){removed=true;}boolean hasPickUpDelay(){return false;}void setItem(ItemStack s){item=s;}
+    }
+    static class MiscUtil{
+        static void addUnitCheckpoint(Unit u,BlockPos p,boolean bool){}
+        static boolean isMobInRangeOfPos(BlockPos p,Mob m,float r){return m.pos.distSqr(p)<=r*r;}
+    }
+    interface Unit {
+        List<ItemStack> getItems(); String getOwnerName();void resetBehaviours();ReturnResourcesGoal getReturnResourcesGoal();
+        static boolean atMaxResources(Unit u){return Resources.getTotalResourcesFromItems(u.getItems()).getTotalValue()>=4;}
+        static boolean atThresholdResources(Unit u){return atMaxResources(u);}
+    }
+    interface UnitInventory {boolean isEmpty();}
+    interface WorkerUnit {
+        GatherResourcesGoal getGatherResourceGoal();static void resetBehaviours(WorkerUnit w){w.getGatherResourceGoal().active=false;}
+    }
+    static class Job {boolean saved=true;boolean hasData(){return saved;}void delete(){saved=false;}}
+    static class GatherResourcesGoal {
+        Job saveData=new Job();boolean active;void loadState(){active=saveData.saved;}void clearReturnState(){saveData.delete();}
+        ResourceName getTargetResourceName(){return ResourceName.NONE;}void saveAndReturnResources(){}
+    }
+    static class Worker extends Mob implements Unit, WorkerUnit {
+        ReturnResourcesGoal trip; GatherResourcesGoal gather=new GatherResourcesGoal(); List<ItemStack> bag=new ArrayList<>();
+        Worker(Level l){super(l);trip=new ReturnResourcesGoal(this);}public List<ItemStack> getItems(){return bag;}
+        public String getOwnerName(){return "owner";}public void resetBehaviours(){}public ReturnResourcesGoal getReturnResourcesGoal(){return trip;}
+        public GatherResourcesGoal getGatherResourceGoal(){return gather;}
+    }
+    static class MoveToTargetBlockGoal {
+        Mob mob;BlockPos moveTarget; MoveToTargetBlockGoal(Mob m,boolean persistent,int radius){mob=m;}
+        public boolean canUse(){return moveTarget!=null;}public boolean canContinueToUse(){return canUse();}
+        public void start(){}public void tick(){} public void stopMoving(){moveTarget=null;}protected void resetRecalcBackoff(){}
+    }
+    enum RTSPlayerScoresEnum{TOTAL_RESOURCES_HARVESTED,FOOD_HARVESTED,WOOD_HARVESTED,ORES_HARVESTED}
+    static class RTSPlayer {RTSPlayer scores=this;void addToScore(RTSPlayerScoresEnum key,int value){}}
+    static class PlayerServerEvents {static RTSPlayer getRTSPlayer(String s){return null;}}
+    static class UnitSyncClientboundPacket {static void sendSyncResourcesPacket(Unit u){}}
+    static /*ROUTE*/
+    static class ItemUtil {static boolean isEdibleDrink(String item){return false;}}
+    enum SoundAction{POTION_POP} static class SoundClientboundPacket{static void playSoundAtPos(SoundAction a,BlockPos pos,float f){}}
+    static class UnitAnimationClientboundPacket{static void sendEatFoodPacket(LivingEntity le,int i){}}
+    static class BuiltInRegistries{static final BuiltInRegistries ITEM=new BuiltInRegistries();int getId(String item){return 1;}}
+    /*PICKUP*/
+    static class BuildingUtils {static BlockPos altRotatePos(BlockPos p,int rot){return p;}}
+    static class EntityType<T>{} static class UnitServerEvents{static void rollbackUncommittedProductionSpawn(Mob m){m.removed=true;}}
+    static class LevelEvent{static int PARTICLES_DESTROY_BLOCK=1;}
+    static class Graveyard extends BuildingPlacement {
+        final Block skull=new AbstractSkullBlock();int rotation,calls;long capture;boolean releasingSkull,veto;
+        List<BlockPos> wallSkullPoses=List.of(), skullPoses=List.of(new BlockPos(1,0,0));
+        List<Worker> births=new ArrayList<>(); Runnable listener=()->{};
+        Graveyard(Level l){super(l,0);}long getCaptureRevision(){return capture;}
+        EntityType<? extends Unit> getEntityType(Block b,boolean wall){return b==skull?new EntityType<Worker>():null;}
+        Object produceUnit(ServerLevel s,EntityType<? extends Unit> type,String owner,boolean indoor){
+            calls++;listener.run();if(veto)return null;var w=new Worker(s);births.add(w);return w;
+        }
+        long alive(){return births.stream().filter(Mob::isAlive).count();}
+        /*RELEASE*/
+    }
+    static Resources bank(){return new Resources("owner",0,0,0,0);}
+    static void chests(){
+        for(boolean accepts:List.of(false,true)){
+            var l=new ServerLevel();var host=new BuildingPlacement(l,0);var c=l.chest;var bank=bank();
+            c.slots[1]=stack("wheat",3); c.slots[2]=stack("gem",4);var gem=c.slots[2];
+            var free=stack("sand",5);c.slots[5]=free;var other=stack("none",7);c.slots[7]=other;
+            ResourcesServerEvents.resourcesList.clear();int before=ResourcesClientboundPacket.published;
+            ManualChestDeposit.collect(host,accepts);check(c.slots[1].n==3 && c.dirtied==0,"missing account");
+            ResourcesServerEvents.resourcesList.addAll(List.of(bank,bank()));
+            ManualChestDeposit.collect(host,accepts);check(bank.food==0 && !c.slots[1].isEmpty(),"ambiguous account");
+            ResourcesServerEvents.resourcesList.remove(1);bank.food=Integer.MAX_VALUE-11;
+            ManualChestDeposit.collect(host,accepts);check(bank.emerald==0 && c.slots[1].n==3 && c.slots[2]==gem && c.dirtied==0,"atomic balance overflow");
+            bank.food=0;c.slots[4]=stack("huge",2);ManualChestDeposit.collect(host,accepts);
+            check(bank.food==0 && c.slots[4].n==2 && c.dirtied==0,"atomic valuation overflow");
+            c.slots[4]=stack("empty",0);l.loaded=false;ManualChestDeposit.collect(host,accepts);
+            check(c.dirtied==0 && ResourcesClientboundPacket.published==before,"unloaded chest is not opened");
+            l.loaded=true;ManualChestDeposit.collect(host,accepts);ManualChestDeposit.collect(host,accepts);
+            check(c.dirtied==1 && ResourcesClientboundPacket.published==before+1,"notify/dirty exactly once");
+            check(bank.food==12 && bank.emerald==(accepts?4:0) && c.slots[1].isEmpty() &&
+                (accepts? c.slots[2].isEmpty():c.slots[2]==gem && gem.n==4),"credit only actual categories");
+            check(c.slots[5]==free && c.slots[7]==other && free.n==5 && other.n==7,"preserve rejected slots and objects");
+        }
+    }
+    static void edits(){
+        var a=stack("wheat",2);var b=stack("gem",6);var zero=stack("sand",2);var keep=stack("apple",1);
+        List<ItemStack> bag=new ArrayList<>(List.of(zero,a,keep,b));var saved=UnitCargoSaveData.write(bag);
+        check(saved.size()==2 && bag.size()==4 && bag.get(1)==a,"save excludes priced, doesn't mutate live bag");
+        saved.add(stack("gem",39).save(new CompoundTag()));saved.add(stack("empty",0).save(new CompoundTag()));
+        UnitCargoSaveData.read(bag,saved,true);UnitCargoSaveData.read(bag,saved,true);
+        check(bag.size()==4 && bag.get(1)==a && bag.get(3)==b && bag.get(0).tag.equals(zero.tag) && bag.get(2).tag.equals(keep.tag),"live edits preserve unpaid slots and don't import duplicates");
+        UnitCargoSaveData.read(bag,saved,false);UnitCargoSaveData.read(bag,saved,false);
+        check(bag.size()==2 && bag.get(0).tag.equals(zero.tag) && bag.get(1).n==1,"cold reads reject priced and empty slots");
+        UnitCargoSaveData.read(bag,new ListTag(),false);check(bag.isEmpty(),"missing old cargo is empty on cold read");
+    }
+    static void route(){
+        var level=new ServerLevel();var other=new ServerLevel();var w=new Worker(level);var g=w.trip;w.bag.add(stack("wheat",2));
+        var all=BuildingServerEvents.depots;all.clear();
+        var foreignWorld=new BuildingPlacement(other,1);var foreignOwner=new BuildingPlacement(level,1);foreignOwner.ownerName="another";
+        var tornDown=new BuildingPlacement(level,1);tornDown.isDestroyedServerside=true;
+        var near=new BuildingPlacement(level,4);var alt=new BuildingPlacement(level,9);var far=new BuildingPlacement(level,1400);
+        all.addAll(List.of(foreignWorld,foreignOwner,tornDown,near,alt,far));
+        g.returnToClosestBuilding();check(g.getBuildingTarget()==near,"nearest own live depot");
+        all.remove(near);g.tick();check(g.getBuildingTarget()==null && g.hasReturnOrder(),"removed route is cleared; retry keeps order");
+        level.time=20;g.canUse();check(g.getBuildingTarget()==alt,"redirect to alternate");
+        alt.ownerName="captor";level.time=40;g.tick();check(g.getBuildingTarget()==far,"recapture seeks far same-world depot beyond 316 and 1000");
+        far.isBuilt=false;level.time=60;g.canContinueToUse();check(g.getBuildingTarget()==null && !g.canUse(),"no depot releases MOVE");
+        int scans=all.scans;for(int i=0;i<19;i++){level.time++;g.tick();g.canUse();g.canContinueToUse();}
+        check(all.scans==scans && w.bag.size()==1 && w.gather.saveData.hasData(),"waiting does not scan every tick/erase cargo or work");
+        far.isBuilt=true;level.time++;g.canUse();check(g.getBuildingTarget()==far,"new depot wakes idle selector");
+        w.pos=far.centrePos;ResourcesServerEvents.resourcesList.clear();g.tick();
+        check(w.bag.size()==1 && w.gather.saveData.hasData() && g.hasReturnOrder(),"do not resume or swallow cargo on missing account");
+        var a=bank();ResourcesServerEvents.resourcesList.add(a);level.time+=20;g.tick();g.tick();
+        check(a.food==8 && w.bag.isEmpty() && !g.hasReturnOrder() && w.gather.active && !w.gather.saveData.hasData(),"one successful delivery resumes original work");
+        all.clear();w.gather.saveData.saved=true;g.returnToClosestBuilding();g.cancelReturning();all.add(far);level.time+=30;g.canUse();check(!g.hasReturnOrder() && g.getBuildingTarget()==null && !w.gather.saveData.hasData(),"explicit stop cancels pending delivery and stale saved work");
+        g.setBuildingTarget(foreignWorld);check(!g.hasReturnOrder(),"explicit cross-dimension target rejected");
+    }
+    static void pickup(){
+        var l=new ServerLevel();var w=new Worker(l);w.bag.add(stack("stick",3));
+        var ground=new ItemEntity(stack("gem",4));l.items.add(ground);checkAndPickupResources(w);
+        check(!ground.isRemoved() && ground.item.n==3 && w.bag.size()==2 && w.bag.get(1).n==1,"partial resource pickup debits ground once");
+        check(w.bag.get(1).tag.equals(ground.item.tag) && w.bag.get(1)!=ground.item,"split retains original tag in both places");
+        w.bag.clear();checkAndPickupResources(w);check(ground.isRemoved() && w.bag.size()==3 && w.bag.stream().allMatch(s->s.tag.equals("gem metadata")),"last three resources consumed with tags");
+        var food=new ItemEntity(stack("apple",2));startEatingOrDrinking(w,food);
+        check(food.item.n==1 && w.bag.get(3).tag.equals("apple metadata") && w.bag.get(3).n==1,"edible pickup splits one complete serving");
+        startEatingOrDrinking(w,food);startEatingOrDrinking(w,food);check(food.isRemoved() && w.bag.size()==5,"no extra serving after final removal");
+    }
+    static void graveyard(){
+        var l=new ServerLevel();var g=new Graveyard(l);var pos=g.skullPoses.get(0).above();BuildingServerEvents.depots.add(g);
+        l.blocks.put(pos,g.skull.defaultBlockState());g.veto=true;g.releaseNextUnit();
+        check(g.calls==1 && g.alive()==0 && l.getBlockState(pos).is(g.skull),"publication veto keeps skull");
+        g.veto=false;g.listener=g::releaseNextUnit;g.releaseNextUnit();g.releaseNextUnit();
+        check(g.calls==2 && g.alive()==1 && l.getBlockState(pos).is(Blocks.AIR),"reentrant notification and retry spend skull only once");
+        l.blocks.put(pos,g.skull.defaultBlockState());l.mutable=false;g.releaseNextUnit();
+        check(g.alive()==1 && l.getBlockState(pos).is(g.skull),"failed marker removal rolls back birth");
+        l.mutable=true;g.listener=()->g.capture++;g.releaseNextUnit();
+        check(g.alive()==1 && l.getBlockState(pos).is(g.skull),"changed capture generation cannot consume old inventory");
+    }
+    public static void main(String[] args){chests();edits();route();pickup();graveyard();System.out.println("LOGISTICS_PROBE_OK assertions="+checks);}
+}

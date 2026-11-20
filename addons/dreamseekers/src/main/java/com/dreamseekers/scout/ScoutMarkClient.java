@@ -3,6 +3,8 @@ package com.dreamseekers.scout;
 import com.solegendary.reignofnether.client.ActiveClientTickClock;
 
 import com.dreamseekers.DreamseekersMod;
+import com.dreamseekers.skill.SkillReadiness;
+import com.dreamseekers.skill.SnapshotSkillButton;
 import com.dreamseekers.unit.PinkChickenScout;
 import com.solegendary.reignofnether.alliance.AlliancesClient;
 import com.solegendary.reignofnether.cursor.CursorClientEvents;
@@ -61,7 +63,7 @@ public final class ScoutMarkClient {
     public static void accept(ScoutMarkNetwork.Sync sync) {
         context();
         if (MC.level == null || MC.player == null) return;
-        if (sync.revision() < 0) { VIEWS.remove(sync.scoutUuid()); return; }
+        if (sync.revision() < 0) { VIEWS.remove(sync.scoutUuid()); if(sync.scoutUuid().equals(armed))cancel(); return; }
         Entity entity = MC.level.getEntity(sync.scoutId());
         if (!(entity instanceof PinkChickenScout scout) || !scout.getUUID().equals(sync.scoutUuid()) || !owned(scout)) return;
         View old = VIEWS.get(sync.scoutUuid());
@@ -74,16 +76,25 @@ public final class ScoutMarkClient {
     private static boolean owned(PinkChickenScout scout) {
         return MC.player != null && scout.level() == MC.level && scout.isAlive() && scout.getOwnerName().equals(MC.player.getGameProfile().getName());
     }
-    public static int cooldown(PinkChickenScout scout) {
+    @Nullable private static View currentView(PinkChickenScout scout) {
         context();
-        View view = VIEWS.get(scout.getUUID());
-        return MC.level == null || view == null ? 0 : (int) CLOCK.remaining(view.receivedAt, view.cooldownTicks);
+        if(!owned(scout)||MC.level==null||MC.level.getEntity(scout.getId())!=scout)return null;
+        View view=VIEWS.get(scout.getUUID());
+        return view!=null&&view.scoutId==scout.getId()&&CLOCK.fresh(view.receivedAt,40)?view:null;
     }
+    public static SkillReadiness readiness(PinkChickenScout scout) {
+        View view=currentView(scout);
+        return view==null?SkillReadiness.WAITING:SkillReadiness.at(CLOCK,view.receivedAt,view.cooldownTicks);
+    }
+    public static int cooldown(PinkChickenScout scout) { return readiness(scout).nativeCooldown(ScoutBalance.MARK_COOLDOWN_TICKS); }
     public static boolean isArmed(PinkChickenScout scout) { return scout.getUUID().equals(armed); }
     public static void arm(PinkChickenScout scout) {
         context();
         if (!owned(scout) || !(MC.screen instanceof TopdownGui) || !OrthoviewClientEvents.isEnabled()) return;
         if (isArmed(scout)) { cancel(); return; }
+        SkillReadiness state=readiness(scout);
+        if(state.waiting()){SnapshotSkillButton.waiting();return;}
+        if(!state.ready()){SnapshotSkillButton.cooling(state);return;}
         CursorClientEvents.setLeftClickAction(null);
         CursorClientEvents.setLeftClickSandboxAction(null);
         armed = scout.getUUID();
@@ -98,6 +109,7 @@ public final class ScoutMarkClient {
             cancel(); swallowRelease = event.getButton(); event.setCanceled(true); return;
         }
         if (event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
+        CursorClientEvents.preparePress(event);
         if (HudClientEvents.isMouseOverAnyButtonOrHud()) {
             // Preserve toggle semantics for this same button; other HUD actions cancel the target mode.
             if (!(HudClientEvents.getMousedOverButton() instanceof AbilityButton button)
@@ -105,6 +117,13 @@ public final class ScoutMarkClient {
             return;
         }
         PinkChickenScout scout = armedScout();
+        View view=scout==null?null:currentView(scout);
+        SkillReadiness state=view==null?SkillReadiness.WAITING:SkillReadiness.at(CLOCK,view.receivedAt,view.cooldownTicks);
+        if(!state.ready()){
+            cancel();
+            if(state.waiting())SnapshotSkillButton.waiting();else SnapshotSkillButton.cooling(state);
+            return; // do not swallow either half of a click made while the snapshot is unavailable
+        }
         event.setCanceled(true);
         swallowRelease = event.getButton();
         cancel();
@@ -113,12 +132,6 @@ public final class ScoutMarkClient {
                 .filter(e -> e instanceof Unit && e != scout && visibleTarget(scout, e)).findFirst().orElse(null);
         if (target == null) {
             HudClientEvents.showTemporaryMessage(Component.translatable("ability.dreamseekers.scout_mark.result.invalid").getString());
-            return;
-        }
-        View view = VIEWS.get(scout.getUUID());
-        // Unknown revision deliberately fails closed; periodic owner-only resync supplies it.
-        if (view == null) {
-            HudClientEvents.showTemporaryMessage(Component.translatable("ability.dreamseekers.scout_mark.result.replay").getString());
             return;
         }
         ScoutMarkNetwork.request(new ScoutMarkNetwork.Cast(scout.getId(), scout.getUUID(), target.getId(), target.getUUID(), view.revision));

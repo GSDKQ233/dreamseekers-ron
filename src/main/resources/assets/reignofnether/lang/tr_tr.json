@@ -499,8 +499,8 @@
 
     "commands.reignofnether.toggle_fow": "%s - Tüm oyuncular için savaş sisini aç/kapat",
     "commands.reignofnether.surrender": "%s - Teslim ol",
-    "commands.reignofnether.reset": "%s - Tüm birimleri/yapıları sil, herkesi izleyici yap",
-    "commands.reignofnether.hard_reset": "%s - Tüm sandbox birimleri ve yapıları dahil maçı sıfırla",
+    "commands.reignofnether.reset": "%s - Maçı sıfırlar ve oyuncuları seyirci yapar. Etkin sandbox ve senaryo haritalarında birimler ve binalar korunur.",
+    "commands.reignofnether.hard_reset": "%s - Yüklü RTS birimlerini kaldırır. Etkin sandbox ve senaryo haritalarında binalar korunur; diğer modlarda tüm RTS binaları kaldırılır.",
     "commands.reignofnether.lock": "%s - Oyuncuların RTS maçına katılmasını engelle",
     "commands.reignofnether.ally": "%s - Başka bir oyuncuya ittifak isteği gönder",
     "commands.reignofnether.disband": "%s - Başka bir oyuncu ile ittifakı boz",
@@ -666,6 +666,7 @@
     "server.reignofnether.victory_alliance": "%s ve müttefikleri zafere ulaştı!",
     "server.reignofnether.match_reset": "Maç sıfırlandı!",
     "server.reignofnether.match_reset_hard": "Harita tamamen sıfırlandı!",
+    "server.reignofnether.match_reset_hard_map": "Maç sıfırlandı. Yüklü RTS birimleri kaldırıldı, haritadaki binalar korundu.",
     "server.reignofnether.match_locked": "RTS maçı kilitlendi. Yeni oyuncular katılamaz.",
     "server.reignofnether.match_unlocked": "RTS maçı kilidi açıldı. Yeni oyuncular katılabilir.",
     "server.reignofnether.sync_enabled": "RTS giriş senkronizasyonu etkinleştirildi.",

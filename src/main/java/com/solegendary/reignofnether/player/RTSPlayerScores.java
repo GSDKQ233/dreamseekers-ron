@@ -1,6 +1,6 @@
 package com.solegendary.reignofnether.player;
 
-import java.util.ArrayList;
+import com.solegendary.reignofnether.survival.SurvivalResult;
 import java.util.LinkedHashMap;
 
 public class RTSPlayerScores {
@@ -22,13 +22,20 @@ public class RTSPlayerScores {
     }
 
     public void addToScore(RTSPlayerScoresEnum scoresEnum) {
-        int score = scoreList.get(scoresEnum) + 1;
-        scoreList.put(scoresEnum, score);
+        addToScore(scoresEnum, 1);
     }
 
     public void addToScore(RTSPlayerScoresEnum scoresEnum, int amount) {
+        if (SurvivalResult.isAfterMatch()) return;
         int score = scoreList.get(scoresEnum) + amount;
         scoreList.put(scoresEnum, score);
+    }
+
+    /** Native and addon passive-income writers share the match-end scoring gate. */
+    public void addHarvestScore(RTSPlayerScoresEnum key, long amount) {
+        if (amount <= 0 || SurvivalResult.isAfterMatch()) return;
+        long old = Math.max(0, scoreList.getOrDefault(key, 0));
+        scoreList.put(key, (int) (old + Math.min(Integer.MAX_VALUE - old, amount)));
     }
 
     public static String getScoreInitials(RTSPlayerScoresEnum scoresEnum) {

@@ -24,6 +24,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.commands.data.EntityDataAccessor;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
@@ -154,6 +155,53 @@ public final class Repair2CargoRestartGameTests {
         }
     }
 
+    /** Enter via an actual world item and Unit.tick, not cargo-list injection. Exercise both the
+     * final one-stack drop and transfer of a priced, tagged stack subsequently settled in the ledger. */
+    private static void prepareLiveCargo(GameTestHelper h, Unit unit, int side) throws Exception {
+        Mob mob = (Mob)unit;
+        mob.setCanPickUpLoot(true);
+        ItemStack sand = new ItemStack(Items.SOUL_SAND);
+        sand.setHoverName(Component.literal("round trip " + OWNERS[side]));
+        sand.getOrCreateTagElement("Route").putInt("side", side);
+        ItemEntity before = putOnGround(h, mob, sand.copy());
+        Unit.tick(unit);
+        h.assertTrue(before.isRemoved() && encode(unit.getItems()).equals(encode(List.of(sand))),
+                "real resource pickup preserves named zero-yield stack including nested tag");
+        unit.dropAllResources();
+        var drops = h.getLevel().getEntitiesOfClass(ItemEntity.class, mob.getBoundingBox().inflate(2),
+                e -> !e.isRemoved() && e.getItem().save(new CompoundTag()).equals(sand.save(new CompoundTag())));
+        h.assertTrue(unit.getItems().isEmpty() && drops.size() == 1, "one tagged stack returned to the ground");
+        drops.get(0).discard();
+
+        var paid = priced(1 + side);
+        unit.getItems().addAll(kept(side));
+        unit.getItems().addAll(1, paid.subList(0, 3));
+        var emerald = paid.get(3);
+        emerald.setHoverName(Component.literal("uncredited " + OWNERS[side]));
+        emerald.getOrCreateTagElement("Route").putInt("leg", 7);
+        ItemEntity incoming = putOnGround(h, mob, emerald.copy());
+        Unit.tick(unit);
+        h.assertTrue(incoming.isRemoved() && unit.getItems().stream().filter(s -> s.is(Items.EMERALD)
+                        && s.getCount() == 1 && emerald.getTag().equals(s.getTag())).count() == emerald.getCount(),
+                "all and only the actual tagged incoming emeralds reached the bag");
+        var snapshot = encode(unit.getItems());
+        // Same path used by /data merge entity. No saveResources pass occurs on either live edit.
+        var accessor = new EntityDataAccessor(mob);
+        var edited = accessor.getData();
+        edited.putBoolean("Silent", true);
+        accessor.setData(edited.copy());
+        accessor.setData(edited.copy());
+        h.assertTrue(mob.isSilent() && snapshot.equals(encode(unit.getItems())),
+                "both repeated live edits preserve exact unpaid and kept slots for " + OWNERS[side]);
+    }
+
+    private static ItemEntity putOnGround(GameTestHelper h, Mob mob, ItemStack stack) {
+        var item = new ItemEntity(h.getLevel(), mob.getX(), mob.getY(), mob.getZ(), stack);
+        item.setNoPickUpDelay();
+        h.assertTrue(h.getLevel().addFreshEntity(item), "actual item entity admitted");
+        return item;
+    }
+
     private static BuildingPlacement depot(ServerLevel level, BlockPos p, int i) {
         Building type = i == 0 ? Buildings.OAK_STOCKPILE : DreamseekersMod.DREAM_DEPOT;
         for (int x = -2; x < 18; x++) for (int z = -2; z < 18; z++)
@@ -172,6 +220,8 @@ public final class Repair2CargoRestartGameTests {
         ServerLevel level = h.getLevel();
         CompoundTag ids = new CompoundTag();
         ids.putLong("prepareJvm", jvmStart());
+        Mob[] workers = new Mob[OWNERS.length];
+        BuildingPlacement[] depots = new BuildingPlacement[OWNERS.length];
         for (int i = 0; i < OWNERS.length; i++) {
             h.assertTrue(PlayerServerEvents.getRTSPlayer(OWNERS[i]) == null && ExtendedResourcesSync.account(OWNERS[i]) == null,
                     "do not adopt a pre-existing owner or account");
@@ -184,7 +234,7 @@ public final class Repair2CargoRestartGameTests {
             h.assertTrue(!level.getForcedChunks().contains(chunk.toLong()), "test owns only its new forced chunk");
             level.setChunkForced(chunk.x, chunk.z, true);
             ids.putLong("chunk" + i, chunk.toLong());
-            BuildingPlacement depot = depot(level, p, i);
+            depots[i] = depot(level, p, i);
             Mob body = i == 0 ? EntityRegistrar.VILLAGER_UNIT.get().create(level) : DreamseekersMod.FIREFLY_WORKER.get().create(level);
             Unit u = (Unit) body;
             u.setOwnerName(OWNERS[i]);
@@ -193,21 +243,32 @@ public final class Repair2CargoRestartGameTests {
             body.setInvulnerable(true);
             h.assertTrue(level.addFreshEntity(body), "real worker admitted");
             ids.putUUID("body" + i, body.getUUID());
-            u.getItems().addAll(kept(i));
-            u.getItems().addAll(1, priced(1 + i));
-            var goal = u.getReturnResourcesGoal();
-            goal.setBuildingTarget(depot);
-            goal.depositItems();
-            checkBank(h, i, false);
-            checkKept(h, u, i, "live delivery");
-            // The native eating timer would consume the tagged apples after 40 ticks. Freeze only
-            // the two fixture bodies, not serialization, entity admission, or the economy save events.
+            workers[i] = body;
+            // Do not allow eating while waiting for the remote fixture chunks to be ticking.
             body.canUpdate(false);
-            u.getItems().addAll(1, priced(3 + i));
         }
-        NbtIo.writeCompressed(ids, ORACLE);
-        System.out.println("REPAIR2_CARGO_PREPARED native=1 firefly=1 liveDeliveries=2 pendingDeliveries=2");
-        h.succeed(); // no manual saveResources, ledger restore or entity save/load for these two bodies
+        h.startSequence().thenWaitUntil(() -> {
+            for (Mob body : workers)
+                h.assertTrue(level.getEntity(body.getUUID()) == body && level.isPositionEntityTicking(body.blockPosition()),
+                        "wait for actual publication before testing a ground ItemEntity lookup");
+        }).thenExecute(() -> {
+            try {
+                for (int i = 0; i < workers.length; i++) {
+                    Unit u = (Unit)workers[i];
+                    prepareLiveCargo(h, u, i);
+                    var goal = u.getReturnResourcesGoal();
+                    goal.setBuildingTarget(depots[i]);
+                    goal.depositItems();
+                    checkBank(h, i, false);
+                    checkKept(h, u, i, "live delivery");
+                    u.getItems().addAll(1, priced(3 + i));
+                }
+                NbtIo.writeCompressed(ids, ORACLE);
+            } catch (Exception e) {
+                throw new IllegalStateException("prepare live cargo and restart oracle", e);
+            }
+            System.out.println("REPAIR2_CARGO_PREPARED native=1 firefly=1 liveDeliveries=2 pendingDeliveries=2");
+        }).thenSucceed(); // ordinary save and both startup phases still own the real ledger and entities
     }
 
     private static long jvmStart() { return ManagementFactory.getRuntimeMXBean().getStartTime(); }

@@ -1,16 +1,35 @@
 // Applied from the RoN checkout only with -Pdreamseekers.
 // All third-party content stays in user-provided, locally cached dependencies.
 // Nothing from those dependencies is copied or shaded into the addon JAR.
-ext.dreamseekersVersion = '0.65.0-repair2'
+ext.dreamseekersVersion = '0.65.0-repair3.1'
 
-def dependencyRepository = project.findProperty('dreamseekersDependencyRepo') ?: new File(rootDir, '.dreamseekers-deps/maven').toString()
+def dependencyRepository = file(project.findProperty('dreamseekersDependencyRepo') ?: '.dreamseekers-deps/maven')
+def dependencyGroup = 'local.dreamseekers.dependencies'
+def dependencyLock = new groovy.json.JsonSlurper().parse(file('addons/dreamseekers/dependencies.lock.json'))
+// ForgeGradle maps the original local artifacts. Re-attest those originals
+// before registering mapped dependencies, rather than trusting Maven coordinates.
+dependencyLock.dependencies.each { dep ->
+    def rawJar = new File(dependencyRepository,
+        "local/dreamseekers/dependencies/${dep.mavenArtifact}/${dep.mavenVersion}/${dep.mavenArtifact}-${dep.mavenVersion}.jar")
+    if (!rawJar.isFile())
+        throw new GradleException("Missing locked Dreamseekers dependency: ${rawJar.name}; run prepare_local_dependencies.py")
+    def digest = java.security.MessageDigest.getInstance('SHA-256')
+    rawJar.withInputStream { stream ->
+        byte[] buffer = new byte[65536]
+        for (int count = stream.read(buffer); count != -1; count = stream.read(buffer))
+            digest.update(buffer, 0, count)
+    }
+    def actual = digest.digest().encodeHex().toString()
+    if (actual != dep.sha256)
+        throw new GradleException("SHA256 mismatch for locked Dreamseekers dependency: ${rawJar.name}; re-import the official JAR")
+}
 // Keep the raw local repository ahead of remote repositories. Do not use
 // exclusiveContent: ForgeGradle's generated remapping repository must also be
 // allowed to serve the same group with its mapped-version suffix.
 def localDependencyRepository = repositories.maven {
     name = 'dreamseekersVerifiedLocalDependencies'
     url = uri(dependencyRepository)
-    content { includeGroup 'local.dreamseekers.dependencies' }
+    content { includeGroup dependencyGroup }
 }
 repositories.remove(localDependencyRepository)
 repositories.addFirst(localDependencyRepository)
@@ -51,10 +70,9 @@ tasks.named('compileDreamseekersJava', JavaCompile).configure {
 }
 
 dependencies {
-    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:pasterdream:beta0.4.2')
-    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:geckolib:4.8.2')
-    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:curios:5.14.1')
-    dreamseekersImplementation fg.deobf('local.dreamseekers.dependencies:player-animation-lib:1.0.2-rc1')
+    dependencyLock.dependencies.each { dep ->
+        dreamseekersImplementation fg.deobf("${dependencyGroup}:${dep.mavenArtifact}:${dep.mavenVersion}".toString())
+    }
 }
 
 mixin {
@@ -852,15 +870,15 @@ tasks.register('verifyDreamseekersCoreJar') {
                     it.startsWith('assets/pasterdream/') || it.startsWith('data/pasterdream/') ||
                     it.endsWith('GameTests.class') || it == 'dreamseekers.refmap.json' }
             if (!leaked.empty) throw new GradleException('Addon/dependency/test content in core: ' + leaked)
-            def coreMods = core.getInputStream(core.getEntry('META-INF/mods.toml')).getText('UTF-8')
-            def addonMods = file('addons/dreamseekers/src/main/resources/META-INF/mods.toml').getText('UTF-8')
+            def addonFile = tasks.named('dreamseekersJar').get().archiveFile.get().asFile
+            project.exec {
+                commandLine([(project.findProperty('dreamseekersPython') ?: 'python3').toString(),
+                        file('addons/dreamseekers/verify_paired_mods.py').absolutePath,
+                        coreFile.absolutePath, addonFile.absolutePath, project.version.toString(), dreamseekersVersion])
+            }
             def runtimeVersionSource = file('src/main/java/com/solegendary/reignofnether/ReignOfNether.java').getText('UTF-8')
-            if (!coreMods.contains(project.version.toString()) || !addonMods.contains('[' + project.version.toString() + ']'))
-                throw new GradleException('Core metadata and exact addon dependency version disagree')
             if (!runtimeVersionSource.contains('VERSION_STRING = "' + project.version.toString() + '"'))
                 throw new GradleException('Core runtime/config version and artifact version disagree')
-            if (!addonMods.contains('version="' + dreamseekersVersion + '"'))
-                throw new GradleException('Addon metadata and artifact version disagree')
             ['com/solegendary/reignofnether/building/BuildingServerboundPacket.class',
              'com/solegendary/reignofnether/resources/ResourcesServerEvents.class',
              'reignofnether.refmap.json'].each { name ->

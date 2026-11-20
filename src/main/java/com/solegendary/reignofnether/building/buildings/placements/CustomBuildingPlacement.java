@@ -10,7 +10,7 @@ import com.solegendary.reignofnether.unit.interfaces.Unit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.DoubleTag;
+import com.solegendary.reignofnether.building.production.NativeProductionCompletion;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
@@ -72,26 +72,20 @@ public class CustomBuildingPlacement extends ItemShopPlacement {
         if (!spawnBlocks.isEmpty()) {
             spawnPoint = spawnBlocks.get(random.nextInt(spawnBlocks.size()));
         }
-        CompoundTag nbt = null;
-        if (this.getBuilding() instanceof CustomBuilding cb && cb.unitProductionNbts.containsKey(entityType))
-            nbt = cb.unitProductionNbts.get(entityType);
-
-        Entity entity = entityType.spawn(level, (CompoundTag) null,
-                null,
-                spawnPoint,
-                MobSpawnType.SPAWNER,
-                true,
-                false
-        );
-        entity = com.solegendary.reignofnether.building.production.NativeProductionCompletion.acceptSpawn(this,entity);
-        if (entity != null && nbt != null) {
-            ListTag pos = new ListTag();
-            pos.add(DoubleTag.valueOf(entity.getX()));
-            pos.add(DoubleTag.valueOf(entity.getY()));
-            pos.add(DoubleTag.valueOf(entity.getZ()));
-            nbt.put("Pos", pos);
-            entity.load(nbt);
-        }
+        // Read the exact completing recipe. Apply a fresh copy before publication; never replace
+        // the newly allocated identity or spawn location with values stored in a structure.
+        CompoundTag template = NativeProductionCompletion.copyCustomSpawnTemplate(this, entityType);
+        Entity entity = entityType.spawn(level, (CompoundTag) null, newborn -> {
+            if (template != null) {
+                template.remove("id");
+                template.remove("UUID");
+                template.remove("Pos");
+                CompoundTag nbt = newborn.saveWithoutId(new CompoundTag());
+                nbt.merge(template);
+                newborn.load(nbt);
+            }
+        }, spawnPoint, MobSpawnType.SPAWNER, true, false);
+        entity = NativeProductionCompletion.acceptSpawn(this, entity);
         if (entity instanceof Unit unit) {
             unit.setOwnerName(ownerName);
             unit.setupEquipmentAndUpgradesServer();

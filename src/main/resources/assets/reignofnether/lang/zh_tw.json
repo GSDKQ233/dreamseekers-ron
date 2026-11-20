@@ -507,8 +507,8 @@
 
     "commands.reignofnether.toggle_fow": "%s - 爲所有玩家切換戰爭迷霧",
     "commands.reignofnether.surrender": "%s - 認輸比賽",
-    "commands.reignofnether.reset": "%s - 刪除所有單位/建築，將所有玩家設爲觀察者",
-    "commands.reignofnether.hard_reset": "%s - 重置比賽，包括所有沙盒模式放置的單位和建築",
+    "commands.reignofnether.reset": "%s - 重設對局並切換至旁觀模式。使用中的沙盒或情境地圖會保留單位與建築。",
+    "commands.reignofnether.hard_reset": "%s - 清除已載入的 RTS 單位。使用中的沙盒或情境地圖會保留建築；其他模式也會清除所有 RTS 建築。",
     "commands.reignofnether.lock": "%s - 阻止新玩家加入 RTS 比賽",
     "commands.reignofnether.ally": "%s - 嚮另一玩家發送聯盟請求",
     "commands.reignofnether.disband": "%s - 與另一玩家解除聯盟",
@@ -682,6 +682,7 @@
     "server.reignofnether.victory_alliance": "%s及其盟友獲得勝利！",
     "server.reignofnether.match_reset": "比賽已重置！",
     "server.reignofnether.match_reset_hard": "地圖已完全重置！",
+    "server.reignofnether.match_reset_hard_map": "對局已重設：已清除載入的 RTS 單位，保留地圖建築。",
     "server.reignofnether.match_locked": "RTS 比賽已鎖定，無新玩家可加入。",
     "server.reignofnether.match_unlocked": "RTS 比賽已解鎖，新玩家現可加入。",
     "server.reignofnether.sync_enabled": "RTS 登入同步已啓用。",

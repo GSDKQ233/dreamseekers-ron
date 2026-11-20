@@ -43,6 +43,10 @@ public class AllyCommand {
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(AllyCommand::allyCancelRequest)));
 
+        dispatcher.register(Commands.literal("allywithdraw")
+                .then(Commands.argument("player", EntityArgument.player())
+                        .executes(ctx -> finishInvitation(ctx, true))));
+
         dispatcher.register(Commands.literal("disband")
                 .then(Commands.argument("player", EntityArgument.player())
                         .executes(AllyCommand::disband)));
@@ -76,7 +80,8 @@ public class AllyCommand {
             player.sendSystemMessage(Component.translatable("alliance.reignofnether.ally_self", playerName));
             return 0;
         }
-        AlliancesServerEvents.pendingAlliances.computeIfAbsent(allyPlayerName, k -> new HashSet<>()).add(playerName);
+        if (AlliancesServerEvents.isAllied(playerName, allyPlayerName)
+                || !DirectedInvitations.add(AlliancesServerEvents.pendingAlliances, allyPlayerName, playerName)) return 0;
         AllianceClientboundPacket.addPendingAlliance(allyPlayerName, playerName);
         context.getSource().sendSuccess(()->Component.translatable("alliance.reignofnether.sent_request", allyPlayerName), false);
         SoundClientboundPacket.playSoundForPlayer(SoundAction.CHAT, allyPlayerName);
@@ -103,15 +108,21 @@ public class AllyCommand {
     }
 
     private static int allyCancelRequest(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        return finishInvitation(context, false);
+    }
+
+    private static int finishInvitation(CommandContext<CommandSourceStack> context, boolean withdraw) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         ServerPlayer allyPlayer = EntityArgument.getPlayer(context, "player");
-        String playerName = player.getName().getString();
-        String allyPlayerName = allyPlayer.getName().getString();
-
-        if (player.equals(allyPlayer)) {
+        String playerName = player.getGameProfile().getName();
+        String allyPlayerName = allyPlayer.getGameProfile().getName();
+        boolean removed = !player.equals(allyPlayer) && (withdraw
+                ? AlliancesServerEvents.clearPending(allyPlayerName, playerName)
+                : AlliancesServerEvents.clearPending(playerName, allyPlayerName));
+        if (!removed) {
+            context.getSource().sendFailure(Component.translatable("alliance.reignofnether.no_request", allyPlayerName));
             return 0;
         }
-        AlliancesServerEvents.clearPending(playerName, allyPlayerName);
         context.getSource().sendSuccess(()->Component.translatable("alliance.reignofnether.ally_request_cancelled_self", allyPlayerName), false);
         SoundClientboundPacket.playSoundForPlayer(SoundAction.ENEMY, allyPlayerName);
         allyPlayer.sendSystemMessage(Component.translatable("alliance.reignofnether.ally_request_cancelled", playerName));
@@ -151,6 +162,7 @@ public class AllyCommand {
             }
         } else {
             context.getSource().sendFailure(Component.translatable("alliance.reignofnether.no_request", requesterPlayerName));
+            return 0;
         }
         return Command.SINGLE_SUCCESS;
     }

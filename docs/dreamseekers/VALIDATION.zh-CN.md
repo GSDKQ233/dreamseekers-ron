@@ -57,7 +57,7 @@ bash ./gradlew -Pdreamseekers runDreamseekersClient
 
 普通配对专服在 `run-dreamseekers-server/`，与客户端、GameTest 及未启用附属的核心 `bash ./gradlew runServer` 隔离。发布验收另行用两个实际重混淆 JAR 和四份前置启动，不能用开发源集替代。
 
-**单一套件与阶段。** 用 `-PresourceTechSuite=<名称>`，可用白名单见 `gradle/gametest-plan.gradle`。每次只选择一个入口，不混用聚焦、旧经济/击杀或重启选择开关。新式套件仅 `research_restart` 另支持 `verify_settled`；其余重启套件仅 `prepare`、`verify`。重新从头验证时用未用过的 `resourceTechRun` 后缀；同一次重启的两阶段须使用同一后缀、同一核心/配对配置，分两个进程正常退出后接续：
+**单一套件与阶段。** 用 `-PresourceTechSuite=<名称>`，可用白名单见 `gradle/gametest-plan.gradle`。每次只选择一个入口，不混用聚焦、旧经济/击杀或重启选择开关。带阶段的套件都用 `prepare`、`verify`；`research_restart` 和 `api65_repair2_cargo` 另需 `verify_settled`；`api65_repair2_survival` 还需按顺序执行 `verify_settled`、`verify_final`；本候选的 `api65_repair3_survival_result` 用 `prepare → verify → verify_terminal`。同组各阶段保留同一 `resourceTechRun` 后缀及核心／配对配置，每阶段用独立 JVM，在上一阶段已验证且正常退出后接续。重开整组用未使用的后缀。
 
 ```bash
 bash ./gradlew -PresourceTechSuite=api65_editor_worlds runGameTestServer
@@ -65,6 +65,8 @@ bash ./gradlew -PresourceTechSuite=api65_repair_play runGameTestServer
 bash ./gradlew -Pdreamseekers -PresourceTechSuite=api65_addon_restart -PresourceTechRun=trial1 -PresourceTechPhase=prepare runGameTestServer
 bash ./gradlew -Pdreamseekers -PresourceTechSuite=api65_addon_restart -PresourceTechRun=trial1 -PresourceTechPhase=verify runGameTestServer
 ```
+
+其中携货（附属）须使用 `-Pdreamseekers -PresourceTechSuite=api65_repair2_cargo`；塔防（核心）须使用 `-PresourceTechSuite=api65_repair2_survival`。为组内所有阶段保留各自的 `GAMETEST_VERIFIED` 日志，不将单阶段通过视作整组通过。旧附属定向入口若传 `dreamseekersTestCase`，还须指定相应的 `dreamseekersTestBatch`。源码里的历史测试类不一定在现有入口中，不能把它们计入已运行用例。
 
 API65 入口按本次 JVM 的控制台核对**唯一实际命名空间、完成数、通过数**与白名单期望；必须非零且相同，缺证即失败。没有 `GAMETEST_VERIFIED` 不算该套件通过。其他历史套件仍须独立核对实际选择、非零完成数与退出结果。
 

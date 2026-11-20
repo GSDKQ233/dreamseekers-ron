@@ -501,8 +501,8 @@
 
     "commands.reignofnether.toggle_fow": "%s - Bật/Tắt sương mù chiến trận cho tất cả người chơi",
     "commands.reignofnether.surrender": "%s - Đầu hàng trận đấu.",
-    "commands.reignofnether.reset": "%s - Xóa tất cả đơn vị/công trình, đặt tất cả thành người xem",
-    "commands.reignofnether.hard_reset": "%s - Thiết lập lại trận đấu, bao gồm tất cả các đơn vị và công trình đã được đặt trong chế độ Sandbox.",
+    "commands.reignofnether.reset": "%s - Đặt lại trận đấu và chuyển người chơi sang chế độ khán giả. Bản đồ kịch bản hoặc Sandbox đang hoạt động giữ lại đơn vị và công trình.",
+    "commands.reignofnether.hard_reset": "%s - Xóa các đơn vị RTS đã tải. Bản đồ kịch bản hoặc Sandbox đang hoạt động giữ lại công trình; các chế độ khác xóa mọi công trình RTS.",
     "commands.reignofnether.lock": "%s - Ngăn tất cả người chơi tham gia trận RTS",
     "commands.reignofnether.ally": "%s - Gửi yêu cầu liên minh đến người chơi khác",
     "commands.reignofnether.disband": "%s - Hủy liên minh với người chơi khác",
@@ -668,6 +668,7 @@
     "server.reignofnether.victory_alliance": "%s và đồng minh của họ chiến thắng!",
     "server.reignofnether.match_reset": "Trận đấu đã được thiết lập lại!",
     "server.reignofnether.match_reset_hard": "Trận đấu đã được thiết lập lại hoàn toàn!",
+    "server.reignofnether.match_reset_hard_map": "Đã đặt lại trận đấu: đã xóa các đơn vị RTS đã tải và giữ lại công trình trên bản đồ.",
     "server.reignofnether.match_locked": "Trận đấu RTS đã bị khóa. Không có người chơi mới nào có thể tham gia.",
     "server.reignofnether.match_unlocked": "Trận đấu RTS đã được mở lại. Người chơi mới có thể tham gia.",
     "server.reignofnether.sync_enabled": "Đồng bộ đăng nhập RTS đã được kích hoạt.",

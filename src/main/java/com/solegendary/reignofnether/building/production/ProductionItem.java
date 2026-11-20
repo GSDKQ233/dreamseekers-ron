@@ -168,6 +168,13 @@ public abstract class ProductionItem {
         return null;
     }
 
+    /** Keep the recipe's icon and tooltip, but bind this button to the particular rendered row. */
+    public StopProductionButton getCancelButton(ProductionPlacement host, ActiveProduction row, boolean front) {
+        StopProductionButton button = getCancelButton(host, front);
+        button.onLeftClick = BuildingProductionServerboundPacket.cancelClick(host, row, front);
+        return button;
+    }
+
     public void recordScore(ProductionPlacement placement) {
         // Both legacy and receipt-backed research use this explicit work kind.
         // Research completion may alter a building or unlock a recipe, but is not
@@ -192,7 +199,7 @@ public abstract class ProductionItem {
 
     // return true if the tick finished
     public boolean tick(ProductionPlacement placement, ActiveProduction active) {
-        boolean predictingServerHead = placement.getLevel().isClientSide() && reportsHeadPause();
+        boolean predictingServerHead = placement.getLevel().isClientSide() && (reportsHeadPause() || active.pause().revision() != 0);
         if (predictingServerHead && active.pause().paused()) return false;
         if (active.ticksLeft > 0) {
             // On opt-in clients only the server decides to freeze this paid entry. No estimated

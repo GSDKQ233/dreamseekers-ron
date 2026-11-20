@@ -115,6 +115,8 @@ public interface WorkerUnit {
         // Direct building assignment uses this partial reset rather than
         // Unit.fullResetBehaviours; it is still a new authoritative work order.
         UnitServerEvents.discardPendingFormationMove((LivingEntity) unit);
+        var returning = ((Unit) unit).getReturnResourcesGoal();
+        if (returning != null && returning.hasReturnOrder()) returning.cancelReturning();
         unit.getBuildRepairGoal().stopBuilding();
         unit.getGatherResourceGoal().stopGathering();
     }

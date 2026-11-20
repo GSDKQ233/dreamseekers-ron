@@ -3,7 +3,7 @@ package com.solegendary.reignofnether.alliance;
 import com.solegendary.reignofnether.registrars.PacketHandler;
 import com.solegendary.reignofnether.resources.Resources;
 import com.solegendary.reignofnether.resources.ResourcesAction;
-import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
@@ -27,14 +27,26 @@ public class AllianceClientboundPacket {
                 new AllianceClientboundPacket(AllianceAction.ACCEPT_REQUEST, playerName1, playerName2, true));
     }
 
+    static void sendTo(ServerPlayer target, AllianceAction action, String first, String second, boolean value) {
+        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> target),
+                new AllianceClientboundPacket(action, first, second, value));
+    }
+
+    private static void sendInvitation(AllianceAction action, String to, String from) {
+        var server = net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer();
+        if (server == null) return;
+        var recipient = server.getPlayerList().getPlayerByName(to);
+        var sender = server.getPlayerList().getPlayerByName(from);
+        if (recipient != null) sendTo(recipient, action, to, from, true);
+        if (sender != null && sender != recipient) sendTo(sender, action, to, from, true);
+    }
+
     public static void addPendingAlliance(String toPlayer, String fromPlayer) {
-        PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(),
-                new AllianceClientboundPacket(AllianceAction.REQUEST, toPlayer, fromPlayer, true));
+        sendInvitation(AllianceAction.REQUEST, toPlayer, fromPlayer);
     }
 
     public static void cancelPendingAlliance(String toPlayer, String fromPlayer) {
-        PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(),
-                new AllianceClientboundPacket(AllianceAction.CANCEL_REQUEST, toPlayer, fromPlayer, true));
+        sendInvitation(AllianceAction.CANCEL_REQUEST, toPlayer, fromPlayer);
     }
 
     public static void removeAlliance(String playerName1, String playerName2) {
@@ -81,9 +93,11 @@ public class AllianceClientboundPacket {
     // server-side packet-consuming functions
     public boolean handle(Supplier<NetworkEvent.Context> ctx) {
         final var success = new AtomicBoolean(false);
-
+        var connection = ctx.get().getNetworkManager();
         ctx.get().enqueueWork(() -> {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+                var current = net.minecraft.client.Minecraft.getInstance().getConnection();
+                if (current == null || current.getConnection() != connection) return;
                 switch (this.action) {
 
                     case REQUEST -> {

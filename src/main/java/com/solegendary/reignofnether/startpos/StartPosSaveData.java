@@ -44,7 +44,9 @@ public class StartPosSaveData extends SavedData {
                 int y = btag.getInt("y");
                 int z = btag.getInt("z");
                 int colorId = btag.getInt("colorId");
-                data.startPoses.add(new StartPos(new BlockPos(x,y,z), colorId));
+                StartPos seat = new StartPos(new BlockPos(x, y, z), colorId);
+                seat.enabled = !btag.contains("enabled", Tag.TAG_BYTE) || btag.getBoolean("enabled");
+                data.startPoses.add(seat);
                 ReignOfNether.LOGGER.info("StartPosSaveData.load: " + x + "," + y + "," + z + "|" + colorId);
             }
         }
@@ -62,6 +64,7 @@ public class StartPosSaveData extends SavedData {
             cTag.putInt("y", sp.pos.getY());
             cTag.putInt("z", sp.pos.getZ());
             cTag.putInt("colorId", sp.colorId);
+            cTag.putBoolean("enabled", sp.enabled);
             list.add(cTag);
             //ReignOfNether.LOGGER.info("StartPosSaveData.save: " + sp.pos.getX() + "," + sp.pos.getY() + "," + sp.pos.getZ() + "|" + sp.colorId);
         });

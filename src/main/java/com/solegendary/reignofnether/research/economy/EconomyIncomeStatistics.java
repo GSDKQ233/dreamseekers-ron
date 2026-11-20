@@ -14,8 +14,6 @@ public final class EconomyIncomeStatistics {
         add(p,RTSPlayerScoresEnum.TOTAL_RESOURCES_HARVESTED,credited.ore());
     }
     private static void add(RTSPlayer p,RTSPlayerScoresEnum key,int amount) {
-        if(amount<=0)return;
-        int old=p.scores.scoreList.getOrDefault(key,0);
-        p.scores.scoreList.put(key,(int)Math.min(Integer.MAX_VALUE,Math.max(0L,(long)old)+amount));
+        p.scores.addHarvestScore(key,amount);
     }
 }

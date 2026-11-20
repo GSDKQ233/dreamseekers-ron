@@ -42,4 +42,27 @@ public final class ProductionPageState {
         }
         return best;
     }
+
+    /**
+     * Prefer a locally ready hall, but always send a legal selected hall to the
+     * server even if every client-side prerequisite prediction is negative.
+     */
+    public static <T> T preferredIdlest(List<T> selected, Predicate<T> legal, Predicate<T> predictedReady,
+                                       ToDoubleFunction<T> queuedTicks) {
+        T best = null;
+        boolean bestReady = false;
+        double remaining = Double.POSITIVE_INFINITY;
+        for (T candidate : selected) {
+            if (!legal.test(candidate)) continue;
+            boolean ready = predictedReady.test(candidate);
+            double estimate = queuedTicks.applyAsDouble(candidate);
+            double ticks = Double.isFinite(estimate) && estimate >= 0 ? estimate : Double.POSITIVE_INFINITY;
+            if (best == null || (ready && !bestReady) || (ready == bestReady && ticks < remaining)) {
+                best = candidate;
+                bestReady = ready;
+                remaining = ticks;
+            }
+        }
+        return best;
+    }
 }

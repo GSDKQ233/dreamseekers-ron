@@ -26,6 +26,9 @@ public class BuildingSave {
     public DataStorage dataStorage;
     public double partialBlocksDestroyed;
     public ListTag commandsNbt;
+    // Extra top-level keys belong to this placement, never to a future replacement at its coordinates.
+    CompoundTag extraFields = new CompoundTag();
+    CompoundTag inputRecord; // retained only until materialization succeeds, for a factory that cannot restore it
     public CompoundTag pendingConstruction = new CompoundTag();
 
     public BuildingSave(BlockPos originPos, Level level, Building building, String ownerName, Rotation rotation,

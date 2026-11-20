@@ -133,6 +133,11 @@ public interface AttackerUnit {
     public BlockPos getAttackMoveTarget();
     public boolean canAttackBuildings();
 
+    /** Optional extra veto for autonomous targeting. These predicates cannot waive the core
+     * relationship, range or line-of-sight rules and do not authorize an explicit attack. */
+    default boolean acceptsAutoAttackTarget(LivingEntity target) { return true; }
+    default boolean acceptsAutoAttackBuilding(BuildingPlacement target) { return true; }
+
     public Goal getAttackGoal(); // not necessarily the same goal, eg. could be melee or ranged
     public Goal getAttackBuildingGoal();
 
@@ -466,20 +471,17 @@ public interface AttackerUnit {
         else
             units = UnitServerEvents.getAllUnits();
 
-        ArrayList<LivingEntity> eligibleTargets = new ArrayList<>();
-        List<LivingEntity> unitsCopy = new ArrayList<>(units); // defensive copy
-        for (LivingEntity entity : unitsCopy) {
-            if (entity instanceof Unit otherUnit &&
-                    (!workersOnly || entity instanceof WorkerUnit) &&
-                    !unit.getOwnerName().equals(otherUnit.getOwnerName()) &&
-                    !AlliancesServerEvents.isAllied(unit.getOwnerName(), otherUnit.getOwnerName()) &&
-                    !otherUnit.getOwnerName().isBlank()) {
-                eligibleTargets.add(entity);
-            }
-        }
-        eligibleTargets.sort(Comparator.comparing(e -> e.position().distanceToSqr(((Entity) unit).position())));
-
-        if (!eligibleTargets.isEmpty())
-            setAttackMoveTarget(eligibleTargets.get(0).getOnPos());
+        // The RTS roster covers every level. Never turn another dimension's coordinates
+        // (or an unloaded/dead body's last position) into a command in this one.
+        new ArrayList<>(units).stream()
+                .filter(entity -> entity.level() == mob.level() && entity.isAlive() && entity.isAddedToWorld())
+                .filter(entity -> entity instanceof Unit otherUnit
+                        && (!workersOnly || entity instanceof WorkerUnit)
+                        && !otherUnit.getOwnerName().isBlank()
+                        && !unit.getOwnerName().equals(otherUnit.getOwnerName())
+                        && !AlliancesServerEvents.isAllied(unit.getOwnerName(), otherUnit.getOwnerName())
+                        && acceptsAutoAttackTarget(entity))
+                .min(Comparator.comparingDouble(mob::distanceToSqr))
+                .ifPresent(target -> setAttackMoveTarget(target.getOnPos()));
     }
 }

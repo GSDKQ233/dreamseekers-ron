@@ -12,6 +12,8 @@ import com.solegendary.reignofnether.registrars.EntityRegistrar;
 import com.solegendary.reignofnether.research.ResearchClient;
 import com.solegendary.reignofnether.research.ResearchServerEvents;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
+import com.solegendary.reignofnether.unit.UnitServerEvents;
+import com.solegendary.reignofnether.building.BuildingServerEvents;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -35,6 +37,7 @@ import java.util.List;
 public class GraveyardPlacement extends ProductionPlacement {
 
     public boolean autoRelease = false;
+    private boolean releasingSkull; // Forge join callbacks are synchronous and may re-enter release
 
     private static List<BlockPos> skullPoses = List.of(
             new BlockPos(1,1,3),
@@ -224,7 +227,7 @@ public class GraveyardPlacement extends ProductionPlacement {
 
     // find first skull in reverse order to createSkull to turn into a unit
     public void releaseNextUnit() {
-        if (this.level.isClientSide()) return;
+        if (!(level instanceof ServerLevel server) || !server.getServer().isSameThread() || releasingSkull) return;
         Block skull = null;
         BlockPos skullPos = null;
         boolean isWallBlock = true;
@@ -232,7 +235,8 @@ public class GraveyardPlacement extends ProductionPlacement {
         for (int i = wallSkullPoses.size() - 1; i >= 0; i--) {
             BlockPos relativeRotPos = BuildingUtils.altRotatePos(wallSkullPoses.get(i), this.rotation);
             BlockPos worldPos = relativeRotPos.offset(originPos).above();
-            if (level.getBlockState(worldPos).getBlock() instanceof WallSkullBlock skullBlock) {
+            if (level.getBlockState(worldPos).getBlock() instanceof WallSkullBlock skullBlock
+                    && getEntityType(skullBlock, true) != null) {
                 skull = skullBlock;
                 skullPos = worldPos;
             }
@@ -241,19 +245,38 @@ public class GraveyardPlacement extends ProductionPlacement {
             for (int i = skullPoses.size() - 1; i >= 0; i--) {
                 BlockPos relativeRotPos = BuildingUtils.altRotatePos(skullPoses.get(i), this.rotation);
                 BlockPos worldPos = relativeRotPos.offset(originPos).above();
-                if (level.getBlockState(worldPos).getBlock() instanceof AbstractSkullBlock skullBlock) {
+                if (level.getBlockState(worldPos).getBlock() instanceof AbstractSkullBlock skullBlock
+                        && getEntityType(skullBlock, false) != null) {
                     skull = skullBlock;
                     skullPos = worldPos;
                     isWallBlock = false;
                 }
             }
         }
-        if (skull != null) {
-            level.setBlockAndUpdate(skullPos, Blocks.AIR.defaultBlockState());
+        if (skull == null) return;
+        EntityType<? extends Unit> entityType = getEntityType(skull, isWallBlock);
+        String owner = ownerName;
+        long capture = getCaptureRevision();
+        releasingSkull = true;
+        try {
+            // produceUnit returns null on a Forge publication veto (repair2). Keep the
+            // exact inventory marker on failure so automatic release may retry later.
+            var entity = produceUnit(server, entityType, owner, true);
+            if (!(entity instanceof Mob born)) return;
+            if (born.isRemoved() || !born.isAlive() || !born.isAddedToWorld()
+                    || born.level() != server || !owner.equals(ownerName) || capture != getCaptureRevision()
+                    || !(born instanceof Unit unit) || !owner.equals(unit.getOwnerName())
+                    || isDestroyedServerside || !BuildingServerEvents.getBuildings().contains(this)
+                    || !level.getBlockState(skullPos).is(skull)
+                    || !level.setBlockAndUpdate(skullPos, Blocks.AIR.defaultBlockState())) {
+                // A callback changed the source or the marker could not be removed.
+                // Do not leave a second paid body next to an unconsumed inventory token.
+                UnitServerEvents.rollbackUncommittedProductionSpawn(born);
+                return;
+            }
             level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, skullPos, Block.getId(Blocks.COBBLESTONE.defaultBlockState()));
-            EntityType<? extends Unit> entityType = getEntityType(skull, isWallBlock);
-            if (entityType != null)
-                this.produceUnit((ServerLevel) level, entityType, this.ownerName, true);
+        } finally {
+            releasingSkull = false;
         }
     }
 }

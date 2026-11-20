@@ -63,9 +63,10 @@ public final class DreamProductionPages {
                 if(!result.current()||visible.get()||!enabled.get())return;
                 // Only selected legal same-owner Halls participate. Do not switch displayed Hall/page.
                 String owner=placement.ownerName;
-                BuildingPlacement best=ProductionPageState.idlest(new ArrayList<>(BuildingClientEvents.getSelectedBuildings()),
+                BuildingPlacement best=ProductionPageState.preferredIdlest(new ArrayList<>(BuildingClientEvents.getSelectedBuildings()),
                     b->b instanceof DreamHallPlacement p&&p.getBuilding()==placement.getBuilding()&&owner.equals(p.ownerName)
-                        &&live(p)&&authorized(p)&&recipe.getProduceErrorMsg(p)==null,
+                        &&live(p)&&authorized(p),
+                    b->recipe.getProduceErrorMsg((ProductionPlacement)b)==null,
                     b->((ProductionPlacement)b).productionQueue.stream().mapToDouble(a->a.ticksLeft).sum());
                 var key=ReignOfNetherRegistries.PRODUCTION_ITEM.getKey(recipe);
                 if(best==null||key==null||!result.current())return;

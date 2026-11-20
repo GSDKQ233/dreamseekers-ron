@@ -23,19 +23,44 @@ public final class MatchResultsDataGameTests {
     public static void savedActiveAndDefeatedRostersNeverMerge(GameTestHelper h) {
         var data=new RTSPlayerSaveData();data.rtsPlayers.add(player("CodecActive",7));
         data.postGameRtsPlayers.add(player("CodecDefeated",19));data.gameTicks=12345;
+        UUID absent = UUID.randomUUID();
+        data.rtsPlayers.get(0).unavailableUnitIds.add(absent);
+        data.admissionLocked = true;
+        for (int role : new int[]{-1, 7, 42}) {
+            for (boolean login : new boolean[]{false, true}) {
+                var slot = data.rtsPlayers.get(0); slot.scenarioRoleIndex = role;
+                slot.id = role == 42 ? -3 : 15; slot.startPosColorId = 11;
+                var wire = new FriendlyByteBuf(Unpooled.buffer());
+                try {
+                    PlayerClientboundPacket.seatPacket(slot, login).encode(wire);
+                    var row = new PlayerClientboundPacket(wire);
+                    h.assertTrue(!wire.isReadable() && row.playerAction == (role < 0 ? PlayerAction.ADD_RTS_PLAYER
+                            : PlayerAction.ADD_SCENARIO_NPC_RTS_PLAYER) && row.value2 == (role < 0 ? 11 : role)
+                            && row.value1 == slot.id && row.isForLogin == login,
+                            "actual live/login packet preserves stable human/NPC role or ordinary colour");
+                } finally { wire.release(); }
+            }
+        }
         var restored=RTSPlayerSaveData.load(data.save(new CompoundTag()));
         h.assertTrue(restored.rtsPlayers.size()==1&&restored.rtsPlayers.get(0).name.equals("CodecActive"),"defeated participant never restored as active");
         h.assertTrue(restored.postGameRtsPlayers.size()==1&&restored.postGameRtsPlayers.get(0).name.equals("CodecDefeated")
                 &&restored.postGameRtsPlayers.get(0).scores.scoreList.get(RTSPlayerScoresEnum.TOTAL_UNITS_PRODUCED)==19,"defeated name and scores survive codec");
+        h.assertTrue(restored.admissionLocked && restored.rtsPlayers.get(0).unavailableUnitIds.equals(Set.of(absent)),
+                "explicit admission lock and unavailable body survive the save codec");
+        data.admissionLocked = false;
+        h.assertTrue(!RTSPlayerSaveData.load(data.save(new CompoundTag())).admissionLocked,
+                "a nonempty roster can independently have open admission");
         h.assertTrue(restored.gameTicks==12345&&!restored.rtsPlayers.get(0).isDogPerson,"duration and API59 player preference preserved");
         h.succeed();
     }
     @GameTest(templateNamespace="api60_results_data",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=100)
     public static void oldSaveDefaultsDoNotInventDefeatedPlayersOrDuration(GameTestHelper h) {
         var data=new RTSPlayerSaveData();data.rtsPlayers.add(player("OldActive",7));
-        var tag=data.save(new CompoundTag());tag.remove("postGameRtsPlayers");tag.remove("gameTicks");
+        var tag=data.save(new CompoundTag());tag.remove("postGameRtsPlayers");tag.remove("gameTicks");tag.remove("admissionLocked");
         var restored=RTSPlayerSaveData.load(tag);
-        h.assertTrue(restored.rtsPlayers.size()==1&&restored.postGameRtsPlayers.isEmpty()&&restored.gameTicks==0,"old missing fields are empty/zero");
+        h.assertTrue(restored.rtsPlayers.size()==1&&restored.postGameRtsPlayers.isEmpty()&&restored.gameTicks==0
+                && !restored.admissionLocked && restored.rtsPlayers.get(0).unavailableUnitIds.isEmpty(),
+                "absent legacy fields do not invent history, a lock, or unloaded units");
         tag.putLong("gameTicks",-100);
         h.assertTrue(RTSPlayerSaveData.load(tag).gameTicks==0,"negative saved duration does not restore");
         h.succeed();

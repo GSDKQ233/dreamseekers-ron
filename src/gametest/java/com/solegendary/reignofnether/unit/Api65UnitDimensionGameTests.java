@@ -54,7 +54,44 @@ public final class Api65UnitDimensionGameTests {
             command(h,unit,UnitAction.ATTACK_BUILDING,p);
             h.assertTrue(goal.getBuildingTarget()==local,"manual melee targeting still selects same-level building even after a foreign same-coordinate entry");
         } finally {BuildingServerEvents.getBuildings().remove(foreign);BuildingServerEvents.getBuildings().remove(local);unit.discard();}
+        checkScenarioUnitSearch(h);
         h.succeed();
+    }
+
+    /** The real roster includes both levels. The seeker is in the Nether; other local suites'
+     * Overworld units (including the exact-coordinate decoy) must never change its order. */
+    private static void checkScenarioUnitSearch(GameTestHelper h) {
+        ServerLevel home=other(h);BlockPos pos=h.absolutePos(new BlockPos(4,3,4));
+        String owner="Api65Dim_Search",enemy="Api65Dim_SearchEnemy";
+        var source=EntityRegistrar.VINDICATOR_UNIT.get().create(home);
+        var remote=EntityRegistrar.VILLAGER_UNIT.get().create(h.getLevel());
+        var soldier=EntityRegistrar.VINDICATOR_UNIT.get().create(home);
+        var worker=EntityRegistrar.VILLAGER_UNIT.get().create(home);
+        var dead=EntityRegistrar.VILLAGER_UNIT.get().create(home);
+        try {
+            searchBody(h,home,source,pos,owner);
+            searchBody(h,h.getLevel(),remote,pos,enemy);
+            searchBody(h,home,dead,pos.offset(1,0,0),enemy);dead.setHealth(0);
+            BlockPos sentinel=pos.offset(0,0,7);
+            for(boolean workersOnly:new boolean[]{false,true}) {
+                source.setAttackMoveTarget(sentinel);source.attackMoveNearestEnemyUnit(workersOnly);
+                h.assertTrue(sentinel.equals(source.getAttackMoveTarget()),"foreign/dead only: retain order, workers="+workersOnly);
+            }
+            searchBody(h,home,soldier,pos.offset(3,0,0),enemy);
+            searchBody(h,home,worker,pos.offset(5,0,0),enemy);
+            source.attackMoveNearestEnemyUnit(false);
+            h.assertTrue(soldier.getOnPos().equals(source.getAttackMoveTarget()),"nearest living soldier in the seeker's level");
+            source.attackMoveNearestEnemyUnit(true);
+            h.assertTrue(worker.getOnPos().equals(source.getAttackMoveTarget()),"nearest living worker in the seeker's level");
+        } finally {
+            for(Entity body:List.of(dead,worker,soldier,remote,source))if(body.isAddedToWorld())body.discard();
+        }
+    }
+    private static void searchBody(GameTestHelper h,ServerLevel level,Mob body,BlockPos pos,String owner) {
+        level.getChunk(pos);
+        ((Unit)body).setOwnerName(owner);body.setNoAi(true);body.setNoGravity(true);
+        body.moveTo(pos.getX()+.5,pos.getY(),pos.getZ()+.5);
+        h.assertTrue(level.addFreshEntity(body)&&UnitServerEvents.getAllUnits().contains(body),"actual scenario roster fixture");
     }
     @GameTest(templateNamespace="api65_unit_dimensions",template="ore_mine_test_arena",batch=BATCH)
     public static void manualRangedOrderAndDirectSetterRejectForeignBuilding(GameTestHelper h) {

@@ -95,13 +95,13 @@ public final class UnitSkillAbility extends Ability {
                 : skill==UnitSkill.MOTHER_BROOD||skill==UnitSkill.MOTHER_NEST ? com.dreamseekers.DreamseekersMod.BEETLE_MOTHER_ICON
                 : skill==UnitSkill.WEEPING_ECHOES ? com.dreamseekers.DreamseekersMod.WEEPING_SQUEAL_GHOST_ICON
                 : ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/skill_"+skill.id()+".png");
-        return new AbilityButton(skill.id(),icon,
+        return SnapshotSkillButton.bind(new AbilityButton(skill.id(),icon,
                 key,()->SkillClient.isArmed(source,skill)||isAutocasting(unit)||skill==UnitSkill.MOTHER_NEST&&SkillClient.motherNestActive(source),()->false,()->(skill!=UnitSkill.MOTHER_NEST||com.dreamseekers.unitprogression.AdvancedUnitResearch.unlocked(source.getOwnerName(),com.dreamseekers.unitprogression.AdvancedUnitResearch.MOTHER_NEST_ID,true))&&(skill!=UnitSkill.AARONCOS_RIGHT_VORTEX||com.dreamseekers.unitprogression.ExpansionResearch.unlocked(source.getOwnerName(),com.dreamseekers.unitprogression.ExpansionResearch.AARONCOS_VORTEX_ID,true)),
                 ()->SkillClient.arm(source,skill),()->SkillClient.rightClick(source,skill),
                 tooltip(source),this,unit) {
             @Override public void renderTooltip(net.minecraft.client.gui.GuiGraphics graphics,int mouseX,int mouseY) {
                 tooltipLines=UnitSkillAbility.this.tooltip(source);super.renderTooltip(graphics,mouseX,mouseY);
             }
-        };
+        },()->SkillClient.readiness(source,skill));
     }
 }

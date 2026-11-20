@@ -460,12 +460,19 @@ public class GatherResourcesGoal extends MoveToTargetBlockGoal {
 
     public void saveAndReturnResources() {
         Unit unit = (Unit) mob;
-        if (unit.getReturnResourcesGoal() != null) {
+        if (unit.getReturnResourcesGoal() != null && !unit.getReturnResourcesGoal().hasReturnOrder()) {
             this.saveState();
             unit.resetBehaviours();
             WorkerUnit.resetBehaviours((WorkerUnit) unit);
             unit.getReturnResourcesGoal().returnToClosestBuilding();
         }
+    }
+
+    public void clearReturnState() {
+        // Back to Work may have assigned the same object to both fields; clearing a
+        // superseded return must never erase the permanent Call to Arms assignment.
+        if (saveData == permSaveData) saveData = new TargetResourcesSave();
+        else saveData.delete();
     }
 
     private void saveState() {

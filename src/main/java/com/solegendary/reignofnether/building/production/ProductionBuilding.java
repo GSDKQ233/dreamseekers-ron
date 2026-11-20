@@ -27,11 +27,18 @@ public abstract class ProductionBuilding extends Building {
         return minCorner.offset((int) -spawnRadiusOffset, 0, (int) -spawnRadiusOffset);
     }
 
+    /** No terrain or no candidate within this attempt's work budget means hold the paid order. */
+    @javax.annotation.Nullable
     public BlockPos getIndoorSpawnPoint(ServerLevel level, BuildingPlacement placement) {
-        BlockPos spawnPoint;
-        for(spawnPoint = placement.centrePos; level.getBlockState(spawnPoint.below()).isAir(); spawnPoint = spawnPoint.offset(0, -1, 0)) {
-        }
+        BlockPos centre = placement.centrePos;
+        if (!level.hasChunkAt(centre)) return null;
+        var y = IndoorSpawnSearch.find(centre.getY(), level.getMinBuildHeight(), level.getMaxBuildHeight(),
+                floor -> !level.getBlockState(new BlockPos(centre.getX(), floor, centre.getZ())).isAir());
+        if (y.isEmpty()) return null;
+        return adjustIndoorSpawnPoint(new BlockPos(centre.getX(), y.getAsInt(), centre.getZ()), placement);
+    }
 
-        return spawnPoint;
+    protected BlockPos adjustIndoorSpawnPoint(BlockPos grounded, BuildingPlacement placement) {
+        return grounded;
     }
 }

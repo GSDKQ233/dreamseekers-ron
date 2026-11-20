@@ -62,6 +62,17 @@ class ProductionPageStateTest {
         assertEquals(copy,input);
         assertNull(ProductionPageState.idlest(List.of(new Building("A",true,true,Double.NaN),new Building("A",true,true,-1)),b->true,Building::queued));
     }
+    @Test void missingLocalPrerequisitesDoNotSwallowARequestForALegalHall() {
+        var blocked = new Building("A",true,true,0);
+        var ready = new Building("A",true,true,15);
+        var foreign = new Building("B",true,true,0);
+        var invalidEstimate = new Building("A",true,true,Double.NaN);
+        java.util.function.Predicate<Building> legal = b -> b.owner.equals("A") && b.selected && b.live;
+        assertSame(blocked, ProductionPageState.preferredIdlest(List.of(blocked), legal, b -> false, Building::queued));
+        assertSame(ready, ProductionPageState.preferredIdlest(List.of(blocked, ready, foreign), legal, b -> b != blocked, Building::queued));
+        assertSame(invalidEstimate, ProductionPageState.preferredIdlest(List.of(invalidEstimate, foreign), legal, b -> false, Building::queued));
+        assertNull(ProductionPageState.preferredIdlest(List.of(foreign), legal, b -> true, Building::queued));
+    }
     @Test void eighthRecipeUsesOnlySecondPageWAndHeldWCannotCrossPageChange(){
         var s=new ProductionPageState(8,List.of());assertEquals(6,s.end());long old=s.generation();
         assertTrue(s.turn(1,List.of(87)));assertEquals(6,s.start());assertEquals(8,s.end());assertEquals(2,s.pages());

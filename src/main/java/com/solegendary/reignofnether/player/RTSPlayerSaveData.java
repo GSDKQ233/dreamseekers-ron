@@ -25,6 +25,8 @@ public class RTSPlayerSaveData extends SavedData {
     public final ArrayList<RTSPlayer> rtsPlayers = new ArrayList<>();
     public final ArrayList<RTSPlayer> postGameRtsPlayers = new ArrayList<>();
     public long gameTicks;
+    // Old saves did not persist admission policy. Preserve their open-on-restart behavior.
+    public boolean admissionLocked;
 
     private static RTSPlayerSaveData create() {
         return new RTSPlayerSaveData();
@@ -47,6 +49,7 @@ public class RTSPlayerSaveData extends SavedData {
         RTSPlayerSaveData data = create();
         readPlayers(tag, "rtsplayers", data.rtsPlayers);
         readPlayers(tag, "postGameRtsPlayers", data.postGameRtsPlayers);
+        data.admissionLocked = tag.getBoolean("admissionLocked");
         data.gameTicks = Math.max(0L, tag.getLong("gameTicks"));
         return data;
     }
@@ -74,7 +77,7 @@ public class RTSPlayerSaveData extends SavedData {
                     };
                 }
                 int[] scores = ptag.contains("scores") ? ptag.getIntArray("scores") : new RTSPlayerScores().getScoreListAsArray();
-                int scenarioRoleIndex = ptag.getInt("scenarioRoleIndex");
+                int scenarioRoleIndex = ptag.contains("scenarioRoleIndex", Tag.TAG_ANY_NUMERIC) ? ptag.getInt("scenarioRoleIndex") : -1;
 
                 Map<TradeAction, Integer> tradeRates = new HashMap<>();
                 tradeRates.put(TradeAction.FOOD_FOR_EMERALD, ptag.contains("foodEmeraldRate") ? ptag.getInt("foodEmeraldRate") : TradeResources.START_SELL_RATE);
@@ -97,7 +100,20 @@ public class RTSPlayerSaveData extends SavedData {
                 // Older saves never distinguished survival draws; do not fabricate historical rolls.
                 player.survivalRewardDraws = Math.min(Math.max(0, ptag.getInt("survivalRewardDraws")), player.itemDropQueue.size());
                 for (int i = 0; i < player.survivalRewardDraws; i++) player.itemDropQueue.pollFirst();
+                for (Tag entry : ptag.getList("pendingSurvivalRewards", Tag.TAG_COMPOUND)) {
+                    if (player.pendingSurvivalRewards.size() >= player.itemDropQueue.size()) break;
+                    CompoundTag pos = (CompoundTag) entry;
+                    if (!pos.contains("x", Tag.TAG_DOUBLE) || !pos.contains("y", Tag.TAG_DOUBLE)
+                            || !pos.contains("z", Tag.TAG_DOUBLE)) continue;
+                    double x = pos.getDouble("x"), y = pos.getDouble("y"), z = pos.getDouble("z");
+                    if (Double.isFinite(x) && Double.isFinite(y) && Double.isFinite(z))
+                        player.pendingSurvivalRewards.addLast(new net.minecraft.world.phys.Vec3(x,y,z));
+                }
                 if (ptag.hasUUID("playerUuid") && id >= 0) player.playerUuid = ptag.getUUID("playerUuid");
+                for (Tag unitTag : ptag.getList("unavailableUnits", Tag.TAG_COMPOUND)) {
+                    if (unitTag instanceof CompoundTag entry && entry.hasUUID("id"))
+                        player.unavailableUnitIds.add(entry.getUUID("id"));
+                }
                 player.startPosColorId = ptag.getInt("startPosColorId");
                 // Absent on older saves: preserve the historical dog preference default.
                 player.isDogPerson = !ptag.contains("isDogPerson", Tag.TAG_BYTE) || ptag.getBoolean("isDogPerson");
@@ -112,6 +128,7 @@ public class RTSPlayerSaveData extends SavedData {
     public CompoundTag save(CompoundTag tag) {
         tag.put("rtsplayers", writePlayers(rtsPlayers));
         tag.put("postGameRtsPlayers", writePlayers(postGameRtsPlayers));
+        tag.putBoolean("admissionLocked", admissionLocked);
         tag.putLong("gameTicks", Math.max(0L, gameTicks));
         return tag;
     }
@@ -123,6 +140,15 @@ public class RTSPlayerSaveData extends SavedData {
             cTag.putString("name", p.name);
             cTag.putInt("id", p.id);
             if (p.playerUuid != null && !p.isBot()) cTag.putUUID("playerUuid", p.playerUuid);
+            if (!p.unavailableUnitIds.isEmpty()) {
+                ListTag unavailable = new ListTag();
+                for (var id : p.unavailableUnitIds) {
+                    CompoundTag unit = new CompoundTag();
+                    unit.putUUID("id", id);
+                    unavailable.add(unit);
+                }
+                cTag.put("unavailableUnits", unavailable);
+            }
             cTag.putInt("ticksWithoutCapitol", p.ticksWithoutCapitol);
             cTag.putInt("beaconOwnerTicks", p.beaconOwnerTicks);
             cTag.putString("faction", p.faction.key.toString());
@@ -139,6 +165,13 @@ public class RTSPlayerSaveData extends SavedData {
             cTag.putInt("creepScore", p.creepScore);
             cTag.putInt("itemsDropped", p.itemsDropped);
             cTag.putInt("survivalRewardDraws", p.survivalRewardDraws);
+            ListTag pending = new ListTag();
+            p.pendingSurvivalRewards.forEach(pos -> {
+                CompoundTag n = new CompoundTag();
+                n.putDouble("x", pos.x); n.putDouble("y", pos.y); n.putDouble("z", pos.z);
+                pending.add(n);
+            });
+            cTag.put("pendingSurvivalRewards", pending);
             cTag.putLong("itemSeed", p.itemSeed);
             cTag.putLong("raritySeed", p.raritySeed);
             list.add(cTag);

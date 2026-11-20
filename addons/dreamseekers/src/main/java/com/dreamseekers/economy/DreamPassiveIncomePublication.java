@@ -29,8 +29,6 @@ public final class DreamPassiveIncomePublication {
         addSaturated(scores,RTSPlayerScoresEnum.ORES_HARVESTED,ore);
     }
     private static void addSaturated(RTSPlayerScores scores,RTSPlayerScoresEnum key,long amount) {
-        if(amount<=0)return;
-        int old=scores.scoreList.getOrDefault(key,0);
-        scores.scoreList.put(key,(int)Math.min(Integer.MAX_VALUE,(long)old+amount));
+        scores.addHarvestScore(key,amount);
     }
 }

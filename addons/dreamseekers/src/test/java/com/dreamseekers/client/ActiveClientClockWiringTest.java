@@ -54,9 +54,12 @@ class ActiveClientClockWiringTest {
         for (String text : List.of(scout, skill)) {
             assertFalse(text.contains("now + Math.max("));
             assertFalse(text.contains("cooldownUntil"));
-            assertTrue(text.contains("CLOCK.remaining("));
+            assertTrue(text.contains("SkillReadiness.at(CLOCK,"));
             assertTrue(text.contains("CLOCK.fresh("));
         }
+        String readiness = source("skill/SkillReadiness.java");
+        assertTrue(readiness.contains("clock.remaining(received, duration)"));
+        assertTrue(readiness.contains("clock.fresh(received, 40)"));
         assertTrue(source("client/DreamEconomyClientHud.java").contains("!CLOCK.fresh(refillTick,1)"));
         assertTrue(source("resonance/ResonanceClient.java").contains("CLOCK.remaining(VIEWS.get(p).received,s.cooldown())"));
     }

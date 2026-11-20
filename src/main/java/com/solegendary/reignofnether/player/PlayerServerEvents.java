@@ -37,6 +37,7 @@ import com.solegendary.reignofnether.scenario.ScenarioServerEvents;
 import com.solegendary.reignofnether.scenario.ScenarioUtils;
 import com.solegendary.reignofnether.startpos.StartPosServerEvents;
 import com.solegendary.reignofnether.survival.SurvivalServerEvents;
+import com.solegendary.reignofnether.survival.SurvivalResult;
 import com.solegendary.reignofnether.time.TimeServerEvents;
 import com.solegendary.reignofnether.time.TimeUtils;
 import com.solegendary.reignofnether.tutorial.TutorialServerEvents;
@@ -143,6 +144,7 @@ public class PlayerServerEvents {
         data.postGameRtsPlayers.clear();
         data.postGameRtsPlayers.addAll(postGameRtsPlayers);
         data.gameTicks = rtsGameTicks;
+        data.admissionLocked = rtsLocked;
         data.save();
         serverLevel.getDataStorage().save();
     }
@@ -158,7 +160,9 @@ public class PlayerServerEvents {
             rtsPlayers.addAll(data.rtsPlayers);
             postGameRtsPlayers.clear();
             postGameRtsPlayers.addAll(data.postGameRtsPlayers);
+            serverLevel = level;
             rtsGameTicks = data.gameTicks;
+            rtsLocked = data.admissionLocked;
             FogOfWarServerEvents.invalidateRtsCache();
 
             for (RTSPlayer rtsPlayer : rtsPlayers) {
@@ -178,6 +182,8 @@ public class PlayerServerEvents {
     private static int saveTicks = 0;
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent evt) {
+        // Listener order is immaterial: the unit stop hook also checkpoints before emptying its list.
+        UnitServerEvents.checkpointUnitPresence(evt.getServer().overworld());
         saveRTSPlayers();
     }
 
@@ -199,7 +205,7 @@ public class PlayerServerEvents {
             }
         }
     }
-    private static boolean alreadyHasSlot(ServerPlayer player) {
+    static boolean alreadyHasSlot(ServerPlayer player) {
         return rtsPlayers.stream().anyMatch(slot -> slot.name.equals(player.getGameProfile().getName())
                 || (slot.playerUuid != null && slot.playerUuid.equals(player.getUUID())));
     }
@@ -211,7 +217,7 @@ public class PlayerServerEvents {
         if (ortho) orthoviewPlayers.add(player);
         bindPlayerSession(player);
         for (RTSPlayer slot : rtsPlayers) if (slot.playerUuid != null && slot.playerUuid.equals(player.getUUID()))
-            PlayerClientboundPacket.addRTSPlayer(slot.name, slot.faction, (long) slot.id, slot.startPosColorId, slot.isDogPerson, true);
+            PlayerClientboundPacket.addRTSPlayer(slot, true);
     }
 
     public static boolean isRTSPlayer(String playerName) {
@@ -271,11 +277,12 @@ public class PlayerServerEvents {
         serverLevel = evt.getServer().getLevel(Level.OVERWORLD);
 
         if (evt.phase == TickEvent.Phase.END) {
+            if (SurvivalResult.isAfterMatch()) rtsGameTicks = SurvivalResult.current().elapsed();
             FogChunkSnapshot.recaptureIfRequested(serverLevel);
         }
 
         synchronized (rtsPlayers) {
-            if (evt.phase == TickEvent.Phase.END) {
+            if (evt.phase == TickEvent.Phase.END && !SurvivalResult.isAfterMatch()) {
                 for (RTSPlayer rtsPlayer : rtsPlayers)
                     rtsPlayer.serverTick();
 
@@ -285,7 +292,9 @@ public class PlayerServerEvents {
                         break;
                     }
                 }
-                if (rtsPlayers.isEmpty()) {
+                if (SurvivalResult.isAfterMatch()) {
+                    PlayerClientboundPacket.syncRtsGameTime(SurvivalResult.current().elapsed());
+                } else if (rtsPlayers.isEmpty()) {
                     rtsGameTicks = 0;
                 } else {
                     rtsGameTicks += 1;
@@ -412,10 +421,7 @@ public class PlayerServerEvents {
             PlayerClientboundPacket.removeRTSPlayer(playerName);
         }
         for (RTSPlayer rtsPlayer : rtsPlayers) {
-            PlayerClientboundPacket.addRTSPlayer(
-                    rtsPlayer.name, rtsPlayer.faction, (long) rtsPlayer.id,
-                    rtsPlayer.startPosColorId, rtsPlayer.isDogPerson, true
-            );
+            PlayerClientboundPacket.addRTSPlayer(rtsPlayer, true);
         }
 
         if (rtsLocked) {
@@ -456,22 +462,10 @@ public class PlayerServerEvents {
     public static void startRTS(int playerId, Vec3 pos, Faction faction, int startPosColorId) {
         if (faction == null || pos == null || !Double.isFinite(pos.x) || !Double.isFinite(pos.y) || !Double.isFinite(pos.z)) return;
         if (faction != Factions.NONE && faction != Factions.RANDOM && !Factions.PLAYABLE_FACTIONS.contains(faction.key)) return;
-        if (faction == Factions.RANDOM) {
-            var candidates = RandomStartFactionSelection.candidates(Factions.PLAYABLE_FACTIONS,
-                    Factions::getFaction, candidate ->
-                            ForgeRegistries.ENTITY_TYPES.containsKey(candidate.workerEntityType)
-                                    && ForgeRegistries.ENTITY_TYPES.containsKey(candidate.scoutEntityType)
-                                    && ReignOfNetherRegistries.BUILDING.containsKey(candidate.capitolBuilding));
-            faction = RandomStartFactionSelection.select(candidates, random::nextInt);
-            if (faction == null) {
-                ReignOfNether.LOGGER.warn("[Player] Cannot start random faction: no registered start-capable faction");
-                return;
-            }
-        }
+        faction = resolveStartFaction(faction);
+        if (faction == null) return;
         ReignOfNether.LOGGER.info("[Player] startRTS: playerId={}, pos=[{},{},{}], faction={}, startPosColorId={}", playerId, pos.x, pos.y, pos.z, faction, startPosColorId);
         synchronized (rtsPlayers) {
-            boolean readiedStart = startPosColorId != 0;
-
             ServerPlayer serverPlayer = null;
             for (ServerPlayer player : players)
                 if (player.getId() == playerId)
@@ -500,8 +494,34 @@ public class PlayerServerEvents {
             }
             GameModeServerEvents.StartChoice modeChoice = GameModeServerEvents.takeStartChoice(serverPlayer, faction, false);
             if (modeChoice == null) return;
+            grantAdmittedStart(serverPlayer, pos, faction, startPosColorId, modeChoice, null);
+        }
+    }
+
+    static Faction resolveStartFaction(Faction faction) {
+        if (faction == Factions.RANDOM) {
+            var candidates = RandomStartFactionSelection.candidates(Factions.PLAYABLE_FACTIONS,
+                    Factions::getFaction, candidate ->
+                            ForgeRegistries.ENTITY_TYPES.containsKey(candidate.workerEntityType)
+                                    && ForgeRegistries.ENTITY_TYPES.containsKey(candidate.scoutEntityType)
+                                    && ReignOfNetherRegistries.BUILDING.containsKey(candidate.capitolBuilding));
+            faction = RandomStartFactionSelection.select(candidates, random::nextInt);
+            if (faction == null) {
+                ReignOfNether.LOGGER.warn("[Player] Cannot start random faction: no registered start-capable faction");
+                return null;
+            }
+        }
+        return faction;
+    }
+
+    // Batch callers already checked every frozen seat, and published all of their units together.
+    // No admission decision is repeated per participant during the grant phase.
+    static boolean grantAdmittedStart(ServerPlayer serverPlayer, Vec3 pos, Faction faction, int startPosColorId,
+                                  GameModeServerEvents.StartChoice modeChoice, @Nullable ReadiedStart.Assets batch) {
+        synchronized (rtsPlayers) {
+            boolean readiedStart = batch != null || startPosColorId != 0;
             boolean firstStart = rtsPlayers.isEmpty();
-            boolean isDogPerson = random.nextBoolean();
+            boolean isDogPerson = batch == null ? random.nextBoolean() : batch.dogPerson();
 
             EntityType<?> workerEntityType = ForgeRegistries.ENTITY_TYPES.getValue(faction.workerEntityType);
 	        EntityType<?> scoutEntityType = ForgeRegistries.ENTITY_TYPES.getValue(faction.scoutEntityType);
@@ -544,42 +564,46 @@ public class PlayerServerEvents {
             ArrayList<Entity> startingWorkers = new ArrayList<>();
             Entity startingScout = null;
 
-            List<BlockPos> nonReadiedWorkerBps = List.of(
-                    new BlockPos((int) pos.x,0,(int) pos.z),
-                    new BlockPos((int) pos.x+1,0,(int) pos.z),
-                    new BlockPos((int) pos.x,0,(int) pos.z+1),
-                    new BlockPos((int) pos.x-1,0,(int) pos.z),
-                    new BlockPos((int) pos.x,0,(int) pos.z-1)
-            );
-            for (BlockPos bp0 : nonReadiedWorkerBps) {
-                Entity entity = workerEntityType != null ? workerEntityType.create(level) : null;
-                if (entity instanceof Unit unit) {
-                    BlockPos bp = MiscUtil.getHighestNonAirBlock(level, bp0)
-                            .above()
-                            .above();
-                    unit.setOwnerName(playerName);
-                    entity.moveTo(bp, 0, 0);
-                    if (!readiedStart)
-                        level.addFreshEntity(entity);
-                    startingWorkers.add(entity);
-                }
-            }
             boolean isBat = scoutEntityType == EntityRegistrar.BAT_UNIT.get();
-            if (FogOfWarServerEvents.isEnabled()) {
-                BlockPos nonReadiedScoutBp = new BlockPos((int) pos.x - 1, 0,(int) pos.z - 1);
-                Entity scoutEntity = scoutEntityType != null ? scoutEntityType.create(level) : null;
-                if (scoutEntity instanceof Unit) {
-                    BlockPos bp = MiscUtil.getHighestNonAirBlock(level, nonReadiedScoutBp)
-                            .above()
-                            .above();
-                    ((Unit) scoutEntity).setOwnerName(playerName);
-                    scoutEntity.moveTo(isBat ? bp.offset(0,10,0) : bp, 0, 0);
-                    if (!readiedStart)
-                        level.addFreshEntity(scoutEntity);
-                    startingScout = scoutEntity;
+            if (batch == null) {
+                List<BlockPos> nonReadiedWorkerBps = List.of(
+                        new BlockPos((int) pos.x,0,(int) pos.z),
+                        new BlockPos((int) pos.x+1,0,(int) pos.z),
+                        new BlockPos((int) pos.x,0,(int) pos.z+1),
+                        new BlockPos((int) pos.x-1,0,(int) pos.z),
+                        new BlockPos((int) pos.x,0,(int) pos.z-1)
+                );
+                for (BlockPos bp0 : nonReadiedWorkerBps) {
+                    Entity entity = workerEntityType != null ? workerEntityType.create(level) : null;
+                    if (entity instanceof Unit unit) {
+                        BlockPos bp = MiscUtil.getHighestNonAirBlock(level, bp0)
+                                .above()
+                                .above();
+                        unit.setOwnerName(playerName);
+                        entity.moveTo(bp, 0, 0);
+                        if (!readiedStart)
+                            level.addFreshEntity(entity);
+                        startingWorkers.add(entity);
+                    }
                 }
-            }
+                if (FogOfWarServerEvents.isEnabled()) {
+                    BlockPos nonReadiedScoutBp = new BlockPos((int) pos.x - 1, 0,(int) pos.z - 1);
+                    Entity scoutEntity = scoutEntityType != null ? scoutEntityType.create(level) : null;
+                    if (scoutEntity instanceof Unit) {
+                        BlockPos bp = MiscUtil.getHighestNonAirBlock(level, nonReadiedScoutBp)
+                                .above()
+                                .above();
+                        ((Unit) scoutEntity).setOwnerName(playerName);
+                        scoutEntity.moveTo(isBat ? bp.offset(0,10,0) : bp, 0, 0);
+                        if (!readiedStart)
+                            level.addFreshEntity(scoutEntity);
+                        startingScout = scoutEntity;
+                    }
+                }
 
+            } else {
+                startingWorkers.addAll(batch.workers());
+            }
             if (faction != Factions.NONE) {
                 if (SurvivalServerEvents.isEnabled()) {
                     level.setDayTime(TimeUtils.DAWN + getWaveSurvivalTimeModifier(SurvivalServerEvents.getDifficulty()));
@@ -596,24 +620,41 @@ public class PlayerServerEvents {
             ResourcesServerEvents.resetResources(playerName, readiedStart);
 
             if (readiedStart) {
-                Building building = ReignOfNetherRegistries.BUILDING.get(faction.capitolBuilding);;
-                ArrayList<BuildingBlock> blocks;
+                Building building = batch != null ? batch.capitol() : ReignOfNetherRegistries.BUILDING.get(faction.capitolBuilding);
                 if (building != null) {
-                    blocks = building.getRelativeBlockData(level);
-                    BlockPos bp = getBuildingOriginPos(new BlockPos((int) pos.x, (int) pos.y, (int) pos.z), blocks);
-                    for (int i = 0; i < startingWorkers.size(); i++) {
-                        startingWorkers.get(i).moveTo(bp.offset(-1, 1, i), 0, 0);
-                        level.addFreshEntity(startingWorkers.get(i));
+                    BlockPos bp = batch != null ? batch.origin()
+                            : getBuildingOriginPos(BlockPos.containing(pos), building.getRelativeBlockData(level));
+                    if (batch == null) {
+                        for (int i = 0; i < startingWorkers.size(); i++) {
+                            startingWorkers.get(i).moveTo(bp.offset(-1, 1, i), 0, 0);
+                            level.addFreshEntity(startingWorkers.get(i));
+                        }
+                        if (startingScout != null) {
+                            startingScout.moveTo(bp.offset(0, isBat ? 10 : 1, 2), 0, 0);
+                            level.addFreshEntity(startingScout);
+                        }
                     }
-                    if (startingScout != null) {
-                        startingScout.moveTo(bp.offset(0,  isBat ? 10 : 1, 2), 0, 0);
-                        level.addFreshEntity(startingScout);
+                    var workerIds = startingWorkers.stream().mapToInt(Entity::getId).toArray();
+                    if (batch == null) {
+                        BuildingServerEvents.placeBuilding(building, bp, Rotation.NONE, playerName, workerIds, false, false, true, true);
+                    } else {
+                        // The exact concrete object, origin, world and footprint were checked for every seat.
+                        if (BuildingServerEvents.placeBuilding(batch.placement(), bp, Rotation.NONE, playerName, workerIds,
+                                false, false, true, true) != batch.placement()) return false;
+                        // Native assignment uses level.getEntity(id). An accepted worker in a cold
+                        // section can still be hidden from lookup: give that exact staged object the
+                        // same order, without using an ID retry or touching any replacement entity.
+                        for (LivingEntity body : batch.workers()) {
+                            if (!UnitServerEvents.isPublishedBody(level, body)
+                                    || !playerName.equals(((Unit)body).getOwnerName())) return false;
+                            var worker = (WorkerUnit)body;
+                            if (level.getEntity(body.getId()) == null && worker.getBuildRepairGoal().getBuildingTarget() != batch.placement()) {
+                                ((Unit)body).resetBehaviours();
+                                WorkerUnit.resetBehavioursExceptExploreBuild(worker);
+                                worker.getBuildRepairGoal().setBuildingTarget(batch.placement());
+                            }
+                        }
                     }
-                    var workerIds = new int[startingWorkers.size()];
-                    for (int i = 0; i < startingWorkers.size(); i++) {
-                        workerIds[i] = startingWorkers.get(i).getId();
-                    }
-                    BuildingServerEvents.placeBuilding(building, bp, Rotation.NONE, playerName, workerIds, false, false, true, true);
                     PlayerClientboundPacket.teleport(playerName, BlockPos.containing(pos));
                 }
                 for (RTSPlayer rtsPlayer : rtsPlayers) {
@@ -643,7 +684,8 @@ public class PlayerServerEvents {
 
             PlayerClientboundPacket.syncRtsGameTime(rtsGameTicks);
             GameModeServerEvents.commitStart(serverPlayer, modeChoice, firstStart);
-            saveRTSPlayers();
+            if (batch == null) saveRTSPlayers(); // batch saves once, after lock and all seats are committed
+            return true;
         }
     }
 
@@ -660,13 +702,17 @@ public class PlayerServerEvents {
     }
 
     public static void startRTSBot(String name, Vec3 pos, Faction faction, ServerLevel level) {
-        if (level == null || !level.getServer().isSameThread()) return;
+        if (level == null || !level.getServer().isSameThread() || SurvivalResult.isAfterMatch()) return;
         synchronized (rtsPlayers) {
 
             EntityType<?> entityType = ForgeRegistries.ENTITY_TYPES.getValue(faction.workerEntityType);
             RTSPlayer bot = RTSPlayer.getNewBot(name, faction);
             if (rtsPlayers.isEmpty()) clearMatchHistory();
             rtsPlayers.add(bot);
+            if (SurvivalServerEvents.isEnabled())
+                for (RTSPlayer seat : rtsPlayers)
+                    if (seat != bot && !seat.name.equals(bot.name) && !AlliancesServerEvents.isAllied(seat.name, bot.name))
+                        AlliancesServerEvents.addAlliance(seat.name, bot.name);
             FogOfWarServerEvents.invalidateRtsCache();
             ResourcesServerEvents.assignResources(bot.name);
 
@@ -748,7 +794,7 @@ public class PlayerServerEvents {
             FogOfWarServerEvents.invalidateRtsCache();
             String playerName = serverPlayer.getName().getString();
             ResourcesServerEvents.assignScenarioResources(rtsPlayer);
-            PlayerClientboundPacket.addRTSPlayer(playerName, role.faction, (long) serverPlayer.getId(), 0, true, false);
+            PlayerClientboundPacket.addRTSPlayer(rtsPlayer, false);
 
             for (BuildingPlacement building : BuildingServerEvents.getBuildings()) {
                 if (building.scenarioRoleIndex == roleIndex) {
@@ -782,7 +828,7 @@ public class PlayerServerEvents {
                     rtsPlayers.add(npcRtsPlayer);
                     FogOfWarServerEvents.invalidateRtsCache();
                     ResourcesServerEvents.assignScenarioResources(npcRtsPlayer);
-                    PlayerClientboundPacket.addScenarioNPCRTSPlayer(scenarioRole.name, scenarioRole.faction, (long) id, scenarioRole.index);
+                    PlayerClientboundPacket.addRTSPlayer(npcRtsPlayer, false);
                     id -= 1;
                 }
             }
@@ -1092,7 +1138,7 @@ public class PlayerServerEvents {
     }
 
     public static void defeat(String playerName, String reason) {
-        if (SandboxServer.isSandboxPlayer(playerName))
+        if (serverLevel == null || SurvivalResult.isAfterMatch() || SandboxServer.isSandboxPlayer(playerName))
             return;
 
         boolean playerExists = false;
@@ -1108,6 +1154,8 @@ public class PlayerServerEvents {
         ReignOfNether.LOGGER.info("[Player] defeat: playerName={}, reason={}", playerName, reason);
 
         synchronized (rtsPlayers) {
+            // Read the formal mode before removing the session's seat, including its last seat.
+            final GameMode matchMode = GameModeServerEvents.getGameMode(serverLevel);
             // Remove the defeated player from the list
             FogOfWarServerEvents.invalidateRtsCache();
 
@@ -1159,8 +1207,14 @@ public class PlayerServerEvents {
             ResearchServerEvents.removeAllCheatsFor(playerName);
             ResourcesServerEvents.removeAccount(playerName);
 
-            // No survivor is a completed all-defeated result in ordinary and coop matches.
-            // Emit it before the next empty-roster tick resets the elapsed timer.
+            // Cooperative wave survival never awards victory for being the last seat/alliance.
+            // Losing its last formal seat is a terminal defeat, regardless of the coop gamerule.
+            if (matchMode == GameMode.SURVIVAL) {
+                if (rtsPlayers.isEmpty() && SurvivalServerEvents.finish(serverLevel,
+                        SurvivalResult.Kind.ALL_DEFEATED, Set.of())) broadcastMatchStats(Set.of());
+                return;
+            }
+            // Preserve the existing Classic/Scenario elimination rules.
             if (rtsPlayers.isEmpty()) {
                 broadcastMatchStats(Set.of());
             // Check if only allied players are left or if a single player remains.
@@ -1201,22 +1255,19 @@ public class PlayerServerEvents {
 
     public static void beaconVictory(String playerName) {
         ReignOfNether.LOGGER.info("[Player] beaconVictory: playerName={}", playerName);
-        if (SurvivalServerEvents.isEnabled()) {
-            try {
-                if (AlliancesServerEvents.getAllAllies(playerName).isEmpty())
-                    sendMessageToAllPlayers("server.reignofnether.victorious", true, playerName);
-                else
-                    sendMessageToAllPlayers("server.reignofnether.victory_alliance", true, playerName);
-                PlayerClientboundPacket.victory(playerName);
-                for (String allyName : AlliancesServerEvents.getAllAllies(playerName))
-                    PlayerClientboundPacket.victory(allyName);
-                SurvivalServerEvents.endCurrentWave();
-                Set<String> winners = new HashSet<>(AlliancesServerEvents.getAllAllies(playerName));
-                winners.add(playerName);
-                broadcastMatchStats(winners);
-            } catch (ConcurrentModificationException e) {
-                System.err.println("ConcurrentModificationException during beaconVictory: " + e.getMessage());
-            }
+        if (GameModeServerEvents.getGameMode(serverLevel) == GameMode.SURVIVAL) {
+            if (!isRTSPlayer(playerName) || SurvivalResult.isAfterMatch()) return;
+            // Only a still-active formal seat can receive a victory title. A spectator's stale
+            // alliance edge, or a seat already eliminated in this round, is not a victory claim.
+            Set<String> winners = new TreeSet<>();
+            for (RTSPlayer p : List.copyOf(rtsPlayers))
+                if (p.name.equals(playerName) || AlliancesServerEvents.isAllied(playerName, p.name))
+                    winners.add(p.name);
+            if (!SurvivalServerEvents.finish(serverLevel, SurvivalResult.Kind.BEACON_VICTORY, winners)) return;
+            sendMessageToAllPlayers(winners.size() == 1 ? "server.reignofnether.victorious"
+                    : "server.reignofnether.victory_alliance", true, playerName);
+            for (String name : winners) PlayerClientboundPacket.victory(name);
+            broadcastMatchStats(winners);
         } else {
             for (RTSPlayer p : rtsPlayers) {
                 String n = p.name;
@@ -1299,47 +1350,49 @@ public class PlayerServerEvents {
     public static int resetRTS(boolean hardReset) {
         ReignOfNether.LOGGER.info("[Player] resetRTS: hardReset={}", hardReset);
         GameModeServerEvents.reset(serverLevel.getServer());
-        StartPosServerEvents.cancelStartGameCountdown(true);
         FogChunkSnapshot.clear(serverLevel);
         FogOfWarServerEvents.resetNeutralFogUnits();
 
-        boolean isSandboxOrScenario = SandboxServer.isAnyoneASandboxPlayer() || serverLevel.getGameRules().getRule(GameRuleRegistrar.SCENARIO_MODE).get();
+        MatchResetPolicy reset = new MatchResetPolicy(hardReset, SandboxServer.isAnyoneASandboxPlayer()
+                || serverLevel.getGameRules().getBoolean(GameRuleRegistrar.SCENARIO_MODE));
 
         synchronized (rtsPlayers) {
             rtsPlayers.clear();
             FogOfWarServerEvents.invalidateRtsCache();
 
-            for (LivingEntity entity : UnitServerEvents.getAllUnits())
-                if (hardReset || (entity instanceof Unit unit && !Unit.hasAnchor(unit) && !isSandboxOrScenario))
+            for (LivingEntity entity : List.copyOf(UnitServerEvents.getAllUnits()))
+                if (reset.removeUnit(entity instanceof Unit unit && !Unit.hasAnchor(unit)))
                     entity.kill();
 
-            if (!isSandboxOrScenario)
-                UnitServerEvents.getAllUnits().removeIf(u -> (hardReset || (u instanceof Unit unit && !Unit.hasAnchor(unit))));
+            if (!reset.preserveMap())
+                UnitServerEvents.getAllUnits().removeIf(u -> reset.removeUnit(u instanceof Unit unit && !Unit.hasAnchor(unit)));
 
-            if (!isSandboxOrScenario)
+            if (!reset.preserveMap())
                 for (LivingEntity entity : UnitServerEvents.getAllUnits())
                     if (entity instanceof Unit unit)
                         unit.setOwnerName("");
 
-            for (BuildingPlacement building : BuildingServerEvents.getBuildings()) {
+            for (BuildingPlacement building : List.copyOf(BuildingServerEvents.getBuildings())) {
                 if (building instanceof ProductionPlacement productionBuilding)
                     productionBuilding.productionQueue.clear();
-                if ((building.getBuilding().shouldDestroyOnReset || hardReset) && !isSandboxOrScenario)
+                if (reset.removeBuilding(building.getBuilding().shouldDestroyOnReset))
                     building.destroy((ServerLevel) building.getLevel());
             }
-            if (!isSandboxOrScenario)
-                BuildingServerEvents.getBuildings().removeIf(b -> b.getBuilding().shouldDestroyOnReset || hardReset);
+            if (!reset.preserveMap())
+                BuildingServerEvents.getBuildings().removeIf(b -> reset.removeBuilding(b.getBuilding().shouldDestroyOnReset));
 
-            if (!isSandboxOrScenario)
+            if (!reset.preserveMap())
                 for (BuildingPlacement building : BuildingServerEvents.getBuildings())
                     building.ownerName = "";
 
             ResearchServerEvents.removeAllResearch();
             ResearchServerEvents.removeAllCheats();
-            PlayerClientboundPacket.resetRTS(hardReset);
+            PlayerClientboundPacket.resetRTS(reset);
+            StartPosServerEvents.reset(serverLevel);
             if (!TutorialServerEvents.isEnabled()) {
                 if (hardReset)
-                    sendMessageToAllPlayers("server.reignofnether.match_reset_hard", true);
+                    sendMessageToAllPlayers(reset.preserveMap() ? "server.reignofnether.match_reset_hard_map"
+                            : "server.reignofnether.match_reset_hard", true);
                 else
                     sendMessageToAllPlayers("server.reignofnether.match_reset", true);
             }
@@ -1378,13 +1431,11 @@ public class PlayerServerEvents {
             if (le instanceof Unit unit) {
                 ScenarioRole role = ScenarioUtils.getScenarioRole(false, unit.getScenarioRoleIndex());
                 unit.setOwnerName(role != null ? role.name : "");
-                UnitSyncClientboundPacket.sendSyncScenarioRoleIndexPacket(unit);
             }
         }
         for (BuildingPlacement bpl : BuildingServerEvents.getBuildings()) {
             ScenarioRole role = ScenarioUtils.getScenarioRole(false, bpl.scenarioRoleIndex);
             bpl.ownerName = role != null ? role.name : "";
-            BuildingClientEvents.syncBuilding(bpl, bpl.getBlocksPlaced(), bpl.partialBlocksDestroyed, bpl.ownerName, bpl.scenarioRoleIndex);
         }
         serverLevel.getGameRules().getRule(GameRuleRegistrar.SCENARIO_MODE).set(true, serverLevel.getServer());
         FogOfWarServerEvents.resetNeutralFogUnits();
@@ -1399,10 +1450,6 @@ public class PlayerServerEvents {
             }
             ResearchServerEvents.removeAllResearch();
             ResearchServerEvents.removeAllCheats();
-            PlayerClientboundPacket.publishScenarioMap();
-            sendMessageToAllPlayers("server.reignofnether.scenario_published", true);
-            sendMessageToAllPlayers("server.reignofnether.scenario_published_tooltip1");
-            sendMessageToAllPlayers("server.reignofnether.scenario_published_tooltip2");
             ResourcesServerEvents.clearAccounts();
             saveAll();
 
@@ -1424,6 +1471,16 @@ public class PlayerServerEvents {
         AlliancesServerEvents.playersWithAlliedControl.clear();
         TimeServerEvents.resetBloodMoon();
 
+        // Publish only after the server has saved the new owners, finished clearing the old match,
+        // and made the viewers spectators. The regular packets apply level and visibility checks.
+        for (BuildingPlacement building : BuildingServerEvents.getBuildings())
+            BuildingClientboundPacket.syncBuilding(building);
+        for (LivingEntity entity : UnitServerEvents.getAllUnits())
+            if (entity instanceof Unit unit) UnitSyncClientboundPacket.sendScenarioPublication(unit);
+        PlayerClientboundPacket.publishScenarioMap();
+        sendMessageToAllPlayers("server.reignofnether.scenario_published", true);
+        sendMessageToAllPlayers("server.reignofnether.scenario_published_tooltip1");
+        sendMessageToAllPlayers("server.reignofnether.scenario_published_tooltip2");
         GameruleClientboundPacket.setScenarioMode(true);
         GameModeClientboundPacket.setAndLockAllClientGameModes(GameMode.SCENARIO);
     }
@@ -1450,6 +1507,10 @@ public class PlayerServerEvents {
 
     public static void setRTSLock(boolean lock, boolean noMsg) {
         rtsLocked = lock;
+        if (serverLevel == null) return;
+        // A manual toggle is an explicit policy change, including between matches. Snapshot it
+        // with the current roster (a readied batch only calls this after every grant).
+        saveRTSPlayers();
         serverLevel.players().forEach(p -> {
             if (rtsLocked) {
                 PlayerClientboundPacket.lockRTS(p.getName().getString());

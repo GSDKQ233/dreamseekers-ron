@@ -21,6 +21,10 @@ record WaveCursor(int next, int active, boolean finished) {
         return canStart() ? new WaveCursor(Math.min(LAST, next + 1), next, false) : this;
     }
 
+    // A dispatch with no confirmed new product has not issued anything, even if older
+    // encounters still have bodies/portals. Preserve ALL fields, including the old active claim.
+    WaveCursor afterDispatch(boolean published) { return published ? start() : this; }
+
     WaveCursor clear() {
         return active == 0 ? this : new WaveCursor(next, 0, active == LAST && next == LAST);
     }

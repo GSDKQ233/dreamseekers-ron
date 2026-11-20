@@ -68,6 +68,9 @@ public final class WindDashSkillGameTests {
             require(h,java.util.concurrent.CompletableFuture.supplyAsync(()->SkillService.request(owner,good)).join(),SkillResult.INVALID_REQUEST,"worker thread cannot mutate dash");
             f.source.addEffect(new MobEffectInstance(MobEffectRegistrar.STUN.get(),20));require(h,SkillService.request(owner,good),SkillResult.DISABLED,"stunned source");f.source.removeEffect(MobEffectRegistrar.STUN.get());
             var nether=h.getLevel().getServer().getLevel(Level.NETHER);h.assertTrue(nether!=null,"real second dimension available");denied(h,SkillService.request(FakePlayerFactory.get(nether,owner.getGameProfile()),good),"wrong dimension sender");
+            f.target.setInvisible(true);
+            require(h,SkillService.request(owner,good),SkillResult.HIDDEN,"physical LOS to invisible unit cannot start dash");
+            f.target.setInvisible(false);
             h.assertTrue(cd(f.source)==0&&!WindDash.isActive(f.source),"all rejected requests leave cooldown and activity untouched");require(h,cast(h,f.source,f.target),SkillResult.SUCCESS,"valid authenticated dash");h.assertTrue(cd(f.source)==440&&WindDash.isActive(f.source),"real start atomically pays twenty-two-second cooldown");denied(h,SkillService.request(owner,good),"successful request replay");command(h,f.source,UnitAction.STOP,-1,BlockPos.ZERO,false);ledger(h,"Authority");pass("SENDER_UUID_ENEMY_THREAD_REPLAY");
         }).thenSucceed();
     }
@@ -228,8 +231,23 @@ public final class WindDashSkillGameTests {
 
     @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=1040)
     public static void enemyBecomingAllyInsideFinalCallbackCannotBeDamagedOrRewardCommand(GameTestHelper h) {
-        floor(h);var f=fixture(h,"DiplomacyHit");var seq=ready(h,f.source,f.target,f.friend).thenExecute(()->{watch(f.target,Stage.DAMAGE,hit->AlliancesServerEvents.addAlliance(f.source.getOwnerName(),((Unit)f.target).getOwnerName()));require(h,cast(h,f.source,f.target),SkillResult.SUCCESS,"enemy initially legal");});
-        finish(seq,f).thenExecute(()->{close(h,f.target.getHealth(),200,"new alliance blocks actual final HP write");h.assertTrue(!commanded(f.friend,BuffKind.MOVEMENT_SPEED),"invalidated hostile hit produces no command");AlliancesServerEvents.removeAlliance(f.source.getOwnerName(),((Unit)f.target).getOwnerName());h.assertTrue(!WindDash.isActive(f.source),"removing alliance cannot restore old in-flight hit");pass("CALLBACK_ALLIANCE_INVALIDATES_RECEIPT");}).thenSucceed();
+        floor(h);var allied=fixture(h,"DiplomacyHit",3,5);var hidden=fixture(h,"HiddenHit",3,17);var fs=List.of(allied,hidden);
+        var seq=ready(h,entities(fs)).thenExecute(()->{
+            watch(allied.target,Stage.DAMAGE,hit->AlliancesServerEvents.addAlliance(allied.source.getOwnerName(),((Unit)allied.target).getOwnerName()));
+            watch(hidden.target,Stage.DAMAGE,hit->hidden.target.setInvisible(true));
+            for(var f:fs)require(h,cast(h,f.source,f.target),SkillResult.SUCCESS,"both enemies visible and legal at start");
+        });
+        finishAll(seq,fs).thenExecute(()->{
+            for(var f:fs){
+                close(h,f.target.getHealth(),200,"alliance or visibility loss blocks actual final HP write");
+                h.assertTrue(!commanded(f.friend,BuffKind.MOVEMENT_SPEED)&&WindDash.knockbackTicks(f.target)==0&&cd(f.source)>0,
+                        "no command/knockback/refund after final callback revocation");
+            }
+            AlliancesServerEvents.removeAlliance(allied.source.getOwnerName(),((Unit)allied.target).getOwnerName());
+            hidden.target.setInvisible(false);
+            h.assertTrue(!WindDash.isActive(allied.source)&&!WindDash.isActive(hidden.source),"revoked dash cannot resume");
+            pass("CALLBACK_ALLIANCE_OR_HIDDEN_INVALIDATES_RECEIPT");
+        }).thenSucceed();
     }
 
     @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=1080)

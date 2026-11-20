@@ -79,8 +79,8 @@ public class ShrineOfProsperity extends ProductionBuilding {
     }
 
     @Override
-    public BlockPos getIndoorSpawnPoint(ServerLevel level, BuildingPlacement placement) {
-        return super.getIndoorSpawnPoint(level, placement)
+    protected BlockPos adjustIndoorSpawnPoint(BlockPos grounded, BuildingPlacement placement) {
+        return grounded
                 .offset(BuildingUtils.altRotatePos(new BlockPos(0,-1,2), placement.rotation));
     }
 }

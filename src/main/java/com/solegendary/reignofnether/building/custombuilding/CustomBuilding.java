@@ -71,7 +71,6 @@ public class CustomBuilding extends ProductionBuilding implements GarrisonableBu
     public Set<Block> portraitBlockOptions = new HashSet<>();
     public CompoundTag attributesNbt = new CompoundTag(); // NBT containing all the below fields (including portrait block key)
     public ListTag commandsNbt = new ListTag();
-    public HashMap<EntityType<?>, CompoundTag> unitProductionNbts = new HashMap<>();
     public int nightRadius = 0;
     public int netherRadius = 0;
     public boolean buildableByVillagers = false;
@@ -295,13 +294,13 @@ public class CustomBuilding extends ProductionBuilding implements GarrisonableBu
                             }
 
                             String newItemName = originalProdItem.getItemName() + "-" + "custom" + "-" + hotkeyIndex;
-                            ProductionItem prodItem = new CustomProductionItem(newCost, newItemName, originalProdItem, newToolTip, newTooltipTitle == null);
+                            CompoundTag template = stackNbt != null && stackNbt.contains("EntityTag", Tag.TAG_COMPOUND)
+                                    ? stackNbt.getCompound("EntityTag") : null;
+                            ProductionItem prodItem = new CustomProductionItem(newCost, newItemName, originalProdItem,
+                                    newToolTip, newTooltipTitle == null, type, template);
 
                             Keybinding hotkey = hotkeyIndex < HOTKEYS.size() ? HOTKEYS.get(hotkeyIndex) : null;
                             this.productions.add(prodItem, hotkey);
-                            if (stackNbt != null && stackNbt.contains("EntityTag")) {
-                                this.unitProductionNbts.put(type, stackNbt.getCompound("EntityTag"));
-                            }
                             hotkeyIndex += 1;
                         }
                     }

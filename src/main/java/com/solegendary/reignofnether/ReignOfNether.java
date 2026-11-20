@@ -81,7 +81,7 @@ import java.util.function.Supplier;
 public class ReignOfNether {
     public static final Logger LOGGER = LogManager.getLogger();
     public static final String MOD_ID = "reignofnether";
-    public static final String VERSION_STRING = "1.5.0b-ore-mines.2-dreamseekers-api.65-repair2";
+    public static final String VERSION_STRING = "1.5.0b-ore-mines.2-dreamseekers-api.65-repair3.1";
     // Text-only releases share the existing configuration files and user settings.
     public static final String CONFIG_VERSION = "1.5.0b-ore-mines.2-dreamseekers-api.65-audit-fixes";
 

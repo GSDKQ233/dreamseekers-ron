@@ -1,6 +1,6 @@
 寻梦者 API65 安装与更新指南
 
-本指南适用于 API65 repair2 修复候选；安装前先看 REPAIR2.zh-CN.md 的实测范围。寻梦者是原版 PasterDream 与 Reign of Nether 的独立 RTS 兼容附属，需要同时安装配对核心及指定前置。
+本指南仅适用于此前已交付的 API65 repair2，不适用于 repair3 源码候选；安装前先看 REPAIR2.zh-CN.md 的实测范围。寻梦者是原版 PasterDream 与 Reign of Nether 的独立 RTS 兼容附属，需要同时安装配对核心及指定前置。
 
 一、安装文件
 

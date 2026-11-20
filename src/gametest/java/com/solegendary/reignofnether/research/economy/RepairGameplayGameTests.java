@@ -1,8 +1,13 @@
 package com.solegendary.reignofnether.research.economy;
 
 import com.solegendary.reignofnether.api.ReignOfNetherRegistries;
+import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
 import com.solegendary.reignofnether.building.*;
 import com.solegendary.reignofnether.building.buildings.placements.ProductionPlacement;
+import com.solegendary.reignofnether.building.buildings.placements.PortalPlacement;
+import com.solegendary.reignofnether.building.buildings.placements.StockpilePlacement;
+import com.solegendary.reignofnether.resources.ResourcesServerEvents;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import com.solegendary.reignofnether.building.production.*;
 import com.solegendary.reignofnether.player.PlayerServerEvents;
 import com.solegendary.reignofnether.player.RTSPlayerScoresEnum;
@@ -66,19 +71,50 @@ public final class RepairGameplayGameTests {
             goal.depositItems();
             h.assertTrue(balance.equals(ResearchEconomyFixtures.snapshot(f.bank)) && Arrays.equals(scored,scores.getScoreListAsArray())
                     && worker.getItems().get(0) == apple, "second arrival with only unvalued cargo credits nothing");
+            manualChests(f);
         }
         h.succeed();
     }
 
+    private static void manualChests(Api65EconomyGameTests.F f) {
+        for (boolean stockpile : new boolean[]{true,false}) {
+            var host = f.install(stockpile ? Buildings.OAK_STOCKPILE : Buildings.PORTAL_CIVILIAN);
+            var chest = host.getBlocks().stream().map(b -> f.h.getLevel().getBlockEntity(b.getBlockPos()))
+                    .filter(ChestBlockEntity.class::isInstance).map(ChestBlockEntity.class::cast).findFirst().orElseThrow();
+            var sand = new ItemStack(Items.SOUL_SAND, 3);
+            sand.getOrCreateTag().putString("keep", "exact slot");
+            var gems = new ItemStack(Items.EMERALD, 5);
+            gems.getOrCreateTag().putInt("lot", 41);
+            chest.setItem(2, new ItemStack(Items.WHEAT, 2)); chest.setItem(7, sand); chest.setItem(16, gems);
+            Runnable deposit = stockpile ? ((StockpilePlacement)host)::checkAndConsumeChestItems : ((PortalPlacement)host)::checkAndConsumeChestItems;
+            int food = f.bank.food, emerald = f.bank.emerald;
+            ResourcesServerEvents.resourcesList.remove(f.bank);
+            try {
+                deposit.run();
+                f.h.assertTrue(chest.getItem(2).getCount()==2 && chest.getItem(7)==sand && chest.getItem(16)==gems,
+                        "absent recipient cannot consume a manual deposit");
+            } finally { ResourcesServerEvents.resourcesList.add(f.bank); }
+            deposit.run(); deposit.run();
+            f.h.assertTrue(chest.getItem(2).isEmpty() && chest.getItem(7)==sand && sand.getCount()==3
+                            && (stockpile ? chest.getItem(16).isEmpty() : chest.getItem(16)==gems && gems.getCount()==5)
+                            && f.bank.food==food+8 && f.bank.emerald==emerald+(stockpile?5:0),
+                    "only paid slots consumed once; civilian portal leaves its unaccepted emeralds in place");
+        }
+    }
+
     private static void cancel(Api65EconomyGameTests.F f, ProductionPlacement host, ProductionItem item, UUID observed) {
+        cancel(f, host, item, observed, BuildingAction.CANCEL_PRODUCTION);
+    }
+
+    private static void cancel(Api65EconomyGameTests.F f, ProductionPlacement host, ProductionItem item, UUID observed, BuildingAction action) {
         String key = ReignOfNetherRegistries.PRODUCTION_ITEM.getKey(item).toString();
-        var packet = new BuildingProductionServerboundPacket(BuildingAction.CANCEL_PRODUCTION, key, host.originPos, observed);
+        var packet = new BuildingProductionServerboundPacket(action, key, host.originPos, observed);
         var bytes = new FriendlyByteBuf(Unpooled.buffer());
         try {
             packet.encode(bytes);
             var decoded = new BuildingProductionServerboundPacket(bytes);
-            f.h.assertTrue(java.util.Objects.equals(decoded.expectedHead, observed) && bytes.readableBytes() == 0,
-                    "front intent survives the real request codec");
+            f.h.assertTrue(java.util.Objects.equals(decoded.expectedEntry, observed) && bytes.readableBytes() == 0,
+                    "queue intent survives the real request codec");
             decoded.handle(() -> f.peer.context);
         } finally { bytes.release(); }
         f.peer.channel.runPendingTasks();
@@ -134,6 +170,34 @@ public final class RepairGameplayGameTests {
             var refunded = ResearchEconomyFixtures.snapshot(f.bank);
             cancel(f, town, recipe, b.queueEntryId);
             h.assertTrue(refunded.equals(ResearchEconomyFixtures.snapshot(f.bank)), "repeat click does not refund twice");
+            try (var delegate = new Api65EconomyGameTests.F(h, "crew")) {
+                AlliancesServerEvents.addAlliance(f.owner, delegate.owner);
+                try {
+                    h.assertTrue(BuildingProductionServerboundPacket.canOperate(f.peer.actor, town)
+                            && !BuildingProductionServerboundPacket.canOperate(delegate.peer.actor, town), "owner and ungranted ally are distinct");
+                    AlliancesServerEvents.playersWithAlliedControl.add(f.owner);
+                    int balance = f.bank.food, crewBalance = delegate.bank.food;
+                    delegate.production(town, recipe);
+                    f.production(town, recipe);
+                    h.assertTrue(town.productionQueue.size() == 2, "both granted ally and owner may start production");
+                    var first = town.productionQueue.get(0); var tail = town.productionQueue.get(1);
+                    h.assertTrue(first.ticksLeft == tail.ticksLeft && first.nativeQuote.food() > 0, "two untouched same-recipe jobs");
+                    cancel(delegate, town, recipe, tail.queueEntryId, BuildingAction.CANCEL_OBSERVED_BACK_PRODUCTION);
+                    h.assertTrue(town.productionQueue.equals(List.of(first)) && f.bank.food == balance-first.nativeQuote.food()
+                            && delegate.bank.food == crewBalance, "only selected tail refunded, to actual payer");
+                    cancel(delegate, town, recipe, tail.queueEntryId, BuildingAction.CANCEL_OBSERVED_BACK_PRODUCTION);
+                    h.assertTrue(town.productionQueue.equals(List.of(first)) && f.bank.food == balance-first.nativeQuote.food(),
+                            "replayed tail cannot remove head or credit payer twice");
+                    AlliancesServerEvents.playersWithAlliedControl.remove(f.owner);
+                    h.assertTrue(!BuildingProductionServerboundPacket.canOperate(delegate.peer.actor, town)
+                            && BuildingProductionServerboundPacket.canOperate(f.peer.actor, town), "revocation is effective without relogin");
+                    cancel(f, town, recipe, first.queueEntryId);
+                    h.assertTrue(f.bank.food == balance && town.productionQueue.isEmpty(), "surviving head retained its original quote");
+                } finally {
+                    AlliancesServerEvents.playersWithAlliedControl.remove(f.owner);
+                    AlliancesServerEvents.removeAlliance(f.owner, delegate.owner);
+                }
+            }
         }
         h.succeed();
     }

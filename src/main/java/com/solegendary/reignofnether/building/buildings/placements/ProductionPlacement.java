@@ -128,7 +128,7 @@ public class ProductionPlacement extends BuildingPlacement {
         return !this.productionQueue.isEmpty();
     }
     // start with the centre pos then go down and look at adjacent blocks until we reach a non-solid block
-    public BlockPos getIndoorSpawnPoint(ServerLevel level) {
+    @Nullable public BlockPos getIndoorSpawnPoint(ServerLevel level) {
         ProductionBuilding building = (ProductionBuilding) getBuilding();
         return building.getIndoorSpawnPoint(level, this);
     }
@@ -142,12 +142,13 @@ public class ProductionPlacement extends BuildingPlacement {
     /** Read-only shutdown/autosave refund projection. Existing producers retain their original semantics. */
     public Resources getPendingProductionRefund(String payer) {
         Resources result = new Resources(payer, 0, 0, 0, 0);
-        if (!ownerName.equals(payer)) return result;
         for (ActiveProduction active : productionQueue) {
             if(active.item instanceof com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem) continue;
-            var cost = active.item.getCost(false, ownerName);
-            result.food += cost.food; result.wood += cost.wood;
-            result.ore += cost.ore; result.emerald += cost.emerald;
+            var paid = active.nativeQuote;
+            if (!active.completed && paid != null && paid.payer().equals(payer)) {
+                result.food += paid.food(); result.wood += paid.wood();
+                result.ore += paid.ore(); result.emerald += paid.emerald();
+            }
         }
         return result;
     }
@@ -157,7 +158,7 @@ public class ProductionPlacement extends BuildingPlacement {
     }
 
     /** Shared read-only candidate selection; callers may validate an exit without spawning a unit. */
-    public BlockPos getUnitSpawnPoint(ServerLevel level, boolean spawnIndoors, Vec3i spawnOffset) {
+    @Nullable public BlockPos getUnitSpawnPoint(ServerLevel level, boolean spawnIndoors, Vec3i spawnOffset) {
         ProductionBuilding building = (ProductionBuilding) getBuilding();
         BlockPos spawnPoint;
         if (spawnIndoors) {
@@ -170,11 +171,17 @@ public class ProductionPlacement extends BuildingPlacement {
         else
             spawnPoint = getDefaultOutdoorSpawnPoint();
 
-        return spawnPoint.offset(spawnOffset);
+        if (spawnPoint == null) return null;
+        BlockPos candidate = spawnPoint.offset(spawnOffset);
+        return spawnIndoors && (level.isOutsideBuildHeight(candidate) || !level.hasChunkAt(candidate)) ? null : candidate;
     }
 
     public Entity produceUnit(ServerLevel level, EntityType<? extends Unit> entityType, String ownerName, boolean spawnIndoors, Vec3i spawnOffset) {
         BlockPos spawnPoint = getUnitSpawnPoint(level, spawnIndoors, spawnOffset);
+        if (spawnPoint == null) {
+            if (spawnIndoors) NativeProductionCompletion.holdForIndoorSpawn(this);
+            return null;
+        }
         Entity entity = entityType.spawn(level, (CompoundTag) null,
                 null,
                 spawnPoint,
@@ -256,10 +263,8 @@ public class ProductionPlacement extends BuildingPlacement {
                     productionQueue.add(activeProduction);
                     ResourcesServerEvents.addSubtractResources(new Resources(
                             ownerName,
-                            -prodItem.getCost(level.isClientSide(), ownerName).food,
-                            -prodItem.getCost(level.isClientSide(), ownerName).wood,
-                            -prodItem.getCost(level.isClientSide(), ownerName).ore,
-                            -prodItem.getCost(level.isClientSide(), ownerName).emerald
+                            -activeProduction.nativeQuote.food(), -activeProduction.nativeQuote.wood(),
+                            -activeProduction.nativeQuote.ore(), -activeProduction.nativeQuote.emerald()
                     ));
                     success = true;
                 }
@@ -297,64 +302,51 @@ public class ProductionPlacement extends BuildingPlacement {
         return success;
     }
 
-    /** The public HUD may cancel only the ordinary head it actually observed. */
+    /** An old click never shifts to a successor, even when the recipe and ticks match. */
     public final boolean cancelObservedHead(ProductionItem recipe, UUID expectedEntry) {
-        if (expectedEntry == null || productionQueue.isEmpty()) return false;
-        ActiveProduction head = productionQueue.get(0);
-        if (!expectedEntry.equals(head.queueEntryId) || head.item != recipe || head.completed
-                || head.receiptResearch != null || recipe instanceof com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem)
-            return false;
-        return cancelProductionItem(recipe, true);
+        return cancelObservedEntry(recipe, expectedEntry, true);
     }
 
-    public boolean cancelProductionItem(ProductionItem item, boolean frontItem) {
-        if (frontItem && (productionQueue.isEmpty() || productionQueue.get(0).item != item)) return false;
-        // Internal lifecycle cancellation may detach a receipt job; public old packets are gated separately.
-        if(!getLevel().isClientSide()) {
-            ActiveProduction candidate=frontItem&&!productionQueue.isEmpty()?productionQueue.get(0):null;
-            if(!frontItem) for(var a:productionQueue)if(a.item==item){candidate=a;break;}
-            if(candidate!=null && candidate.receiptResearch!=null) {
-                com.solegendary.reignofnether.research.economy.ReceiptResearchService.detachAndRefund(this,candidate);return true;
-            }
+    public final boolean cancelObservedEntry(ProductionItem recipe, UUID expectedEntry, boolean front) {
+        if (expectedEntry == null || recipe == null
+                || recipe instanceof com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem)
+            return false;
+        for (int i = 0; i < productionQueue.size(); i++) {
+            ActiveProduction row = productionQueue.get(i);
+            if (expectedEntry.equals(row.queueEntryId))
+                return (i == 0) == front && !row.completed && row.item == recipe && row.receiptResearch == null
+                        && cancelExactProduction(row, front);
         }
-        boolean success = false;
+        return false;
+    }
 
-        if (!productionQueue.isEmpty()) {
-            if (frontItem) {
-                ActiveProduction prodItem = productionQueue.get(0);
-                productionQueue.remove(0);
-                if (!getLevel().isClientSide()) {
-                    ResourcesServerEvents.addSubtractResources(new Resources(
-                            ownerName,
-                            prodItem.item.getCost(level.isClientSide(), ownerName).food,
-                            prodItem.item.getCost(level.isClientSide(), ownerName).wood,
-                            prodItem.item.getCost(level.isClientSide(), ownerName).ore
-                    ));
-                }
-                success = true;
-            }
-            else {
-                // find first non-started item to remove
-                for (int i = 0; i < productionQueue.size(); i++) {
-                    ActiveProduction prodItem = productionQueue.get(i);
-                    if (prodItem.item.equals(item) &&
-                            prodItem.ticksLeft >= prodItem.item.getCost(level.isClientSide(), ownerName).ticks) {
-                        productionQueue.remove(prodItem);
-                        if (!getLevel().isClientSide()) {
-                            ResourcesServerEvents.addSubtractResources(new Resources(
-                                    ownerName,
-                                    prodItem.item.getCost(level.isClientSide(), ownerName).food,
-                                    prodItem.item.getCost(level.isClientSide(), ownerName).wood,
-                                    prodItem.item.getCost(level.isClientSide(), ownerName).ore
-                            ));
-                        }
-                        success = true;
-                        break;
-                    }
-                }
+    /** Lifecycle/Java API only. A non-front request skips the head regardless of elapsed ticks. */
+    public boolean cancelProductionItem(ProductionItem item, boolean front) {
+        if (front)
+            return !productionQueue.isEmpty() && productionQueue.get(0).item == item
+                    && cancelExactProduction(productionQueue.get(0), true);
+        for (int i = 1; i < productionQueue.size(); i++) {
+            ActiveProduction row = productionQueue.get(i);
+            if (row.item == item) return cancelExactProduction(row, false);
+        }
+        return false;
+    }
+
+    /** Hook for hosts with their own payment journal. Never looks up another row by recipe. */
+    protected boolean cancelExactProduction(ActiveProduction row, boolean front) {
+        int index = productionQueue.indexOf(row);
+        if (index < 0 || (index == 0) != front) return false;
+        if (!getLevel().isClientSide() && !row.completed && row.receiptResearch != null) {
+            com.solegendary.reignofnether.research.economy.ReceiptResearchService.detachAndRefund(this, row);
+        } else {
+            productionQueue.remove(index);
+            if (!getLevel().isClientSide() && !row.completed && row.nativeQuote != null) {
+                var paid = row.nativeQuote;
+                ResourcesServerEvents.addSubtractResources(new Resources(
+                        paid.payer(), paid.food(), paid.wood(), paid.ore(), paid.emerald()));
             }
         }
-        return success;
+        return true;
     }
 
     @Override
@@ -377,12 +369,18 @@ public class ProductionPlacement extends BuildingPlacement {
 
         if (!productionQueue.isEmpty()) {
             ActiveProduction nextItem = productionQueue.get(0);
-            boolean observe = !tickLevel.isClientSide() && nextItem.item.reportsHeadPause();
+            boolean observe = !tickLevel.isClientSide() && (nextItem.item.reportsHeadPause()
+                    || NativeProductionCompletion.handles(this, nextItem.item));
             if (observe) nextItem.beginPauseObservation();
             if (nextItem.item.tick(this, nextItem)) {
                 if (!tickLevel.isClientSide() && nextItem.completed && !productionQueue.isEmpty() && productionQueue.get(0)==nextItem) {
                     productionQueue.remove(nextItem);
-                    BuildingProductionClientboundPacket.completeProduction(this.ownerName, this.originPos, nextItem.item.getItemName(), nextItem.queueEntryId);
+                    if (nextItem.receiptResearch != null || nextItem.item instanceof com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem) {
+                        var owner = tickLevel.getServer().getPlayerList().getPlayerByName(ownerName);
+                        if (owner != null) com.solegendary.reignofnether.research.economy.ResearchQueueSync.send(owner, this, "ready");
+                    } else {
+                        BuildingProductionClientboundPacket.completeProduction(this, nextItem);
+                    }
                 }
             } else if (observe && !nextItem.completed && !productionQueue.isEmpty()
                     && productionQueue.get(0) == nextItem && nextItem.finishPauseObservation()) {
@@ -411,7 +409,7 @@ public class ProductionPlacement extends BuildingPlacement {
             for (ActiveProduction activeProd : new ArrayList<>(productionQueue)) {
                 cancelProductionItem(activeProd.item, true);
             }
-            BuildingProductionClientboundPacket.clearQueue(this.ownerName, this.originPos);
+            BuildingProductionClientboundPacket.clearQueue(this);
             this.ownerName = newOwner;
         }
         return captured;

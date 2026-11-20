@@ -347,7 +347,10 @@ public class MiscUtil {
                 unitPosition.y + range,
                 unitPosition.z + range
         );
-        var entities = level.getEntitiesOfClass(LivingEntity.class, aabb);
+        // Rank only candidates this unit could actually accept. Returning a nearer rejected
+        // neutral here would starve both a farther valid enemy and the caller's building fallback.
+        var entities = level.getEntitiesOfClass(LivingEntity.class, aabb, e -> e.isAlive()
+                && (!(unitMob instanceof AttackerUnit attacker) || attacker.acceptsAutoAttackTarget(e)));
         boolean isMelee = unitMob instanceof AttackerUnit aUnit && aUnit.getAttackGoal() instanceof AbstractMeleeAttackUnitGoal;
         entities.sort(Comparator.comparingDouble(
             e -> {
@@ -452,7 +455,8 @@ public class MiscUtil {
         BuildingPlacement closestBuilding = null;
 
         for (BuildingPlacement building : buildings) {
-            if (building.level != unitMob.level()) continue;
+            if (building.level != unitMob.level()
+                    || (unitMob instanceof AttackerUnit attacker && !attacker.acceptsAutoAttackBuilding(building))) continue;
             // Check if the building is attackable, taking into account the relationship
             if (isBuildingAutoAttackable(unitMob, building) && !(building.getBuilding() instanceof AbstractBridge)) {
                 BlockPos attackPos = building.getClosestGroundPos(unitMob.blockPosition(), 1);

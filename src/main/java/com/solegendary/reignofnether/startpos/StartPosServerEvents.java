@@ -1,11 +1,10 @@
 package com.solegendary.reignofnether.startpos;
 
 import com.solegendary.reignofnether.ReignOfNether;
-import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
 import com.solegendary.reignofnether.blocks.RTSStartBlock;
 import com.solegendary.reignofnether.player.PlayerColors;
 import com.solegendary.reignofnether.player.PlayerServerEvents;
-import com.solegendary.reignofnether.player.RTSPlayer;
+import com.solegendary.reignofnether.player.ReadiedStart;
 import com.solegendary.reignofnether.registrars.PacketHandler;
 import com.solegendary.reignofnether.rtsmap.RTSMapInfoServerEvents;
 import com.solegendary.reignofnether.sounds.SoundAction;
@@ -15,9 +14,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.BlockEvent;
@@ -28,7 +25,7 @@ import net.minecraftforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.LinkedHashSet;
 
 // manages start block and readied start (startRTSEveryone) actions
 
@@ -40,6 +37,10 @@ public class StartPosServerEvents {
 
     private static int ticksToStart = StartPosCountdown.DURATION;
     private static boolean startingGame = false;
+    private static List<ReadiedStart.Seat> frozenSeats = List.of();
+    // Observe actual post-event block state at END tick. A cancelled Forge event is not a seat edit.
+    private static final Set<BlockPos> pendingChecks = new LinkedHashSet<>();
+    private static final Set<BlockPos> pendingAdditions = new LinkedHashSet<>();
 
     private static int cullTicksMax = 100;
     private static int cullTicks = 0;
@@ -49,30 +50,27 @@ public class StartPosServerEvents {
     }
 
     public static void reset(ServerLevel serverLevel) {
+        cancelStartGameCountdown(true);
         for (StartPos startPos : startPoses) {
             startPos.reset();
         }
         savePositions(serverLevel);
+        broadcastSnapshot();
     }
 
     public static void setPlayerReady(String playerName, boolean ready) {
-        boolean shouldStartGame = startPoses.stream().anyMatch(p -> p.enabled);
         boolean foundPlayer = false;
+        boolean actualReady = false;
         for (StartPos startPos : startPoses) {
             if (startPos.enabled && !playerName.isBlank() && startPos.playerName.equals(playerName)) {
-                startPos.ready = ready;
+                startPos.ready = ready && startPos.faction != null && startPos.faction != Factions.NONE;
                 foundPlayer = true;
+                actualReady = startPos.ready;
             }
-            if (startPos.enabled && (!startPos.ready || startPos.playerName.isBlank()))
-                shouldStartGame = false;
         }
         if (ready && !foundPlayer) return;
-        if (shouldStartGame) {
-            startGameCountdown();
-        } else if (startingGame) {
-            cancelStartGameCountdown(false);
-        }
-        if (ready)
+        recalculateCountdown(false);
+        if (actualReady)
             StartPosClientboundPacket.readyPlayer(playerName);
         else
             StartPosClientboundPacket.unreadyPlayer(playerName);
@@ -81,8 +79,10 @@ public class StartPosServerEvents {
     public static void setPosEnabled(BlockPos pos, boolean enable) {
         if (startingGame)
             return;
+        boolean changed = false;
         for (StartPos startPos : startPoses) {
-            if (startPos.pos.equals(pos)) {
+            if (startPos.pos.equals(pos) && startPos.enabled != enable) {
+                changed = true;
                 startPos.enabled = enable;
                 if (!startPos.enabled) {
                     startPos.playerName = "";
@@ -91,48 +91,105 @@ public class StartPosServerEvents {
                 }
             }
         }
+        if (!changed) return;
         if (enable)
             StartPosClientboundPacket.enablePos(pos);
         else
             StartPosClientboundPacket.disablePos(pos);
+        savePositions(PlayerServerEvents.serverLevel);
+        recalculateCountdown(true);
     }
 
-    @SubscribeEvent
+    private static boolean usePhysicalPositions(ServerLevel level) {
+        // StartPosSaveData is an Overworld-only catalogue; map JSON (including disabled/unsupported
+        // modes) owns its own roster. A decoration in another dimension is never a lobby marker.
+        return level == level.getServer().overworld() && RTSMapInfoServerEvents.rtsMapInfo == null;
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
     public static void onBlockPlaced(BlockEvent.EntityPlaceEvent evt) {
-        if (evt.getPlacedBlock().getBlock() instanceof RTSStartBlock rtsStartBlock) {
-            if (RTSMapInfoServerEvents.usingMapInfoStartPositions() && evt.getLevel().getServer() != null) {
-                evt.getLevel().getServer().sendSystemMessage(Component.translatable("startpos.reignofnether.max_positions"));
+        if (!(evt.getLevel() instanceof ServerLevel level) || !(evt.getPlacedBlock().getBlock() instanceof RTSStartBlock)) return;
+        if (!usePhysicalPositions(level)) {
+            if (level == level.getServer().overworld() && evt.getEntity() instanceof ServerPlayer player)
+                player.sendSystemMessage(Component.translatable("startpos.reignofnether.rts_map_info_used"));
+            return;
+        }
+        BlockPos pos = evt.getPos().immutable();
+        boolean known = startPoses.stream().anyMatch(p -> p.pos.equals(pos));
+        if (!known && !pendingAdditions.contains(pos) && startPoses.size() + pendingAdditions.size() >= MAX_START_POSES) {
+            evt.setCanceled(true);
+            if (evt.getEntity() instanceof ServerPlayer player)
+                player.sendSystemMessage(Component.translatable("startpos.reignofnether.max_positions"));
+            return;
+        }
+        if (!known) pendingAdditions.add(pos);
+        pendingChecks.add(pos);
+    }
+
+    @SubscribeEvent(priority = net.minecraftforge.eventbus.api.EventPriority.LOWEST)
+    public static void onBlockBreak(BlockEvent.BreakEvent evt) {
+        if (evt.getLevel() instanceof ServerLevel level && usePhysicalPositions(level)
+                && evt.getState().getBlock() instanceof RTSStartBlock
+                && startPoses.stream().anyMatch(p -> p.isFromStartBlock && p.pos.equals(evt.getPos())))
+            pendingChecks.add(evt.getPos().immutable());
+    }
+
+    private static void applyBlockChanges(ServerLevel level) {
+        if (pendingChecks.isEmpty()) return;
+        var checks = List.copyOf(pendingChecks);
+        pendingChecks.clear(); pendingAdditions.clear();
+        if (!usePhysicalPositions(level)) return;
+        boolean changed = false;
+        for (BlockPos pos : checks) {
+            var old = startPoses.stream().filter(p -> p.pos.equals(pos)).findFirst().orElse(null);
+            if (old != null && !old.isFromStartBlock) continue;
+            var state = level.getBlockState(pos);
+            if (state.getBlock() instanceof RTSStartBlock marker) {
+                int color = marker.getMapColor(state, level, pos, marker.defaultMapColor()).id;
+                if (old != null && old.colorId == color) continue;
+                if (old == null && startPoses.size() >= MAX_START_POSES) continue;
+                if (old != null) startPoses.remove(old);
+                startPoses.add(new StartPos(pos, color));
+                changed = true;
+            } else if (old != null) {
+                startPoses.remove(old);
+                changed = true;
             }
-            if (startPoses.size() < MAX_START_POSES) {
-                StartPos newStartPos = new StartPos(evt.getPos(),
-                        rtsStartBlock.getMapColor(rtsStartBlock.defaultBlockState(),
-                            evt.getLevel(), evt.getPos(),
-                            rtsStartBlock.defaultMapColor()).id
-                );
-                startPoses.add(newStartPos);
-                StartPosClientboundPacket.addPos(newStartPos);
-            } else {
-                evt.setCanceled(true);
-                for (Player player : PlayerServerEvents.players)
-                    if (player.distanceToSqr(Vec3.atCenterOf(evt.getPos())) < 100)
-                        player.sendSystemMessage(Component.translatable("startpos.reignofnether.max_positions"));
-            }
-            if (evt.getLevel() instanceof ServerLevel serverLevel)
-                savePositions(serverLevel);
+        }
+        if (changed) rosterChanged(level);
+    }
+
+    private static void rosterChanged(ServerLevel level) {
+        recalculateCountdown(true);
+        savePositions(level);
+        broadcastSnapshot();
+    }
+
+    private static void broadcastSnapshot() {
+        try {
+            PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(), new StartPosSnapshotPacket(startPoses,
+                    startingGame ? ticksToStart : StartPosCountdown.INACTIVE));
+        } catch (IllegalArgumentException unsupported) {
+            ReignOfNether.LOGGER.warn("Cannot broadcast complete lobby snapshot: {}", unsupported.getMessage());
+            PlayerServerEvents.sendMessageToAllPlayers("startpos.reignofnether.snapshot_unavailable");
         }
     }
 
-    @SubscribeEvent
-    public static void onBlockBreak(BlockEvent.BreakEvent evt) {
-        if (startPoses.removeIf(sp -> {
-            if (sp.pos.equals(evt.getPos())) {
-                StartPosClientboundPacket.removePos(evt.getPos());
-                return true;
-            }
-            return false;
-        }) && (evt.getLevel() instanceof ServerLevel serverLevel)) {
-            savePositions(serverLevel);
-        }
+    private static List<ReadiedStart.Seat> enabledSeats() {
+        return startPoses.stream().filter(p -> p.enabled).map(ReadiedStart.Seat::new).toList();
+    }
+
+    /** A synchronous Forge callback may change the lobby during tentative unit publication. */
+    public static boolean isPendingStart(List<ReadiedStart.Seat> seats) {
+        return startingGame && frozenSeats.equals(seats) && frozenSeats.equals(enabledSeats());
+    }
+
+    private static void recalculateCountdown(boolean rosterChanged) {
+        if (rosterChanged && startingGame) cancelStartGameCountdown(false);
+        var seats = enabledSeats();
+        if (!seats.isEmpty() && seats.stream().allMatch(s -> s.ready() && !s.owner().isBlank()
+                && s.faction() != null && s.faction() != Factions.NONE)) startGameCountdown();
+        else if (startingGame) cancelStartGameCountdown(false);
     }
 
     @SubscribeEvent
@@ -153,19 +210,17 @@ public class StartPosServerEvents {
     }
 
     private static void cullInvalidPoses(ServerLevel serverLevel) {
-        if (startPoses.removeIf(sp -> {
-            if (sp.isFromStartBlock && !(serverLevel.getBlockState(sp.pos).getBlock() instanceof RTSStartBlock)) {
-                StartPosClientboundPacket.removePos(sp.pos);
-                return true;
-            }
-            return false;
-        })) {
-            savePositions(serverLevel);
+        if (!usePhysicalPositions(serverLevel)) return;
+        if (startPoses.removeIf(sp -> sp.isFromStartBlock && serverLevel.hasChunkAt(sp.pos)
+                && !(serverLevel.getBlockState(sp.pos).getBlock() instanceof RTSStartBlock))) {
+            rosterChanged(serverLevel);
         }
     }
 
     public static void startGameCountdown() {
         if (!startingGame) {
+            frozenSeats = enabledSeats();
+            if (frozenSeats.isEmpty()) return;
             ticksToStart = StartPosCountdown.DURATION;
             startingGame = true;
             StartPosClientboundPacket.startGameCountdown();
@@ -176,6 +231,7 @@ public class StartPosServerEvents {
         if (startingGame) {
             ticksToStart = StartPosCountdown.DURATION;
             startingGame = false;
+            frozenSeats = List.of();
             StartPosClientboundPacket.cancelStartGameCountdown();
             if (!noMsg)
                 PlayerServerEvents.sendMessageToAllPlayers("startpos.reignofnether.cancelled_start_game", true);
@@ -187,6 +243,8 @@ public class StartPosServerEvents {
         if (evt.phase != TickEvent.Phase.END)
             return;
 
+        ServerLevel level = evt.getServer().overworld();
+        applyBlockChanges(level);
         if (startingGame) {
             if (ticksToStart % 20 == 0) {
                 int secondsLeft = ticksToStart / 20;
@@ -194,35 +252,20 @@ public class StartPosServerEvents {
                     PlayerServerEvents.sendMessageToAllPlayersNoNewlines("startpos.reignofnether.starting_game", false, secondsLeft);
                     SoundClientboundPacket.playSoundForAllPlayers(SoundAction.CHAT);
                 } else {
-                    PlayerServerEvents.sendMessageToAllPlayers("startpos.reignofnether.started_game", true);
-                    SoundClientboundPacket.playSoundForAllPlayers(SoundAction.ALLY);
-                    for (ServerPlayer serverPlayer : PlayerServerEvents.players) {
-                        for (StartPos startPos : startPoses) {
-                            if (startPos.playerName.equals(serverPlayer.getName().getString()) && startPos.faction != Factions.NONE) {
-                                PlayerServerEvents.startRTS(
-                                        serverPlayer.getId(),
-                                        new Vec3(startPos.pos.getX(), startPos.pos.getY(), startPos.pos.getZ()),
-                                        startPos.faction,
-                                        startPos.colorId
-                                );
-                                break;
-                            }
-                        }
-                    }
-                    // ally all players who start at the same color of start block
-                    for (int i = 0; i < PlayerServerEvents.rtsPlayers.size(); i++) {
-                        RTSPlayer p1 = PlayerServerEvents.rtsPlayers.get(i);
-                        for (int j = i + 1; j < PlayerServerEvents.rtsPlayers.size(); j++) {
-                            RTSPlayer p2 = PlayerServerEvents.rtsPlayers.get(j);
-                            if (p1.startPosColorId == p2.startPosColorId) {
-                                AlliancesServerEvents.addAlliance(p1.name, p2.name);
-                            }
-                        }
+                    var failure = frozenSeats.equals(enabledSeats()) ? ReadiedStart.tryStart(level, frozenSeats)
+                            : new ReadiedStart.Failure("?", "startpos.reignofnether.preflight_position");
+                    if (failure != null) {
+                        cancelStartGameCountdown(true);
+                        PlayerServerEvents.sendMessageToAllPlayers("startpos.reignofnether.preflight_failed", true,
+                                failure.player(), Component.translatable(failure.reasonKey()));
+                        broadcastSnapshot(); // keep reservations and enabled settings; a fresh ready click can retry
+                        return;
                     }
                     PlayerServerEvents.setRTSLock(true, true);
-                    StartPosServerEvents.reset(evt.getServer().getLevel(Level.OVERWORLD));
-                    StartPosClientboundPacket.reset();
-                    startingGame = false;
+                    reset(level);
+                    PlayerServerEvents.sendMessageToAllPlayers("startpos.reignofnether.started_game", true);
+                    SoundClientboundPacket.playSoundForAllPlayers(SoundAction.ALLY);
+                    return;
                 }
             }
             if (ticksToStart >= 0)
@@ -244,16 +287,14 @@ public class StartPosServerEvents {
 
     public static void savePositions(ServerLevel serverLevel) {
         // A map with an unsupported active mode must not overwrite an older block-based save.
-        if (mapModeExceedsLimit()) return;
-        if (!RTSMapInfoServerEvents.usingMapInfoStartPositions()) {
-            StartPosSaveData startPosData = StartPosSaveData.getInstance(serverLevel);
-            if (startPosData.startPoses.size() > StartPosSnapshotPacket.MAX_SEATS) return;
-            startPosData.startPoses.clear();
-            startPosData.startPoses.addAll(startPoses);
-            startPosData.save();
-            serverLevel.getDataStorage().save();
-            //ReignOfNether.LOGGER.info("saved " + startPoses.size() + " start positions in serverevents");
-        }
+        if (serverLevel == null || !usePhysicalPositions(serverLevel)
+                || startPoses.stream().anyMatch(sp -> !sp.isFromStartBlock)) return;
+        StartPosSaveData data = StartPosSaveData.getInstance(serverLevel);
+        if (data.startPoses.size() > StartPosSnapshotPacket.MAX_SEATS) return;
+        data.startPoses.clear();
+        data.startPoses.addAll(startPoses);
+        data.setDirty();
+        serverLevel.getDataStorage().save();
     }
 
     @SubscribeEvent
@@ -264,6 +305,7 @@ public class StartPosServerEvents {
         if (level != null) {
             // A fresh world in the same JVM cannot inherit the previous roster or live clock.
             startPoses.clear();
+            pendingAdditions.clear(); pendingChecks.clear(); frozenSeats = List.of(); cullTicks = 0;
             startingGame = false;
             ticksToStart = StartPosCountdown.DURATION;
             if (RTSMapInfoServerEvents.rtsMapInfo == null) {
@@ -285,7 +327,8 @@ public class StartPosServerEvents {
         if (!RTSMapInfoServerEvents.usingMapInfoStartPositions())
             return;
         int playerColorIndex = 0;
-        List<StartPos> oldStartPoses = new ArrayList<>(startPoses);
+        cancelStartGameCountdown(true);
+        pendingChecks.clear(); pendingAdditions.clear();
         startPoses.clear();
         for (List<BlockPos> teamStartPoses : RTSMapInfoServerEvents.rtsMapInfo.getTeams()) {
             for (BlockPos startBlockPos : teamStartPoses) {
@@ -297,14 +340,7 @@ public class StartPosServerEvents {
             if (playerColorIndex >= PlayerColors.colors.length)
                 playerColorIndex = 0;
         }
-        Set<BlockPos> newBlockPoses = startPoses.stream()
-                .map(sp -> sp.pos)
-                .collect(Collectors.toSet());
-        for (StartPos oldStartPos : oldStartPoses)
-            if (!newBlockPoses.contains(oldStartPos.pos))
-                StartPosClientboundPacket.removePos(oldStartPos.pos);
-        for (StartPos startPos : startPoses)
-            StartPosClientboundPacket.addPos(startPos);
+        broadcastSnapshot();
     }
 
     @SubscribeEvent

@@ -1,11 +1,8 @@
 package com.dreamseekers.unit.flight;
 
 import com.solegendary.reignofnether.building.BuildingPlacement;
-import com.solegendary.reignofnether.building.BuildingServerEvents;
 import com.solegendary.reignofnether.unit.goals.ReturnResourcesGoal;
-import com.solegendary.reignofnether.unit.interfaces.Unit;
 import net.minecraft.world.entity.Mob;
-import javax.annotation.Nullable;
 
 public final class FlyingReturnResourcesGoal extends ReturnResourcesGoal {
     public FlyingReturnResourcesGoal(Mob mob) { super(mob); }
@@ -18,11 +15,6 @@ public final class FlyingReturnResourcesGoal extends ReturnResourcesGoal {
     }
     @Override public void tick() {
         if(!com.dreamseekers.skill.FireflyRush.active(mob))super.tick();
-    }
-
-    @Override public void setBuildingTarget(@Nullable BuildingPlacement building) {
-        moveTarget = null;
-        super.setBuildingTarget(building);
     }
 
     @Override protected void calcMoveTarget() {
@@ -38,10 +30,7 @@ public final class FlyingReturnResourcesGoal extends ReturnResourcesGoal {
 
     @Override public boolean canDropOff() {
         BuildingPlacement building = getBuildingTarget();
-        return !com.dreamseekers.skill.FireflyRush.active(mob) && building != null && building.getLevel() == mob.level()
-                && building.isBuilt && building.getBuilding().canAcceptResources
-                && building.ownerName.equals(((Unit) mob).getOwnerName())
-                && BuildingServerEvents.getBuildings().contains(building)
+        return !com.dreamseekers.skill.FireflyRush.active(mob) && hasValidDepositTarget()
                 && FlightWorkPositions.canWorkAtBuilding(mob, building, moveTarget);
     }
 }

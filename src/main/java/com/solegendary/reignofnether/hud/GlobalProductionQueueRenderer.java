@@ -96,7 +96,7 @@ public class GlobalProductionQueueRenderer {
 
         List<FormattedCharSequence> tooltip = new ArrayList<>();
         tooltip.add(fcs(btn.name));
-        int progressPercent = ProductionProgressLabel.percent(frac, group.activeProd.item.reportsHeadPause());
+        int progressPercent = ProductionProgressLabel.percent(frac, group.activeProd.item.reportsHeadPause() || group.activeProd.pause().revision() != 0);
         if (group.activeProd.pause().paused()) {
             var status = net.minecraft.network.chat.Component.translatable("hud.reignofnether.queue_paused",
                     net.minecraft.network.chat.Component.translatable(group.activeProd.pause().reasonKey()));

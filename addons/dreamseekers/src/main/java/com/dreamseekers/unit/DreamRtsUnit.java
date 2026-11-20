@@ -3,7 +3,7 @@ package com.dreamseekers.unit;
 import com.solegendary.reignofnether.ability.Abilities;
 import com.solegendary.reignofnether.ability.Ability;
 import com.solegendary.reignofnether.registrars.AttributeRegistrar;
-import com.solegendary.reignofnether.resources.Resources;
+import com.solegendary.reignofnether.resources.UnitCargoSaveData;
 import com.solegendary.reignofnether.unit.Checkpoint;
 import com.solegendary.reignofnether.unit.EnemySearchBehaviour;
 import com.solegendary.reignofnether.unit.goals.*;
@@ -13,7 +13,6 @@ import com.solegendary.reignofnether.unit.interfaces.WorkerUnit;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -84,32 +83,17 @@ public interface DreamRtsUnit extends com.dreamseekers.skill.SkillUnit, Attacker
     default void writeRtsData(CompoundTag tag) {
         addUnitSaveData(tag);
         rts().skills().save(tag);
-        ListTag carried = new ListTag();
-        // RoN saves all carried RTS-value items into the owner's saved resource ledger.
-        // Saving those stacks here as well would pay them a second time after a restart.
-        // Do not mutate live items: the normal saveResources pass still needs to see them.
-        for (ItemStack stack : getItems())
-            if (!stack.isEmpty() && !isSettledRtsResource(stack)) carried.add(stack.save(new CompoundTag()));
-        tag.put("DreamseekersCarried", carried);
+        tag.put("DreamseekersCarried", UnitCargoSaveData.write(getItems()));
     }
 
     default void readRtsData(CompoundTag tag) {
         readUnitSaveData(tag);
         rts().skills().load(tag);
-        getItems().clear();
-        ListTag carried = tag.getList("DreamseekersCarried", Tag.TAG_COMPOUND);
-        for (int i = 0; i < carried.size(); i++) {
-            ItemStack stack = ItemStack.of(carried.getCompound(i));
-            // Also reject valued items from an older addon NBT payload: RoN may already
-            // have credited that snapshot to its resource ledger during the same save.
-            if (!stack.isEmpty() && !isSettledRtsResource(stack)) getItems().add(stack);
-        }
+        UnitCargoSaveData.read(getItems(), tag.getList("DreamseekersCarried", Tag.TAG_COMPOUND), mob().isAddedToWorld());
     }
 
-    /** Shares RoN's exact valuation routine, including EMERALD and mod-provided sources. */
     static boolean isSettledRtsResource(ItemStack stack) {
-        Resources value = Resources.getTotalResourcesFromItems(List.of(stack));
-        return value.food != 0 || value.wood != 0 || value.ore != 0 || value.emerald != 0;
+        return UnitCargoSaveData.isLedgerValued(stack);
     }
 
     static AttributeSupplier.Builder attributes(double health, double damage, double speed, double armor, double attackSpeed, double aggro) {

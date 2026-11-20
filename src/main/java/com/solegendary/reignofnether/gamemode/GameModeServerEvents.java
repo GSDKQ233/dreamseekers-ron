@@ -44,6 +44,7 @@ public class GameModeServerEvents {
     }
     private static boolean allowed(ServerPlayer player, GameMode mode) {
         if (!current(player) || player.serverLevel().dimension()!=Level.OVERWORLD
+                || com.solegendary.reignofnether.survival.SurvivalResult.isAfterMatch()
                 || PlayerServerEvents.rtsLocked || mode==null || mode==GameMode.NONE) return false;
         if (mode == GameMode.SANDBOX && !SandboxEditorAccess.mayEnter(player, player.connection.connection)) return false;
         boolean scenario=player.getServer().getGameRules().getBoolean(GameRuleRegistrar.SCENARIO_MODE);
@@ -106,7 +107,18 @@ public class GameModeServerEvents {
     }
     public static StartChoice takeStartChoice(ServerPlayer player, Faction faction, boolean scenario) {
         if (!current(player)) return null;
-        Proposal proposal=proposals(player.getServer()).remove(player.getUUID());
+        return chooseStart(player, faction, scenario, proposals(player.getServer()).remove(player.getUUID()));
+    }
+    /** Validate a lobby seat without consuming or expiring any player's pending mode choice. */
+    public static StartChoice previewStartChoice(ServerPlayer player, Faction faction, boolean scenario) {
+        if (!current(player)) return null;
+        MinecraftServer server = player.getServer();
+        Proposal proposal = PROPOSALS.getOrDefault(server, Map.of()).get(player.getUUID());
+        if (proposal != null && (proposal.player() != player || proposal.connection() != player.connection
+                || server.getTickCount() - proposal.expiresAt() >= 0)) proposal = null;
+        return chooseStart(player, faction, scenario, proposal);
+    }
+    private static StartChoice chooseStart(ServerPlayer player, Faction faction, boolean scenario, Proposal proposal) {
         GameMode mode=proposal!=null?proposal.mode():(scenario?GameMode.SCENARIO:
                 hasMatch()?getGameMode(player.serverLevel()):faction==Factions.NONE?GameMode.SANDBOX:GameMode.CLASSIC);
         if (!allowed(player,mode) || scenario!=(mode==GameMode.SCENARIO)

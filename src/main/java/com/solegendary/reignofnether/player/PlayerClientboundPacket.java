@@ -33,6 +33,19 @@ public class PlayerClientboundPacket {
                 new PlayerClientboundPacket(PlayerAction.ADD_RTS_PLAYER, playerName, id, startPosColorId, faction, isDogPerson, isForLogin));
     }
 
+    /** Scenario seats reuse the existing role-bearing wire layout (the old action name is historical).
+     * Human vs NPC remains the sign of the authoritative ID, not the packet discriminator. */
+    public static void addRTSPlayer(RTSPlayer seat, boolean syncing) {
+        PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(), seatPacket(seat, syncing));
+    }
+
+    static PlayerClientboundPacket seatPacket(RTSPlayer seat, boolean syncing) {
+        boolean scenario = seat.scenarioRoleIndex >= 0;
+        return new PlayerClientboundPacket(scenario ? PlayerAction.ADD_SCENARIO_NPC_RTS_PLAYER : PlayerAction.ADD_RTS_PLAYER,
+                seat.name, (long)seat.id, scenario ? seat.scenarioRoleIndex : seat.startPosColorId,
+                seat.faction, seat.isDogPerson, syncing);
+    }
+
     public static void addScenarioNPCRTSPlayer(String playerName, Faction faction, Long id, int scenarioRoleIndex) {
         PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(),
                 new PlayerClientboundPacket(PlayerAction.ADD_SCENARIO_NPC_RTS_PLAYER, playerName, id, scenarioRoleIndex, faction, true, true));
@@ -53,14 +66,18 @@ public class PlayerClientboundPacket {
                 new PlayerClientboundPacket(PlayerAction.VICTORY, playerName, 0L));
     }
 
+    /** Kept for older external callers that do not supply the server's mode decision. */
     public static void resetRTS(boolean hard) {
-        if (hard) {
-            PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(),
-                    new PlayerClientboundPacket(PlayerAction.RESET_RTS_HARD, "", 0L));
-        } else {
-            PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(),
-                    new PlayerClientboundPacket(PlayerAction.RESET_RTS, "", 0L));
-        }
+        sendReset(hard, 0L);
+    }
+
+    public static void resetRTS(MatchResetPolicy reset) {
+        sendReset(reset.hard(), reset.wireValue());
+    }
+
+    private static void sendReset(boolean hard, long mode) {
+        PacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(),
+                new PlayerClientboundPacket(hard ? PlayerAction.RESET_RTS_HARD : PlayerAction.RESET_RTS, "", mode));
     }
 
     public static void publishScenarioMap() {
@@ -199,10 +216,11 @@ public class PlayerClientboundPacket {
                             case DEFEAT -> PlayerClientEvents.defeat(playerName);
                             case VICTORY -> PlayerClientEvents.victory(playerName);
                             case ADD_RTS_PLAYER -> PlayerClientEvents.addRTSPlayer(playerName, faction, value1, value2, isDogPerson, isForLogin);
-                            case ADD_SCENARIO_NPC_RTS_PLAYER -> PlayerClientEvents.addScenarioNPCRTSPlayer(playerName, faction, value1, value2);
+                            case ADD_SCENARIO_NPC_RTS_PLAYER -> PlayerClientEvents.addRTSPlayer(playerName, faction, value1,
+                                    0, isDogPerson, isForLogin, value2);
                             case REMOVE_RTS_PLAYER -> PlayerClientEvents.removeRTSPlayer(playerName);
-                            case RESET_RTS -> PlayerClientEvents.resetRTS(false);
-                            case RESET_RTS_HARD -> PlayerClientEvents.resetRTS(true);
+                            case RESET_RTS -> PlayerClientEvents.resetRTS(false, value1);
+                            case RESET_RTS_HARD -> PlayerClientEvents.resetRTS(true, value1);
                             case PUBLISH_SCENARIO_MAP -> PlayerClientEvents.publishScenarioMap();
                             case SYNC_RTS_GAME_TIME -> PlayerClientEvents.syncRtsGameTime(value1);
                             case LOCK_RTS -> PlayerClientEvents.setRTSLock(true);

@@ -698,8 +698,8 @@
 
     "commands.reignofnether.toggle_fow": "%s - Alternar niebla de guerra para todos los jugadores",
     "commands.reignofnether.surrender": "%s - Rendir la partida",
-    "commands.reignofnether.reset": "%s - Eliminar todas las unidades/edificios, poner a todos como espectadores",
-    "commands.reignofnether.hard_reset": "%s - Reiniciar partida, incluyendo unidades y edificios colocados en sandbox",
+    "commands.reignofnether.reset": "%s - Reinicia la partida y pasa a los jugadores a espectador. En un escenario o en modo sandbox activo se conservan las unidades y los edificios.",
+    "commands.reignofnether.hard_reset": "%s - Elimina las unidades RTS cargadas. En un escenario o en modo sandbox activo se conservan los edificios; en otros modos se eliminan todos los edificios RTS.",
     "commands.reignofnether.lock": "%s - Prevenir que nuevos jugadores se unan a la partida RTS",
     "commands.reignofnether.ally": "%s - Enviar solicitud de alianza a otro jugador",
     "commands.reignofnether.disband": "%s - Disolver alianza con otro jugador",
@@ -1039,6 +1039,7 @@
     "server.reignofnether.victory_alliance": "¡%s y sus aliados son victoriosos!",
     "server.reignofnether.match_reset": "¡Partida reiniciada!",
     "server.reignofnether.match_reset_hard": "¡Mapa reiniciado completamente!",
+    "server.reignofnether.match_reset_hard_map": "Partida reiniciada. Se han eliminado las unidades RTS cargadas y conservado los edificios del mapa.",
     "server.reignofnether.sandbox_exited": "Modo Sandbox desactivado",
     "server.reignofnether.scenario_published": "Mapa de escenario publicado!",
     "server.reignofnether.scenario_published_tooltip1": "Ahora puedes compartir este mapa con otras personas",

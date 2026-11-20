@@ -86,13 +86,23 @@ public final class ResearchQueueClient {
     public static void start(ProductionPlacement p,ReceiptBackedResearchItem item) {
         if(!ready(p)){query(p);return;}send(p,item.id(),ResearchEconomyServerboundPacket.ZERO,ResearchEconomyServerboundPacket.Action.START);
     }
-    public static void cancel(ProductionPlacement p,ReceiptBackedResearchItem item,boolean first) {
-        if(!ready(p)){query(p);return;}
-        ActiveProduction a=first&&!p.productionQueue.isEmpty()?p.productionQueue.get(0):null;
-        if(!first)for(var candidate:p.productionQueue)if(candidate.item==item){a=candidate;break;}
-        if(a==null||a.item!=item||a.receiptResearch==null)return;
-        send(p,item.id(),a.receiptResearch.receiptId(),ResearchEconomyServerboundPacket.Action.CANCEL);
+    /** Capture the private receipt with the row as rendered. A stale click may only refresh. */
+    public static Runnable cancelClick(ProductionPlacement p,ReceiptBackedResearchItem item,ActiveProduction observed) {
+        UUID entry=observed.queueEntryId;
+        var binding=observed.receiptResearch;
+        return () -> {
+            if (!ready(p) || binding==null) { query(p); return; }
+            for (var current:p.productionQueue) {
+                if (entry.equals(current.queueEntryId) && current.item==item && binding.equals(current.receiptResearch)) {
+                    send(p,item.id(),binding.receiptId(),ResearchEconomyServerboundPacket.Action.CANCEL);
+                    return;
+                }
+            }
+            query(p);
+        };
     }
+    /** There is no safe recipe-only cancellation. Retained for earlier Java callers. */
+    public static void cancel(ProductionPlacement p,ReceiptBackedResearchItem item,boolean first) { query(p); }
     private static void send(ProductionPlacement p,ResourceLocation item,UUID receipt,ResearchEconomyServerboundPacket.Action action) {
         var snapshot=queues.get(p);
         var payload=new ResearchEconomyServerboundPacket.Payload(action,p.getLevel().dimension().location(),p.originPos,item,receipt,snapshot.instance,snapshot.capture);

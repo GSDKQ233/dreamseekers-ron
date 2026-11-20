@@ -14,6 +14,7 @@ import com.solegendary.reignofnether.player.RTSPlayer;
 import com.solegendary.reignofnether.resources.kill.EconomicUnitIdentity;
 import com.solegendary.reignofnether.sandbox.SandboxServer;
 import com.solegendary.reignofnether.sounds.SoundAction;
+import com.solegendary.reignofnether.survival.SurvivalResult;
 import com.solegendary.reignofnether.sounds.SoundClientboundPacket;
 import com.solegendary.reignofnether.unit.interfaces.HeroUnit;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
@@ -145,20 +146,51 @@ public class ItemServerEvents {
         dropNextItem(rtsPlayer, dropper.level(), dropper.position());
     }
 
-    /** A cleared survival wave can finish at a portal after its last slain body has unloaded. */
-    public static boolean dropNextItem(RTSPlayer rtsPlayer, Level level, net.minecraft.world.phys.Vec3 pos) {
-        UnitItem unitItem = rtsPlayer.itemDropQueue.pollFirst();
-        if (unitItem == null) return false;
+    private static final java.util.Set<RTSPlayer> publishingDrop =
+            java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
 
-        ItemStack itemStack = new ItemStack(unitItem.item);
-        itemStack.setCount(unitItem.defaultStackCount);
-        ItemEntity itemEntity = new ItemEntity(level, pos.x, pos.y, pos.z, itemStack);
-        level.addFreshEntity(itemEntity);
+    public static boolean dropNextItem(RTSPlayer seat, Level level, net.minecraft.world.phys.Vec3 pos) {
+        return publishDrop(seat, level, pos, false);
+    }
 
-        SoundClientboundPacket.playSoundAtPos(getItemDropSound(unitItem.rarity), BlockPos.containing(pos), 2.5f);
+    /** Only this path consumes a previously vested survival claim. Creep cannot steal its head. */
+    public static boolean redeemNextSurvivalReward(RTSPlayer seat, ServerLevel level, net.minecraft.world.phys.Vec3 pos) {
+        return publishDrop(seat, level, pos, true);
+    }
 
-        ReignOfNether.LOGGER.info(rtsPlayer.name + " received item drop #" + rtsPlayer.itemsDropped);
-        return true; // a draw occurred; creep and survival use independent progression counters
+    /** Forge can call back into defeat/reset/beacon completion before addFreshEntity returns.
+     * Revalidate both the exact seat/claim and the exact published item before consuming anything. */
+    private static boolean publishDrop(RTSPlayer seat, Level world, net.minecraft.world.phys.Vec3 pos, boolean survivalClaim) {
+        if (!(world instanceof ServerLevel level) || seat == null || pos == null || SurvivalResult.isAfterMatch()
+                || PlayerServerEvents.getRTSPlayer(seat.name) != seat || !publishingDrop.add(seat)) return false;
+        try {
+            UnitItem item = seat.itemDropQueue.peekFirst();
+            var claim = seat.pendingSurvivalRewards.peekFirst();
+            if (item == null || (survivalClaim ? claim != pos : claim != null)) return false;
+            ItemStack stack = new ItemStack(item.item);
+            stack.setCount(item.defaultStackCount);
+            ItemEntity entity = new ItemEntity(level, pos.x, pos.y, pos.z, stack);
+            if (!level.addFreshEntity(entity)) return false;
+            Entity visible = level.getEntity(entity.getUUID());
+            if (SurvivalResult.isAfterMatch() || PlayerServerEvents.getRTSPlayer(seat.name) != seat
+                    || seat.itemDropQueue.peekFirst() != item || seat.pendingSurvivalRewards.peekFirst() != claim
+                    || entity.level() != level || !entity.isAlive() || entity.isRemoved()
+                    || !(visible == entity || visible == null && entity.isAddedToWorld())
+                    || !entity.getItem().is(item.item) || entity.getItem().getCount() != item.defaultStackCount) {
+                if (!entity.isRemoved()) entity.discard(); // this attempt's exact candidate, never another UUID lifetime
+                return false;
+            }
+            seat.itemDropQueue.removeFirst();
+            if (survivalClaim) {
+                seat.pendingSurvivalRewards.removeFirst();
+                seat.survivalRewardDraws++;
+            }
+            SoundClientboundPacket.playSoundAtPos(getItemDropSound(item.rarity), BlockPos.containing(pos), 2.5f);
+            ReignOfNether.LOGGER.info("{} received item drop", seat.name);
+            return true;
+        } finally {
+            publishingDrop.remove(seat);
+        }
     }
 
     private record PendingItemDeath(LivingEntity victim, EconomicUnitIdentity.Stamp victimIdentity,
@@ -208,7 +240,7 @@ public class ItemServerEvents {
      * once prevents canceled/replayed deaths from consuming neutral-drop progression or inventory. */
     public static void commitConfirmedDeath(LivingDeathEvent evt) {
         PendingItemDeath pending = pendingItemDeaths.remove(evt);
-        if (pending == null || evt.isCanceled() || pending.victim.getHealth() > 0 || !pending.victim.isDeadOrDying()
+        if (SurvivalResult.isAfterMatch() || pending == null || evt.isCanceled() || pending.victim.getHealth() > 0 || !pending.victim.isDeadOrDying()
                 || pending.victim.isRemoved() && pending.victim.getRemovalReason() != Entity.RemovalReason.KILLED
                 || !(pending.victimIdentity.sameOwner() || pending.victimIdentity.clearedOnceByDefeat())
                 || pending.killerIdentity != null && !pending.killerIdentity.sameOwner()
@@ -218,7 +250,10 @@ public class ItemServerEvents {
         ReignOfNether.LOGGER.info("+" + pending.creepScore + " creepScore for: " + player.name);
         // Keep the existing progression/balance; only the irreversible commit boundary changes.
         while (player.creepScore >= getCreepScoreThreshold(player.itemsDropped)) {
-            dropNextItem(player, pending.victim);
+            // Unredeemed wave claims own the queue head. Never consume that item for a
+            // subsequent creep or spin on an empty/vetoed drop.
+            if (!player.pendingSurvivalRewards.isEmpty()
+                    || !dropNextItem(player, pending.victim.level(), pending.victim.position())) break;
             player.itemsDropped += 1;
             PlayerClientboundPacket.syncItemsDropped(player.name, player.itemsDropped);
         }

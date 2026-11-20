@@ -283,7 +283,7 @@
 
     "commands.reignofnether.toggle_fow": "%s - Alternar neblina de guerra para todos os jogadores",
     "commands.reignofnether.surrender": "%s - Conceder a partida",
-    "commands.reignofnether.reset": "%s - Apagar todas as unidades/edifícios, definir todos como espectadores",
+    "commands.reignofnether.reset": "%s - Reinicia a partida e coloca os jogadores como espectadores. Em cenários e no modo sandbox ativo, as unidades e construções são mantidas.",
     "commands.reignofnether.lock": "%s - Impedir que outros jogadores entrem na partida RTS",
 
     "controls.reignofnether.toggle_cam": "F12 - Alternar câmera RTS",

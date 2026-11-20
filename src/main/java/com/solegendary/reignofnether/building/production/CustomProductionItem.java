@@ -5,6 +5,9 @@ import com.solegendary.reignofnether.building.buildings.placements.ProductionPla
 import com.solegendary.reignofnether.keybinds.Keybinding;
 import com.solegendary.reignofnether.resources.ResourceCost;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.EntityType;
+import javax.annotation.Nullable;
 
 import java.util.List;
 import java.util.function.BiFunction;
@@ -14,6 +17,10 @@ import java.util.function.BiFunction;
 public class CustomProductionItem extends ProductionItem {
 
     private final ProductionItem original;
+    private final RecipeSpawnTemplate spawnTemplate;
+    @Nullable public CompoundTag copySpawnTemplate(EntityType<?> type) {
+        return spawnTemplate.copyFor(type);
+    }
     @Override public ProductionItem nativeCompletionItem() { return original.nativeCompletionItem(); }
 
     public final String itemName;
@@ -23,7 +30,14 @@ public class CustomProductionItem extends ProductionItem {
     private boolean useOriginalTitle;
 
     public CustomProductionItem(ResourceCost cost, String itemName, ProductionItem productionItem, List<FormattedCharSequence> newTooltip, boolean useOriginalTitle) {
+        this(cost, itemName, productionItem, newTooltip, useOriginalTitle, null, null);
+    }
+
+    public CustomProductionItem(ResourceCost cost, String itemName, ProductionItem productionItem,
+            List<FormattedCharSequence> newTooltip, boolean useOriginalTitle, @Nullable EntityType<?> templateType,
+            @Nullable CompoundTag template) {
         super(cost, productionItem.dupeRule, productionItem.onComplete);
+        this.spawnTemplate = new RecipeSpawnTemplate(templateType, template);
         this.original = productionItem;
         this.itemName = itemName;
         this.getStartButton = productionItem::getStartButton;

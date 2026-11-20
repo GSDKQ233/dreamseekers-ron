@@ -75,8 +75,8 @@ public class Dungeon extends ProductionBuilding {
     }
 
     @Override
-    public BlockPos getIndoorSpawnPoint(ServerLevel level, BuildingPlacement placement) {
-        return super.getIndoorSpawnPoint(level, placement).offset(-1,0,0);
+    protected BlockPos adjustIndoorSpawnPoint(BlockPos grounded, BuildingPlacement placement) {
+        return grounded.offset(-1,0,0);
     }
 
     @Override

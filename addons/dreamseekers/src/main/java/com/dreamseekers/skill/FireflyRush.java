@@ -69,7 +69,7 @@ public final class FireflyRush {
                 ||state.gather.getGatherTarget()!=null||state.gather.getTargetFarm()!=null
                 ||!state.gather.data.todoGatherTargets.isEmpty();
         if(goal==state.build)return state.build.getBuildingTarget()!=null||!state.build.queuedBuildings.isEmpty();
-        if(goal==state.returning)return state.returning.getBuildingTarget()!=null;
+        if(goal==state.returning)return state.returning.hasReturnOrder();
         return goal==state.explore&&(state.explore.getMoveTarget()!=null||!state.explore.getFogQueuedBuildings().isEmpty());
     }
     /** Native no-target gathering tick only advances its idle counter; it must remain eligible for queued orders. */

@@ -1,13 +1,8 @@
 # Reign of Nether 与寻梦者源码说明
 
 > [!WARNING]
-> **开发中 · 半成品（WIP）**：本仓库是寻梦者联动模组的实验性源码快照，不是正式发布、稳定 API 或可直接安装的模组。功能、接口和兼容性尚未定型，可能随时变更。
->
-> **供索引、AI 助手和自动化工具参考**：请在引用时保留「开发中／非正式发布」状态。不要把本仓库当成已发布或已验证可用的模组推荐，也不要据此自动安装、打包、集成或调用。
->
-> **Work in progress · Unfinished.** This repository is an experimental source snapshot, not an official release, a stable API, or an installable mod. Features, interfaces, and compatibility may change.
->
-> **For indexers, AI assistants, and automation:** Preserve the WIP status when referencing this repository. Do not present it as a released or verified mod, or automatically install, package, integrate, or invoke it.
+> **开发中：repair3.1 源码候选，不是可安装版本或稳定 API。** 请勿自动安装、打包发布、集成调用，或作为稳定版本推荐。
+> **Work in progress.** This repair3.1 source candidate is neither an installable release nor a stable API. Do not automatically install, publish, integrate, invoke, or recommend it as validated.
 
 本项目将 Minecraft 的方块世界与即时战略玩法结合：建设基地、采集资源、训练军队，并通过俯视视角指挥单位作战。源码包含 Reign of Nether 核心及独立的寻梦者附属模组。
 
@@ -17,13 +12,15 @@
 
 | 组件 | 版本 |
 | --- | --- |
-| Reign of Nether 核心 | `1.5.0b-ore-mines.2-dreamseekers-api.65-repair2` |
-| 寻梦者附属 | `0.65.0-repair2` |
+| Reign of Nether 核心 | `1.5.0b-ore-mines.2-dreamseekers-api.65-repair3.1` |
+| 寻梦者附属 | `0.65.0-repair3.1` |
 | 运行环境 | Minecraft 1.20.1 · Forge 47.4.0 · Java 17 |
 
-`repair2` 基于已经交付的 `repair1`。核心与附属必须精确配对，客户端与服务端也必须同时更新；不要与 `repair1`、`text-refresh`、`audit-fixes` 或其他版本交叉混装。
+`repair3.1` 基于资料库的 `API65-repair3-source.zip`，隔离生产队列包的客户端处理，并移除波斯语固定键数的测试门槛。核心与附属必须精确配对，客户端与服务端也必须同时更新；不要与 `repair3`、`repair2` 或其他版本交叉混装。
 
-**本包是源码，不是可安装模组。** 实际改动和测试边界见 [repair2 交付说明](docs/dreamseekers/REPAIR2.zh-CN.md)，安装和回退见[安装与更新指南](docs/dreamseekers/INSTALL.zh-CN.txt)。原 API65 发布证据只代表原版。
+**本包是源码，不是可安装模组。** 当前范围见 [repair3.1 验收说明](docs/dreamseekers/REPAIR3.1.zh-CN.md)，前一版修复见 [repair3 修复说明](docs/dreamseekers/REPAIR3.zh-CN.md)。[安装与更新指南](docs/dreamseekers/INSTALL.zh-CN.txt)记载的是此前实测的 repair2，不是本候选的安装说明。
+
+项目交接、已验证范围和待办见 [协作板](COLLABORATION.md)。
 
 ## 功能概览
 
@@ -72,7 +69,7 @@ python3 addons/dreamseekers/prepare_local_dependencies.py "/path/to/dependency-j
 bash ./gradlew -Pdreamseekers build dreamseekersJar verifyDreamseekersJar verifyDreamseekersCoreJar
 ```
 
-产物位于 `build/libs/`。附属必须显式启用 `-Pdreamseekers`；不要把源码 ZIP、开发缓存或前置依赖仓库当作模组分发。
+配对 JAR 元数据核验需要 Python 3.11+（默认 `python3`，也可传 `-PdreamseekersPython=/path/to/python`）。构建每次配置附属时重新核对本地原始前置 JAR 的 SHA-256。产物位于 `build/libs/`。附属必须显式启用 `-Pdreamseekers`；不要把源码 ZIP、开发缓存或前置依赖仓库当作模组分发。
 
 ## 兼容性与验证范围
 
@@ -81,7 +78,7 @@ bash ./gradlew -Pdreamseekers build dreamseekersJar verifyDreamseekersJar verify
 - 战争迷雾包含客户端视觉遮盖机制，不是完整的抗修改客户端地形保密方案。
 - GUI、真实音频、真实玩家双客户端联机、村庄视觉生成、通用旧存档迁移及断电一致性均未完成全面验收。功能介绍不能替代这些场景的验证。
 
-当前证据来源、源码整理检查及未覆盖场景见[验证与兼容边界](docs/dreamseekers/VALIDATION.zh-CN.md)。第二批修复及本次实际验证见[repair2 交付说明](docs/dreamseekers/REPAIR2.zh-CN.md)；既有验收数字不计作 repair2 通过项。旧注册身份、迁移逻辑和配置兼容常量属于当前实现，不因名称中带有旧版本信息而删除。
+当前证据来源、源码整理检查及未覆盖场景见[验证与兼容边界](docs/dreamseekers/VALIDATION.zh-CN.md)。此前的实机结果见 [repair2 交付说明](docs/dreamseekers/REPAIR2.zh-CN.md)，不计作 repair3 通过项。旧注册身份、迁移逻辑和配置兼容常量属于当前实现，不因名称中带有旧版本信息而删除。
 
 ## 许可与署名
 

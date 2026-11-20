@@ -26,5 +26,6 @@ public enum BuildingAction {
     REQUEST_PRODUCTION_SYNC, // request that any-in progress production be resynced to client
     CLEAR_PRODUCTION, // reset client queue
     SYNC_PRODUCTION, // replace ordinary public rows from one authoritative snapshot
-    SYNC_PRODUCTION_HEAD // clientbound; one server observation, bound to the exact head UUID
+    SYNC_PRODUCTION_HEAD, // clientbound; one server observation, bound to the exact head UUID
+    CANCEL_OBSERVED_BACK_PRODUCTION // serverbound; exact observed non-head row, never a recipe-only cancel
 }

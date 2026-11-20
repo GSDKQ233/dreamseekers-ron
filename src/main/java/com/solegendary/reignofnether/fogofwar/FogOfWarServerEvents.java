@@ -5,6 +5,8 @@ import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
 import com.solegendary.reignofnether.building.BuildingPlacement;
 import com.solegendary.reignofnether.building.BuildingServerEvents;
 import com.solegendary.reignofnether.player.PlayerServerEvents;
+import com.solegendary.reignofnether.player.RTSPlayer;
+import com.solegendary.reignofnether.scenario.ScenarioUtils;
 import com.solegendary.reignofnether.registrars.GameRuleRegistrar;
 import com.solegendary.reignofnether.unit.UnitServerEvents;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
@@ -61,7 +63,7 @@ public class FogOfWarServerEvents {
     // the change IS visible to them. Drained by updatePlayerBrightChunks.
     private static final Map<UUID, Set<ChunkPos>> pendingResends = new ConcurrentHashMap<>();
 
-    // players whose units/buildings ignore fog and are visible to everyone
+    // Explicit per-world reveals (compatibility API). Capitol loss is a derived rule, never stored here.
     private static final Set<String> revealedPlayerNames = ConcurrentHashMap.newKeySet();
 
     // <entityId <name of attacked player, ticks to expiry>>.
@@ -425,6 +427,18 @@ public class FogOfWarServerEvents {
         }
     }
 
+    static Set<String> revealedOwnersForMap(Collection<RTSPlayer> activeSlots,
+                                             Set<String> buildingOwners, Set<String> ownersWithCapitol) {
+        Set<String> revealedOwners = new HashSet<>(revealedPlayerNames);
+        for (var slot : activeSlots) {
+            if (slot.isRevealed() && CapitolFogRule.reveals(slot.ticksWithoutCapitol, PlayerServerEvents.TICKS_TO_REVEAL,
+                    buildingOwners.contains(slot.name), ownersWithCapitol.contains(slot.name),
+                    ScenarioUtils.isScenarioNpc(false, slot.scenarioRoleIndex)))
+                revealedOwners.add(slot.name);
+        }
+        return revealedOwners;
+    }
+
     private static void updatePlayerBrightChunks() {
         if (serverLevel == null) return;
 
@@ -446,6 +460,17 @@ public class FogOfWarServerEvents {
         // so it's never rasterised twice).
         Map<String, Long2IntOpenHashMap> revealedViewersByTarget = new HashMap<>();
 
+        // First raster pass after loading already sees the restored roster, buildings and roles.
+        // No delayed re-announcement, cached name from an earlier match, or persisted reveal flag.
+        Set<String> ownersWithCapitol = new HashSet<>();
+        for (BuildingPlacement b : BuildingServerEvents.getBuildings()) {
+            if (b.level != serverLevel) continue;
+            if (b.isCapitol) ownersWithCapitol.add(b.ownerName);
+            addViewer(viewersByOwner.computeIfAbsent(b.ownerName, k -> new Long2IntOpenHashMap()),
+                    b.centrePos.getX(), b.centrePos.getZ(), b.getSightRange());
+        }
+        Set<String> revealedOwners = revealedOwnersForMap(PlayerServerEvents.rtsPlayers, viewersByOwner.keySet(), ownersWithCapitol);
+
         for (LivingEntity le : UnitServerEvents.getAllUnits()) {
             if (le.level() != serverLevel || !(le instanceof Unit unit)) continue;
             String unitOwner = unit.getOwnerName();
@@ -453,7 +478,7 @@ public class FogOfWarServerEvents {
             int sight = unit.getSightRange();
             addViewer(viewersByOwner.computeIfAbsent(unitOwner, k -> new Long2IntOpenHashMap()), bx, bz, sight);
 
-            if (!revealedPlayerNames.contains(unitOwner)) {
+            if (!revealedOwners.contains(unitOwner)) {
                 Map<String, Long> targets = revealedUnitExpiryTick.get(le.getId());
                 if (targets != null) {
                     int revealSight = Math.min(sight, REVEALED_ATTACKER_SIGHT_BLOCKS);
@@ -464,11 +489,6 @@ public class FogOfWarServerEvents {
             }
         }
 
-        for (BuildingPlacement b : BuildingServerEvents.getBuildings()) {
-            if (b.level != serverLevel) continue;
-            addViewer(viewersByOwner.computeIfAbsent(b.ownerName, k -> new Long2IntOpenHashMap()),
-                    b.centrePos.getX(), b.centrePos.getZ(), b.getSightRange());
-        }
 
         // Rasterise each owner's viewer circles ONCE into covered-column masks (chunkLong -> 16x16 bitmask),
         // reused across that owner, all its allies, and (if revealed) every other player.
@@ -478,12 +498,6 @@ public class FogOfWarServerEvents {
             rasterizeViewers(masks, e.getValue());
             coveredByOwner.put(e.getKey(), masks);
         }
-
-        // Revealed owners are treated exactly like allies of everyone: their full block-granular vision is
-        // merged into every player's covered mask.
-        List<String> revealedOwners = new ArrayList<>();
-        for (String owner : viewersByOwner.keySet())
-            if (revealedPlayerNames.contains(owner)) revealedOwners.add(owner);
 
         // One mask set per attacked player: merged only into that player and their allies.
         Map<String, Long2ObjectOpenHashMap<long[]>> revealedMasksByTarget = new HashMap<>();

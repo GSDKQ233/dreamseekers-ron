@@ -140,7 +140,9 @@ public final class PinkSlimeSafetyGameTests {
         h.assertTrue(ReservedSkillService.request(owner,badTarget)==ReservedSkillService.Result.INVALID_TARGET,"typed target UUID verified");
         enemy.setOwnerName("");h.assertTrue(!source.doHurtTarget(enemy),"unowned target is not a valid paid combat target");enemy.setOwnerName(PREFIX+"Enemy");
         source.setOwnerName("");h.assertTrue(!source.doHurtTarget(enemy)&&ReservedSkillService.request(owner,request)==ReservedSkillService.Result.NOT_OWNER,"unowned source cannot fight or cast");
-        source.setOwnerName(PREFIX+"Owner");float hp=enemy.getHealth();
+        source.setOwnerName(PREFIX+"Owner");
+        checkFilteredAutoTarget(h,source,enemy);
+        float hp=enemy.getHealth();
         h.runAfterDelay(20,()->{
             Resources r=ResourcesServerEvents.resourcesList.stream().filter(a->a.ownerName.equals(source.getOwnerName())).findFirst().orElseThrow();
             h.assertTrue(r.food==500&&r.wood==500&&r.ore==500&&source.getAbilities().get().equals(java.util.List.of(com.dreamseekers.skill.UnitSkillAbility.GEL_GUARD))&&enemy.getHealth()==hp,"disabled interface has no currency/cooldown/damage side effect");
@@ -228,6 +230,44 @@ public final class PinkSlimeSafetyGameTests {
             followDiagnostic("legitimate_new_aggro",slime,formerAlly);
             System.out.println("DREAMSEEKERS_SLIME_FOLLOW_REVOKE_NEW_AGGRO_PASS");
         }).thenSucceed();
+    }
+    /** A nearer, otherwise aggro-eligible wild mob must not mask a legal unit or building. */
+    private static void checkFilteredAutoTarget(GameTestHelper h,PinkSlimeUnit source,GoldenFoxUnit enemy) {
+        var level=h.getLevel();
+        var rule=level.getGameRules().getRule(com.solegendary.reignofnether.registrars.GameRuleRegistrar.NEUTRAL_AGGRO);
+        boolean oldAggro=rule.get();Vec3 previous=enemy.position();
+        Mob wild=EntityType.ZOMBIE.create(level);wild.setNoAi(true);
+        wild.moveTo(source.getX(),source.getY(),source.getZ()+1);
+        h.assertTrue(level.addFreshEntity(wild),"nearer, genuine ordinary neutral mob");
+        var buildings=com.solegendary.reignofnether.building.BuildingServerEvents.getBuildings();
+        var neutral=oneBlockTarget(level,source.blockPosition().offset(0,0,2),"");
+        var hostile=oneBlockTarget(level,source.blockPosition().offset(0,0,5),enemy.getOwnerName());
+        try {
+            rule.set(true,level.getServer());
+            enemy.moveTo(source.getX(),source.getY(),source.getZ()+4);
+            h.assertTrue(!source.canHarm(wild)&&source.canHarm(enemy)&&source.hasLineOfSight(wild)
+                    &&source.distanceToSqr(wild)<source.distanceToSqr(enemy),"neutral decoy closer on clear ground");
+            source.attackClosestEnemy(level);
+            h.assertTrue(source.getTarget()==enemy,"auto acquisition passes the rejected neutral and selects the enemy");
+            h.assertTrue(!source.doHurtTarget(wild),"ranking never grants damage against neutral mobs");
+            source.setUnitAttackTarget(null);
+            enemy.moveTo(previous.x,previous.y,previous.z);
+            buildings.add(neutral);buildings.add(hostile);
+            source.attackClosestEnemy(level);
+            h.assertTrue(source.getTarget()==null
+                    &&((TeamSafeBuildingAttackGoal)source.getAttackBuildingGoal()).getBuildingTarget()==hostile,
+                    "neutral entity and nearer neutral building do not mask the valid building fallback");
+        } finally {
+            buildings.remove(neutral);buildings.remove(hostile);
+            source.setAttackBuildingTarget(null,false);source.setUnitAttackTarget(null);
+            enemy.moveTo(previous.x,previous.y,previous.z);wild.discard();rule.set(oldAggro,level.getServer());
+        }
+    }
+    private static com.solegendary.reignofnether.building.BuildingPlacement oneBlockTarget(ServerLevel level,BlockPos p,String owner) {
+        var building=new com.solegendary.reignofnether.building.BuildingPlacement(
+                com.solegendary.reignofnether.building.Buildings.BARRACKS,level,p,net.minecraft.world.level.block.Rotation.NONE,owner,
+                new ArrayList<>(List.of(new com.solegendary.reignofnether.building.BuildingBlock(p,Blocks.STONE.defaultBlockState()))),false);
+        building.isBuilt=true;return building;
     }
     private static String followState(PinkSlimeUnit slime,GoldenFoxUnit ally) {
         var buildingGoal=(TeamSafeBuildingAttackGoal)slime.getAttackBuildingGoal();

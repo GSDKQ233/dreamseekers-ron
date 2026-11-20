@@ -29,7 +29,6 @@ import com.solegendary.reignofnether.research.economy.ResearchQueueSync;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import static com.solegendary.reignofnether.building.BuildingUtils.findBuilding;
 
 public class BuildingProductionClientboundPacket {
     public static final ResourceLocation EMPTY = ResourceLocation.fromNamespaceAndPath("", "");
@@ -50,7 +49,7 @@ public class BuildingProductionClientboundPacket {
     private static final int MAX_ROWS = 4096, MAX_NAME_CHARS_TOTAL = 200_000;
 
     private static boolean canReceive(ServerPlayer player, BuildingPlacement building) {
-        return player.level() == building.getLevel() && (building.ownerName.equals(player.getName().getString())
+        return player.level() == building.getLevel() && (player.getGameProfile().getName().equals(building.ownerName)
                 || FogOfWarServerEvents.canPlayerSeeBuilding(player, building));
     }
 
@@ -69,7 +68,7 @@ public class BuildingProductionClientboundPacket {
     /** An authorized read/stale reply goes only to its requester. Public rows contain no receipts. */
     public static void syncTo(ServerPlayer player, net.minecraft.network.Connection connection, ProductionPlacement host) {
         if (!canReceive(player, host)) return;
-        if (host.ownerName.equals(player.getName().getString()) && ResearchQueueSync.isOptIn(host)) {
+        if (player.getGameProfile().getName().equals(host.ownerName) && ResearchQueueSync.isOptIn(host)) {
             ResearchQueueSync.send(player, connection, host, "ready", 0);
             return;
         }
@@ -106,10 +105,7 @@ public class BuildingProductionClientboundPacket {
     }
 
     private static boolean canSeeHeadState(ServerPlayer actor, ProductionPlacement host) {
-        String name = actor.getGameProfile().getName();
-        return OreMinePlacementAccess.canPlaceFor(name, host.ownerName,
-                com.solegendary.reignofnether.sandbox.SandboxServer.isSandboxPlayer(name),
-                !host.ownerName.isBlank() && com.solegendary.reignofnether.alliance.AlliancesServerEvents.canControlAlly(name, host.ownerName));
+        return BuildingProductionServerboundPacket.canOperate(actor, host);
     }
 
     /** Constant-size transition only, not progress streaming. Use the actual level/host, not a position lookup. */
@@ -120,10 +116,33 @@ public class BuildingProductionClientboundPacket {
         var packet = new BuildingProductionClientboundPacket(BuildingAction.SYNC_PRODUCTION_HEAD, "", host.originPos, head.ticksLeft);
         packet.entryId = head.queueEntryId;
         packet.headPause = head.pause();
+        boolean privateResearch = head.receiptResearch != null || head.item instanceof ReceiptBackedResearchItem;
         for (ServerPlayer actor : level.getServer().getPlayerList().getPlayers()) {
-            if (actor.level() == level && canSeeHeadState(actor, host) && canReceive(actor, host))
+            if ((!privateResearch || host.ownerName.equals(actor.getGameProfile().getName()))
+                    && actor.level() == level && canSeeHeadState(actor, host) && canReceive(actor, host))
                 PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> actor), packet);
         }
+    }
+
+    /** These mutations already have a validated live placement. Do not look it up by bare coordinates again. */
+    private static void publish(ProductionPlacement host, BuildingAction action, String name, float ticks, UUID entry) {
+        if (!(host.getLevel() instanceof net.minecraft.server.level.ServerLevel level)) return;
+        var packet = new BuildingProductionClientboundPacket(action, name, host.originPos, ticks);
+        packet.entryId = entry;
+        for (ServerPlayer actor : level.getServer().getPlayerList().getPlayers())
+            if (canReceive(actor, host)) PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> actor), packet);
+    }
+    public static void startProduction(ProductionPlacement host, String name, ActiveProduction job) {
+        publish(host, BuildingAction.START_PRODUCTION, name, job.ticksLeft, job.queueEntryId);
+    }
+    public static void cancelProduction(ProductionPlacement host, String name, boolean front, UUID entry) {
+        publish(host, front ? BuildingAction.CANCEL_PRODUCTION : BuildingAction.CANCEL_BACK_PRODUCTION, name, -1, entry);
+    }
+    public static void completeProduction(ProductionPlacement host, ActiveProduction job) {
+        publish(host, BuildingAction.COMPLETE_PRODUCTION, job.item.getItemName(), -1, job.queueEntryId);
+    }
+    public static void clearQueue(ProductionPlacement host) {
+        publish(host, BuildingAction.CLEAR_PRODUCTION, "", -1, null);
     }
 
     // send only to players whose fog reveals at least one corner of this building
@@ -266,58 +285,65 @@ public class BuildingProductionClientboundPacket {
         final var success = new AtomicBoolean(false);
 
         ctx.get().enqueueWork(() -> {
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-                var mc = net.minecraft.client.Minecraft.getInstance();
-                if (mc.level == null || mc.getConnection() == null || mc.getConnection().getConnection() != ctx.get().getNetworkManager()) return;
-                BuildingPlacement building = findBuilding(true, this.buildingPos);
-                if (!(building instanceof ProductionPlacement host) || host.getLevel() != mc.level) return;
-                switch (action) {
-                    case SYNC_PRODUCTION -> {
-                        List<ActiveProduction> replacement = new ArrayList<>(rows.size());
-                        for (Row row : rows) {
-                            ProductionItem item = recipe(host, row.itemName());
-                            if (item == null || item instanceof ReceiptBackedResearchItem) return;
-                            ActiveProduction job = new ActiveProduction(item, host.ownerName, row.entryId());
-                            job.ticksLeft = row.ticks();
-                            replacement.add(job);
-                        }
-                        if (entryId != null && !replacement.isEmpty()) {
-                            ActiveProduction head = replacement.get(0);
-                            head.acceptPause(entryId, headPause, head.ticksLeft);
-                        }
-                        host.productionQueue.clear();
-                        host.productionQueue.addAll(replacement);
-                    }
-                    case SYNC_PRODUCTION_HEAD -> {
-                        // A superseded/unseen job is not a retry, cancellation or new order.
-                        if (!host.productionQueue.isEmpty())
-                            host.productionQueue.get(0).acceptPause(entryId, headPause, ticksLeft);
-                    }
-                    case CLEAR_PRODUCTION -> host.productionQueue.clear();
-                    case START_PRODUCTION -> {
-                        if (entryId == null) BuildingProductionServerboundPacket.requestSync(host.originPos);
-                        else host.acceptProductionStart(recipe(host, itemName), ticksLeft, entryId);
-                    }
-                    case CANCEL_BACK_PRODUCTION -> host.cancelProductionItem(recipe(host, itemName), false);
-                    case CANCEL_PRODUCTION, COMPLETE_PRODUCTION -> {
-                        if (entryId == null) {
-                            BuildingProductionServerboundPacket.requestSync(host.originPos);
-                            return;
-                        }
-                        for (ActiveProduction job : host.productionQueue) {
-                            if (entryId.equals(job.queueEntryId)) {
-                                if (action == BuildingAction.COMPLETE_PRODUCTION && !job.completed) job.complete(host);
-                                host.productionQueue.remove(job);
-                                break;
-                            }
-                        }
-                    }
-                    default -> { }
-                }
-                success.set(true);
-            });
+            DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> ClientHandler.apply(this, ctx, success));
         });
         ctx.get().setPacketHandled(true);
         return success.get();
+    }
+    /** Keep Minecraft and ClientLevel bytecode out of the packet registered on both physical sides. */
+    private static final class ClientHandler {
+        private static void apply(BuildingProductionClientboundPacket packet, Supplier<NetworkEvent.Context> ctx,
+                                  AtomicBoolean success) {
+            var mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.level == null || mc.getConnection() == null || mc.getConnection().getConnection() != ctx.get().getNetworkManager()) return;
+            var host = ProductionQueueAddress.resolve(mc.level, packet.buildingPos, BuildingClientEvents.getBuildings());
+            if (host == null) return;
+            switch (packet.action) {
+                case SYNC_PRODUCTION -> {
+                    List<ActiveProduction> replacement = new ArrayList<>(packet.rows.size());
+                    for (Row row : packet.rows) {
+                        ProductionItem item = recipe(host, row.itemName());
+                        if (item == null || item instanceof ReceiptBackedResearchItem) return;
+                        ActiveProduction job = new ActiveProduction(item, host.ownerName, row.entryId());
+                        job.ticksLeft = row.ticks();
+                        replacement.add(job);
+                    }
+                    if (packet.entryId != null && !replacement.isEmpty()) {
+                        ActiveProduction head = replacement.get(0);
+                        head.acceptPause(packet.entryId, packet.headPause, head.ticksLeft);
+                    }
+                    host.productionQueue.clear();
+                    host.productionQueue.addAll(replacement);
+                }
+                case SYNC_PRODUCTION_HEAD -> {
+                    // A superseded/unseen job is not a retry, cancellation or new order.
+                    if (!host.productionQueue.isEmpty())
+                        host.productionQueue.get(0).acceptPause(packet.entryId, packet.headPause, packet.ticksLeft);
+                }
+                case CLEAR_PRODUCTION -> host.productionQueue.clear();
+                case START_PRODUCTION -> {
+                    if (packet.entryId == null) BuildingProductionServerboundPacket.requestSync(host.originPos);
+                    else host.acceptProductionStart(recipe(host, packet.itemName), packet.ticksLeft, packet.entryId);
+                }
+                case CANCEL_BACK_PRODUCTION, CANCEL_PRODUCTION, COMPLETE_PRODUCTION -> {
+                    if (packet.entryId == null) {
+                        BuildingProductionServerboundPacket.requestSync(host.originPos);
+                        return;
+                    }
+                    boolean matched = false;
+                    for (ActiveProduction job : host.productionQueue) {
+                        if (packet.entryId.equals(job.queueEntryId)) {
+                            matched = true;
+                            if (packet.action == BuildingAction.COMPLETE_PRODUCTION && !job.completed) job.complete(host);
+                            host.productionQueue.remove(job);
+                            break;
+                        }
+                    }
+                    if (!matched) BuildingProductionServerboundPacket.requestSync(host.originPos);
+                }
+                default -> { }
+            }
+            success.set(true);
+        }
     }
 }

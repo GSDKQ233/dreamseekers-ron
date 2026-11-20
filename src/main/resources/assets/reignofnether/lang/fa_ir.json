@@ -583,8 +583,8 @@
 
     "commands.reignofnether.toggle_fow": "%s - مه نبرد را برای همه بازیکنان فعال کن",
     "commands.reignofnether.surrender": "%s - تسلیم شو",
-    "commands.reignofnether.reset": "%s - تمام نیرو ها و ساختمان ها را حذف کن - همه را به حالت اسپکتیتور ببر",
-    "commands.reignofnether.hard_reset": "%s - همه چیز را کامل حذف کن, به علاوه نیرو ها و سرباز هایی که در حالت سندباکس گذاشته شدند",
+    "commands.reignofnether.reset": "%s - مسابقه را بازنشانی می‌کند و بازیکنان را به حالت تماشاگر می‌برد. در سناریو و سندباکس فعال، واحدها و ساختمان‌ها حفظ می‌شوند.",
+    "commands.reignofnether.hard_reset": "%s - واحدهای بارگذاری‌شدهٔ RTS را حذف می‌کند. در سناریو و سندباکس فعال، ساختمان‌ها حفظ می‌شوند؛ در حالت‌های دیگر همهٔ ساختمان‌های RTS حذف می‌شوند.",
     "commands.reignofnether.lock": "%s - جلوی همه بازیکنان را از ملحق شدن به بازی بگیر",
     "commands.reignofnether.ally": "%s - به یک بازیکن درخواست اتحاد بده",
     "commands.reignofnether.disband": "%s - اتحاد با یک بازیکن دیگر را از بین ببر",
@@ -746,6 +746,7 @@
     "server.reignofnether.victory_alliance": "بازیکن %s و متحدانش پیروز شدند!",
     "server.reignofnether.match_reset": "بازی بازنشانی شد!",
     "server.reignofnether.match_reset_hard": "بازی بازنشانی سخت شد!",
+    "server.reignofnether.match_reset_hard_map": "مسابقه بازنشانی شد. واحدهای بارگذاری‌شدهٔ RTS حذف شدند و ساختمان‌های نقشه حفظ شدند.",
     "server.reignofnether.match_locked": "بازی قفل شد, بازیکنان جدید نمیتوانند ملحق شوند.",
     "server.reignofnether.match_unlocked": "بازی باز شد, بازیکنان جدید میتوانند ملحق شوند.",
     "server.reignofnether.sync_enabled": "RTS login-syncing has been enabled.",

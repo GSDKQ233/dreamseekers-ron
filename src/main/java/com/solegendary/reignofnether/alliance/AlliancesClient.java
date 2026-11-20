@@ -34,18 +34,21 @@ public class AlliancesClient {
     public static void addAlliance(String owner1, String owner2) {
         alliances.computeIfAbsent(owner1, k -> new HashSet<>()).add(owner2);
         alliances.computeIfAbsent(owner2, k -> new HashSet<>()).add(owner1);
-        inboundPendingAlliances.removeIf(p -> p.equals(owner1) || p.equals(owner2));
-        outboundPendingAlliances.removeIf(p -> p.equals(owner1) || p.equals(owner2));
+        // A graph delta or replay is never an invitation operation.
     }
 
     public static void addPendingAlliance(String toPlayer, String fromPlayer) {
         if (MC.player != null && MC.player.getName().getString().equals(toPlayer))
             inboundPendingAlliances.add(fromPlayer);
+        if (MC.player != null && MC.player.getGameProfile().getName().equals(fromPlayer))
+            outboundPendingAlliances.add(toPlayer);
     }
 
     public static void cancelPendingAlliance(String toPlayer, String fromPlayer) {
         if (MC.player != null && MC.player.getName().getString().equals(toPlayer))
-            inboundPendingAlliances.removeIf(p -> p.equals(fromPlayer));
+            inboundPendingAlliances.remove(fromPlayer);
+        if (MC.player != null && MC.player.getGameProfile().getName().equals(fromPlayer))
+            outboundPendingAlliances.remove(toPlayer);
     }
 
     public static void removeAlliance(String owner1, String owner2) {
@@ -94,6 +97,9 @@ public class AlliancesClient {
     }
     public static void resetAllAlliances() {
         alliances.clear();
+        inboundPendingAlliances.clear();
+        outboundPendingAlliances.clear();
+        playersWithAlliedControl.clear();
     }
 
 }

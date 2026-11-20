@@ -20,23 +20,18 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import static com.solegendary.reignofnether.building.BuildingUtils.findBuilding;
 
 public class BuildingProductionServerboundPacket {
     public String itemName; // resource location string of the ProductionItem
     public BlockPos buildingPos; // used to identify the relevant production building
     public BuildingAction action;
-    public UUID expectedHead;
+    /** Public queue identity, not a payment receipt. The legacy head action retains its wire format. */
+    public UUID expectedEntry;
 
     public static void startProduction(ProductionItem item) {
         BuildingClientEvents.switchHudToIdlestBuilding();
         if (HudClientEvents.hudSelectedPlacement instanceof ProductionPlacement pp) {
-            String prodItemName;
-            if (pp instanceof CustomBuildingPlacement) {
-                prodItemName = item.getItemName();
-            } else {
-                prodItemName = ReignOfNetherRegistries.PRODUCTION_ITEM.getKey(item).toString();
-            }
+            String prodItemName = BuildingProductionClientboundPacket.recipeName(pp, item);
             if (prodItemName != null) {
                 PacketHandler.INSTANCE.sendToServer(new BuildingProductionServerboundPacket(
                         BuildingAction.START_PRODUCTION,
@@ -46,23 +41,28 @@ public class BuildingProductionServerboundPacket {
         }
     }
 
-    /** Bind the intent when this HUD button is made, not when a delayed click is processed. */
-    public static Runnable cancelClick(ProductionPlacement host, BlockPos pos, ProductionItem item, boolean front) {
-        UUID observed = front && !host.productionQueue.isEmpty() && host.productionQueue.get(0).item == item
-                ? host.productionQueue.get(0).queueEntryId : null;
+    /** A queue row is captured when the HUD is built, never inferred from the recipe at click time. */
+    public static Runnable cancelClick(ProductionPlacement host, ActiveProduction row, boolean front) {
+        String name = BuildingProductionClientboundPacket.recipeName(host, row.item);
+        UUID observed = row.queueEntryId;
         return () -> {
-            String name = BuildingProductionClientboundPacket.recipeName(host, item);
-            if (name == null || (front && observed == null)) { requestSync(pos); return; }
+            if (name == null) { requestSync(host.originPos); return; }
             PacketHandler.INSTANCE.sendToServer(new BuildingProductionServerboundPacket(
-                    front ? BuildingAction.CANCEL_PRODUCTION : BuildingAction.CANCEL_BACK_PRODUCTION, name, pos, observed));
+                    front ? BuildingAction.CANCEL_PRODUCTION : BuildingAction.CANCEL_OBSERVED_BACK_PRODUCTION,
+                    name, host.originPos, observed));
         };
     }
 
-    /** Older Java callers without an observed head may refresh, never guess its replacement. */
+    /** Older button factories know only their recipe. A non-head row cannot safely be inferred. */
+    public static Runnable cancelClick(ProductionPlacement host, BlockPos pos, ProductionItem item, boolean front) {
+        if (front && !host.productionQueue.isEmpty() && host.productionQueue.get(0).item == item)
+            return cancelClick(host, host.productionQueue.get(0), true);
+        return () -> requestSync(host.originPos);
+    }
+
+    /** A Java caller without an observed row may refresh, not guess an order. */
     public static void cancelProduction(BlockPos buildingPos, ProductionItem item, boolean frontItem) {
-        if (frontItem) { requestSync(buildingPos); return; }
-        if (HudClientEvents.hudSelectedPlacement instanceof ProductionPlacement host)
-            cancelClick(host, buildingPos, item, false).run();
+        requestSync(buildingPos);
     }
 
     public static void requestSync(BlockPos buildingPos) {
@@ -74,8 +74,8 @@ public class BuildingProductionServerboundPacket {
         this(action, itemName, buildingPos, null);
     }
 
-    public BuildingProductionServerboundPacket(BuildingAction action, String itemName, BlockPos buildingPos, UUID expectedHead) {
-        this.expectedHead = expectedHead;
+    public BuildingProductionServerboundPacket(BuildingAction action, String itemName, BlockPos buildingPos, UUID expectedEntry) {
+        this.expectedEntry = expectedEntry;
         this.action = action;
         this.itemName = itemName;
         this.buildingPos = buildingPos;
@@ -85,17 +85,27 @@ public class BuildingProductionServerboundPacket {
         this.action = buffer.readEnum(BuildingAction.class);
         this.itemName = buffer.readUtf();
         this.buildingPos = buffer.readBlockPos();
-        if (action == BuildingAction.CANCEL_PRODUCTION && buffer.readBoolean()) expectedHead = buffer.readUUID();
+        if ((action == BuildingAction.CANCEL_PRODUCTION || action == BuildingAction.CANCEL_OBSERVED_BACK_PRODUCTION)
+                && buffer.readBoolean()) expectedEntry = buffer.readUUID();
     }
 
     public void encode(FriendlyByteBuf buffer) {
         buffer.writeEnum(this.action);
         buffer.writeUtf(this.itemName);
         buffer.writeBlockPos(this.buildingPos);
-        if (action == BuildingAction.CANCEL_PRODUCTION) {
-            buffer.writeBoolean(expectedHead != null);
-            if (expectedHead != null) buffer.writeUUID(expectedHead);
+        if (action == BuildingAction.CANCEL_PRODUCTION || action == BuildingAction.CANCEL_OBSERVED_BACK_PRODUCTION) {
+            buffer.writeBoolean(expectedEntry != null);
+            if (expectedEntry != null) buffer.writeUUID(expectedEntry);
         }
+    }
+
+    /** Resolved server-side for the target at execution time, never from some other player's sandbox state. */
+    public static boolean canOperate(ServerPlayer actor, ProductionPlacement host) {
+        if (actor == null || actor.serverLevel() != host.getLevel() || host.isDestroyedServerside
+                || host.ownerName == null || host.ownerName.isBlank()) return false;
+        String sender = actor.getGameProfile().getName();
+        return OreMinePlacementAccess.canPlaceFor(sender, host.ownerName, SandboxServer.isSandboxPlayer(sender),
+                AlliancesServerEvents.canControlAlly(sender, host.ownerName));
     }
 
     // server-side packet-consuming functions
@@ -111,68 +121,40 @@ public class BuildingProductionServerboundPacket {
             // The legacy position-only protocol addresses the current Overworld RTS map.
             // Never resolve another dimension's entity/position against its placements.
             if (player.level() != BuildingServerEvents.getServerLevel()) return;
-            BuildingPlacement building = findBuilding(player.level(), this.buildingPos);
-            if (building == null) return;
-            // Opt-in addon queues use the authenticated sender and dimension, not
-            // unrelated global sandbox presence or an empty alliance owner.
-            boolean strict = building.getBuilding().requiresStrictPlacementOwnerCheck();
-            String senderName = player.getName().getString();
-            if (strict && (player.serverLevel() != building.getLevel()
-                    || !OreMinePlacementAccess.canPlaceFor(senderName, building.ownerName,
-                            SandboxServer.isSandboxPlayer(senderName),
-                            building.ownerName != null && !building.ownerName.isBlank()
-                                    && AlliancesServerEvents.canControlAlly(senderName, building.ownerName)))) {
-                ReignOfNether.LOGGER.warn("Rejected restricted production action {} from {} for {}", this.action, senderName, building.ownerName);
+            var host = ProductionQueueAddress.resolve(player.level(), buildingPos, BuildingServerEvents.getBuildings());
+            if (host == null) return;
+            // Reads use the separate same-level/fog gate. The legacy recipe-only tail action is a refresh.
+            if (action == BuildingAction.REQUEST_PRODUCTION_SYNC || action == BuildingAction.CANCEL_BACK_PRODUCTION) {
+                BuildingProductionClientboundPacket.syncTo(player, ctx.get().getNetworkManager(), host);
                 return;
             }
-            else if (!strict && !player.getName().getString().equals(building.ownerName) &&
-                    !SandboxServer.isAnyoneASandboxPlayer() &&
-                    !AlliancesServerEvents.canControlAlly(player.getName().getString(), "")) {
+            if (action != BuildingAction.START_PRODUCTION && action != BuildingAction.CANCEL_PRODUCTION
+                    && action != BuildingAction.CANCEL_OBSERVED_BACK_PRODUCTION) return;
+            if (!canOperate(player, host)) return;
 
-                ReignOfNether.LOGGER.warn("BuildingProductionServerboundPacket: Tried to process packet from " + player.getName() + " for " + building.ownerName);
-                success.set(false);
+            ProductionItem item;
+            if (host instanceof CustomBuildingPlacement custom) {
+                item = custom.getProductionItem(itemName);
+            } else {
+                ResourceLocation key = ResourceLocation.tryParse(itemName);
+                item = key == null ? null : ReignOfNetherRegistries.PRODUCTION_ITEM.get(key);
+            }
+            if (action == BuildingAction.CANCEL_PRODUCTION || action == BuildingAction.CANCEL_OBSERVED_BACK_PRODUCTION) {
+                boolean front = action == BuildingAction.CANCEL_PRODUCTION;
+                if (item != null && host.cancelObservedEntry(item, expectedEntry, front)) {
+                    BuildingProductionClientboundPacket.cancelProduction(host, itemName, front, expectedEntry);
+                } else {
+                    BuildingProductionClientboundPacket.syncTo(player, ctx.get().getNetworkManager(), host);
+                }
                 return;
             }
-            if (building instanceof ProductionPlacement pBuilding) {
-                if (this.action == BuildingAction.REQUEST_PRODUCTION_SYNC) {
-                    BuildingProductionClientboundPacket.syncTo(player, ctx.get().getNetworkManager(), pBuilding);
-                } else {
-                    ProductionItem productionItem;
-                    if (pBuilding instanceof CustomBuildingPlacement cbp) {
-                        productionItem = cbp.getProductionItem(this.itemName);
-                    } else {
-                        ResourceLocation key = ResourceLocation.tryParse(this.itemName);
-                        productionItem = key == null ? null : ReignOfNetherRegistries.PRODUCTION_ITEM.get(key);
-                    }
-                    if (action == BuildingAction.CANCEL_PRODUCTION) {
-                        if (productionItem != null && pBuilding.cancelObservedHead(productionItem, expectedHead)) {
-                            BuildingProductionClientboundPacket.cancelProduction(pBuilding.ownerName, buildingPos, itemName, true, expectedHead);
-                        } else {
-                            BuildingProductionClientboundPacket.syncTo(player, ctx.get().getNetworkManager(), pBuilding);
-                        }
-                        return;
-                    }
-                    if(productionItem instanceof com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem)return;
-                    if (productionItem != null) {
-                        switch (this.action) {
-                            case START_PRODUCTION -> {
-                                boolean prodSuccess = pBuilding.startRequestedProduction(productionItem,
-                                        reason -> com.solegendary.reignofnether.hud.HudClientboundPacket.showTempMessageI18n(player, reason));
-                                if (prodSuccess && !pBuilding.productionQueue.isEmpty()) {
-                                    ActiveProduction job = pBuilding.productionQueue.get(pBuilding.productionQueue.size() - 1);
-                                    if (job.item == productionItem)
-                                        BuildingProductionClientboundPacket.startProduction(pBuilding.ownerName, buildingPos, this.itemName, job);
-                                }
-                            }
-                            case CANCEL_BACK_PRODUCTION -> {
-                                boolean cancelSuccess = pBuilding.cancelProductionItem(productionItem, false);
-                                if (cancelSuccess || pBuilding.productionQueue.isEmpty())
-                                    BuildingProductionClientboundPacket.cancelProduction(pBuilding.ownerName, buildingPos, this.itemName, false);
-                            }
-                            default -> { }
-                        }
-                    }
-                }
+            if (item == null || item instanceof com.solegendary.reignofnether.research.economy.ReceiptBackedResearchItem) return;
+            if (host.startRequestedProduction(item,
+                    reason -> com.solegendary.reignofnether.hud.HudClientboundPacket.showTempMessageI18n(player, reason))
+                    && !host.productionQueue.isEmpty()) {
+                ActiveProduction job = host.productionQueue.get(host.productionQueue.size() - 1);
+                if (job.item == item)
+                    BuildingProductionClientboundPacket.startProduction(host, itemName, job);
             }
             ReignOfNether.LOGGER.info("[Building] {} performed {} (itemName: {}, pos: {})", player.getName(), this.action, this.itemName, this.buildingPos);
             success.set(true);

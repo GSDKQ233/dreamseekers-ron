@@ -13,9 +13,7 @@ public class TeamSafeBuildingAttackGoal extends MeleeAttackBuildingGoal {
         return mob.level().isClientSide() ? BuildingClientEvents.getBuildings() : BuildingServerEvents.getBuildings();
     }
     protected final boolean valid(BuildingPlacement building) {
-        return building != null && mob.isAlive() && building.getLevel()==mob.level()
-                && active().contains(building) && !building.isDestroyedServerside
-                && building.isAttackable() && unit.canHarmOwner(building.ownerName);
+        return unit.canHarmBuilding(building) && active().contains(building) && building.isAttackable();
     }
     @Override public void setBuildingTarget(BlockPos pos) {
         // The legacy global-coordinate lookup does not distinguish dimensions. Do not use it here.

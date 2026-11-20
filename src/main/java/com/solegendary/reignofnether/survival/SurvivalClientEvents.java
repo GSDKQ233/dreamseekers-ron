@@ -25,6 +25,9 @@ public class SurvivalClientEvents {
     public static boolean isEnabled = false;
     private static int waveStatus = 1;
 
+    public static boolean isFreePlay() {
+        return waveStatus == SurvivalResult.BEACON_FREEPLAY || waveStatus == SurvivalResult.DEFEAT_FREEPLAY;
+    }
     public static boolean hasNextWave() { return waveStatus > 0; }
     public static WaveDifficulty difficulty = WaveDifficulty.BEGINNER;
 
@@ -79,13 +82,13 @@ public class SurvivalClientEvents {
                 () -> false,
                 () -> true,
                 () -> {
-                    if (SurvivalClientEvents.waveNumber < 30 && ResearchClient.hasCheat("thereisnospoon")) {
+                    if (!isFreePlay() && SurvivalClientEvents.waveNumber < 30 && ResearchClient.hasCheat("thereisnospoon")) {
                         SurvivalClientEvents.waveNumber += 1;
                         SurvivalServerboundPacket.setWaveNumber(SurvivalClientEvents.waveNumber);
                     }
                 },
                 () -> {
-                    if (SurvivalClientEvents.waveNumber > 1 && ResearchClient.hasCheat("thereisnospoon")) {
+                    if (!isFreePlay() && SurvivalClientEvents.waveNumber > 1 && ResearchClient.hasCheat("thereisnospoon")) {
                         SurvivalClientEvents.waveNumber -= 1;
                         SurvivalServerboundPacket.setWaveNumber(SurvivalClientEvents.waveNumber);
                     }
@@ -143,6 +146,8 @@ public class SurvivalClientEvents {
 
     public static List<FormattedCharSequence> getWaveTooltip() {
         ArrayList<FormattedCharSequence> tooltip = new ArrayList<>();
+        if (isFreePlay()) return List.of(fcs(I18n.get(waveStatus == SurvivalResult.BEACON_FREEPLAY
+                ? "survival.reignofnether.beacon_freeplay" : "survival.reignofnether.defeat_freeplay")));
         if (!hasNextWave()) {
             return List.of(fcs(I18n.get(waveStatus == WaveCursor.FINISHED
                     ? "survival.reignofnether.waves_complete" : "survival.reignofnether.final_active")));

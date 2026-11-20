@@ -22,10 +22,14 @@ public class SurvivalSaveData extends SavedData {
     public int waveNumber = 1;
     public WaveDifficulty difficulty = WaveDifficulty.BEGINNER;
     public long randomSeed;
+    SurvivalResult result = SurvivalResult.OPEN;
     int activeWaveNumber;
     boolean wavesFinished;
     final Set<UUID> activeEnemies = new HashSet<>();
     final Map<BlockPos, PortalState> activePortals = new HashMap<>();
+    // Terminal cleanup tombstones are not outstanding waves or reward claims.
+    final Set<UUID> retiredEnemies = new HashSet<>();
+    final Set<BlockPos> retiredPortals = new HashSet<>();
     int portalSpawnTicks;
     @Nullable Vec3 lastKill;
 
@@ -57,6 +61,23 @@ public class SurvivalSaveData extends SavedData {
         try { data.difficulty = WaveDifficulty.valueOf(tag.getString("difficulty")); }
         catch (IllegalArgumentException ignored) { /* use the new-world difficulty */ }
         data.randomSeed = tag.getLong("randomSeed");
+        // Absence in an older save (including a cleared wave 30) does not prove a match result.
+        if (data.isEnabled && tag.contains("matchResult", Tag.TAG_COMPOUND)) {
+            CompoundTag result = tag.getCompound("matchResult");
+            Set<String> winners = new HashSet<>();
+            for (Tag name : result.getList("winners", Tag.TAG_STRING)) winners.add(name.getAsString());
+            try {
+                data.result = new SurvivalResult(SurvivalResult.Kind.valueOf(result.getString("kind")),
+                        winners, result.getLong("elapsed"));
+            } catch (IllegalArgumentException ignored) { /* unknown result, no invented winners */ }
+        }
+        if (data.result.terminal()) data.activeWaveNumber = 0;
+        // Unloaded exact identities may arrive after an explicit new-match reset.
+        for (Tag entry : tag.getList("retiredEnemies", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) entry;
+            if (e.hasUUID("id")) data.retiredEnemies.add(e.getUUID("id"));
+        }
+        for (long pos : tag.getLongArray("retiredPortals")) data.retiredPortals.add(BlockPos.of(pos));
         if (data.activeWaveNumber > 0) {
             for (Tag entry : tag.getList("activeEnemies", Tag.TAG_COMPOUND)) {
                 CompoundTag e = (CompoundTag) entry;
@@ -83,6 +104,19 @@ public class SurvivalSaveData extends SavedData {
         tag.putInt("waveNumber", waveNumber);
         tag.putString("difficulty", difficulty.name());
         tag.putLong("randomSeed", randomSeed);
+        if (result.terminal()) {
+            CompoundTag end = new CompoundTag();
+            end.putString("kind", result.kind().name());
+            end.putLong("elapsed", result.elapsed());
+            ListTag names = new ListTag();
+            result.winners().stream().sorted().forEach(n -> names.add(net.minecraft.nbt.StringTag.valueOf(n)));
+            end.put("winners", names);
+            tag.put("matchResult", end);
+        } else tag.remove("matchResult");
+        ListTag retired = new ListTag();
+        retiredEnemies.forEach(id -> { CompoundTag e = new CompoundTag(); e.putUUID("id", id); retired.add(e); });
+        tag.put("retiredEnemies", retired);
+        tag.putLongArray("retiredPortals", retiredPortals.stream().mapToLong(BlockPos::asLong).toArray());
         tag.putInt("activeWave", activeWaveNumber);
         tag.putBoolean("wavesFinished", wavesFinished);
         if (activeWaveNumber > 0) {

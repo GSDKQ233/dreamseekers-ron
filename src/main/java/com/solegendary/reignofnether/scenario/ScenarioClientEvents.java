@@ -91,14 +91,15 @@ public class ScenarioClientEvents {
     @Nullable
     public static Button getCycleRoleToPlayButton() {
         List<FormattedCharSequence> tooltipLines = new ArrayList<>();
-        ScenarioRole role = scenarioRoles.get(roleIndexToPlay);
+        ScenarioRole role = selectedPlayRole();
+        if (role == null) return null;
         tooltipLines.add(fcs(I18n.get("hud.gamemode.reignofnether.choose_scenario_role", role.name, MiscUtil.getFactionName(role.faction))));
 
         if (role.isNpc) {
             tooltipLines.add(fcs(I18n.get("hud.gamemode.reignofnether.npc_scenario_role")));
         } else {
             for (RTSPlayer rtsPlayer : PlayerClientEvents.rtsPlayers) {
-                if (rtsPlayer.scenarioRoleIndex == roleIndexToPlay) {
+                if (rtsPlayer.scenarioRoleIndex == role.index) {
                     tooltipLines.add(fcs(I18n.get("hud.gamemode.reignofnether.taken_scenario_role", rtsPlayer.name)));
                     break;
                 }
@@ -128,36 +129,33 @@ public class ScenarioClientEvents {
                 .build();
     }
 
+    @Nullable private static ScenarioRole selectedPlayRole() {
+        if (scenarioRoles.isEmpty()) return null;
+        roleIndexToPlay = Math.floorMod(roleIndexToPlay, scenarioRoles.size());
+        return scenarioRoles.get(roleIndexToPlay);
+    }
+
     private static void goToNextVisibleRole(boolean reverse) {
-        int i = 0;
-        ScenarioRole role = ScenarioUtils.getScenarioRole(true, roleIndexToPlay);
-        if (role != null) {
-            while (getNumScenarioUnits(role) == 0 && getNumScenarioBuildings(role) == 0) {
-                roleIndexToPlay += reverse ? -1 : 1;
-                if (roleIndexToPlay >= scenarioRoles.size())
-                    roleIndexToPlay = 0;
-                if (roleIndexToPlay < 0)
-                    roleIndexToPlay = scenarioRoles.size() - 1;
-                role = ScenarioUtils.getScenarioRole(true, roleIndexToPlay);
-                if (i++ > scenarioRoles.size() * 2 || role == null)
-                    return;
-            }
+        for (int tried = 0; tried < scenarioRoles.size(); tried++) {
+            ScenarioRole role = selectedPlayRole();
+            if (role == null || getNumScenarioUnits(role) > 0 || getNumScenarioBuildings(role) > 0) return;
+            roleIndexToPlay = Math.floorMod(roleIndexToPlay + (reverse ? -1 : 1), scenarioRoles.size());
         }
+    }
+
+    private static boolean canSelect(ScenarioRole role) {
+        return role != null && !role.isNpc && (getNumScenarioUnits(role) > 0 || getNumScenarioBuildings(role) > 0)
+                && PlayerClientEvents.rtsPlayers.stream().noneMatch(p -> p.scenarioRoleIndex == role.index);
     }
 
     public static Button getScenarioStartButton() {
         return new ButtonBuilder("Start Scenario")
                 .iconResource(ResourceLocation.fromNamespaceAndPath(ReignOfNether.MOD_ID, "textures/hud/tick.png"))
-                .isEnabled(() -> {
-                    ScenarioRole role = ScenarioUtils.getScenarioRole(true, roleIndexToPlay);
-                    if (role == null || role.isNpc || (getNumScenarioUnits(role) == 0 && getNumScenarioBuildings(role) == 0))
-                        return false;
-                    for (RTSPlayer rtsPlayer : PlayerClientEvents.rtsPlayers)
-                        if (rtsPlayer.scenarioRoleIndex == roleIndexToPlay)
-                            return false;
-                    return true;
+                .isEnabled(() -> canSelect(selectedPlayRole()))
+                .onLeftClick(() -> {
+                    ScenarioRole role = selectedPlayRole();
+                    if (canSelect(role)) PlayerServerboundPacket.startRTSScenario(role.index);
                 })
-                .onLeftClick(() -> PlayerServerboundPacket.startRTSScenario(roleIndexToPlay))
                 .tooltipLines(List.of(
                         fcs(I18n.get("hud.gamemode.reignofnether.start_scenario"), true)
                 )).build();

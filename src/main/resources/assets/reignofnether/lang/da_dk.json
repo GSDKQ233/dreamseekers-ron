@@ -284,7 +284,7 @@
 
   "commands.reignofnether.toggle_fow": "%s - Skift tåge for alle spillere",
   "commands.reignofnether.surrender": "%s - Overgiv kampen",
-  "commands.reignofnether.reset": "%s - Slet alle enheder/bygninger, sæt alle til tilskuere",
+  "commands.reignofnether.reset": "%s - Nulstil kampen og skift spillerne til tilskuere. I scenarier og aktiv sandkassetilstand bevares enheder og bygninger.",
   "commands.reignofnether.lock": "%s - Forhindr alle spillere i at deltage i RTS-kampen",
 
   "controls.reignofnether.toggle_cam": "F12 - Skift RTS-kamera",

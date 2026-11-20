@@ -92,12 +92,11 @@ public final class SkillClient {
                 && source.getOwnerName().equals(MC.player.getGameProfile().getName());
     }
 
-    /** Unknown/stale state remains unavailable instead of guessing a zero cooldown. */
-    public static int cooldown(SkillUnit source, UnitSkill skill) {
+    public static SkillReadiness readiness(SkillUnit source, UnitSkill skill) {
         View view = currentView(source, skill);
-        return view == null || MC.level == null ? skill.cooldownTicks()
-                : (int) CLOCK.remaining(view.receivedAt(), view.cooldownTicks());
+        return view == null ? SkillReadiness.WAITING : SkillReadiness.at(CLOCK,view.receivedAt(),view.cooldownTicks());
     }
+    public static int cooldown(SkillUnit source, UnitSkill skill) { return readiness(source,skill).nativeCooldown(skill.cooldownTicks()); }
 
     /** No local building/research guess: only a fresh exact-owner server snapshot can display a boost. */
     public static int amplificationTier(SkillUnit source,UnitSkill skill) {
@@ -160,6 +159,7 @@ public final class SkillClient {
             cancel(); swallowRelease = event.getButton(); event.setCanceled(true); return;
         }
         if (event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
+        CursorClientEvents.preparePress(event);
         if (HudClientEvents.isMouseOverAnyButtonOrHud()) {
             if (!(HudClientEvents.getMousedOverButton() instanceof AbilityButton button)
                     || !(button.ability instanceof UnitSkillAbility ability) || ability.skill() != armedSkill) cancel();
@@ -167,13 +167,17 @@ public final class SkillClient {
         }
         SkillUnit source = armedCaster();
         UnitSkill skill = armedSkill;
+        View view=source==null||skill==null?null:currentView(source,skill);
+        SkillReadiness state=view==null?SkillReadiness.WAITING:SkillReadiness.at(CLOCK,view.receivedAt(),view.cooldownTicks());
+        if(!state.ready()) {
+            cancel(); // Give the press AND its release back to ordinary world interaction.
+            if(state.waiting())SnapshotSkillButton.waiting();else SnapshotSkillButton.cooling(state);
+            return;
+        }
         event.setCanceled(true);
         swallowRelease = event.getButton();
         cancel();
-        if (source == null || skill == null || MC.level == null) return;
         if(skill==UnitSkill.FOX_DREAM_SEED||skill==UnitSkill.ASH_EMBER_LANDING||skill==UnitSkill.AARONCOS_RIGHT_VORTEX) {
-            View view=currentView(source,skill);
-            if(view==null) { message("ability.dreamseekers.unit_skill.awaiting_state");return; }
             net.minecraft.core.BlockPos ground=CursorClientEvents.getPreselectedBlockPos();
             if(ground==null) { message("ability.dreamseekers.unit_skill.result.ground_invalid");return; }
             // Cursor rays identify a supporting solid block; the authoritative request names the empty feet cell.
@@ -190,11 +194,9 @@ public final class SkillClient {
                 var building=clicked==null?null:com.solegendary.reignofnether.building.BuildingClientEvents.getPreselectedBuilding();
                 return GolemStrikeTargetSelection.building(golem,building,clicked,
                         b->com.solegendary.reignofnether.building.BuildingClientEvents.getBuildings().stream().anyMatch(current->current==b),
-                        SkillClient::golemVisible);
+                        SkillClient::visibleTargetColumn);
             });
             if(selection==null) { message("ability.dreamseekers.unit_skill.result.invalid_target");return; }
-            View view=currentView(source,skill);
-            if(view==null) { message("ability.dreamseekers.unit_skill.awaiting_state");return; }
             if(selection.unit()!=null) {
                 SkillNetwork.request(new SkillNetwork.Cast(skill,source.mob().getId(),source.mob().getUUID(),view.revision(),
                         selection.unit().getId(),selection.unit().getUUID()));
@@ -206,11 +208,6 @@ public final class SkillClient {
         }
         if (target == null) {
             message("ability.dreamseekers.unit_skill.result.invalid_target");
-            return;
-        }
-        View view = currentView(source, skill);
-        if (view == null) {
-            message("ability.dreamseekers.unit_skill.awaiting_state");
             return;
         }
         SkillNetwork.request(new SkillNetwork.Cast(skill, source.mob().getId(), source.mob().getUUID(), view.revision(),
@@ -255,10 +252,10 @@ public final class SkillClient {
         return view;
     }
 
-    /** Golem mirrors server exact-column fog, not the native entity ranged-reveal exception.
+    /** Dash and Golem mirror server exact-column fog, not the native entity ranged-reveal exception.
      * Both native fog implementations are enabled only for the viewer's RTS role; their
      * current column caches are Overworld-only, so active fog fails closed elsewhere. */
-    private static boolean golemVisible(net.minecraft.core.BlockPos pos) {
+    private static boolean visibleTargetColumn(net.minecraft.core.BlockPos pos) {
         return MC.level!=null
                 &&(!com.solegendary.reignofnether.fogofwar.FogOfWarClientEvents.isEnabled()
                     ||MC.level.dimension()==net.minecraft.world.level.Level.OVERWORLD)
@@ -281,9 +278,9 @@ public final class SkillClient {
                     (skill==UnitSkill.SHADOW_GOLEM_STRIKE||skill==UnitSkill.AARONCOS_LEFT_PRESS)
                         ?ShadowGolemStrike.distanceSquared(source.mob().position(),living.getBoundingBox()):source.mob().distanceToSqr(target),
                     ()->source instanceof com.dreamseekers.unit.StoneSpiritThrowerUnit stone?StoneHeavyShot.range(stone):skill.range())
-                && ((skill!=UnitSkill.COORDINATED_MARK&&skill!=UnitSkill.STONE_HEAVY_SHOT&&skill!=UnitSkill.SQUEAL_SUPPRESSION_WAVE&&skill!=UnitSkill.FRIENDLY_DEBT_CONTRACT&&skill!=UnitSkill.SHADOW_HAND_GRIP&&skill!=UnitSkill.SHADOW_GOLEM_STRIKE&&skill!=UnitSkill.AARONCOS_LEFT_PRESS)||!target.isInvisible()
-                    &&((skill==UnitSkill.SHADOW_GOLEM_STRIKE||skill==UnitSkill.AARONCOS_LEFT_PRESS)
-                        ?golemVisible(target.blockPosition())
+                && ((skill!=UnitSkill.WIND_DASH&&skill!=UnitSkill.COORDINATED_MARK&&skill!=UnitSkill.STONE_HEAVY_SHOT&&skill!=UnitSkill.SQUEAL_SUPPRESSION_WAVE&&skill!=UnitSkill.FRIENDLY_DEBT_CONTRACT&&skill!=UnitSkill.SHADOW_HAND_GRIP&&skill!=UnitSkill.SHADOW_GOLEM_STRIKE&&skill!=UnitSkill.AARONCOS_LEFT_PRESS)||!target.isInvisible()
+                    &&((skill==UnitSkill.WIND_DASH||skill==UnitSkill.SHADOW_GOLEM_STRIKE||skill==UnitSkill.AARONCOS_LEFT_PRESS)
+                        ?visibleTargetColumn(target.blockPosition())
                         :com.solegendary.reignofnether.fogofwar.FogOfWarClientEvents.isInBrightChunk(target)))
                 && (skill!=UnitSkill.JELLY_FLOW||living.getHealth()<living.getMaxHealth());
     }

@@ -4,11 +4,14 @@ package com.dreamseekers.skill;
 import com.dreamseekers.unit.TeamSafeMeleeAttackGoal;
 import com.dreamseekers.unit.WindKnightUnit;
 import com.solegendary.reignofnether.api.FinalUnitDamageHooks;
+import com.solegendary.reignofnether.fogofwar.FogOfWarServerEvents;
 import com.solegendary.reignofnether.unit.UnitServerEvents;
 import com.solegendary.reignofnether.registrars.MobEffectRegistrar;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
 import com.solegendary.reignofnether.unit.interfaces.WorkerUnit;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
@@ -51,6 +54,7 @@ public final class WindDash {
 
     private static final class Dash {
         final WindKnightUnit source;
+        final ServerPlayer commander;
         final SkillIdentity.Stamp caster,target;
         final long commandRevision,startedAt;
         Path plannedPath,ownedPath;
@@ -59,8 +63,8 @@ public final class WindDash {
         double traveled;
         int stalled;
         boolean cancelled;
-        Dash(WindKnightUnit source,LivingEntity target,Path path) {
-            this.source=source;caster=SkillIdentity.capture(source);this.target=SkillIdentity.capture(target);
+        Dash(ServerPlayer commander,WindKnightUnit source,LivingEntity target,Path path) {
+            this.commander=commander;this.source=source;caster=SkillIdentity.capture(source);this.target=SkillIdentity.capture(target);
             commandRevision=source.rts().commandRevision;startedAt=source.level().getGameTime();
             plannedPath=path;previous=source.position();nextRepath=startedAt+REPATH_TICKS;
             standpoint=path==null?source.position():path.getEntityPosAtNode(source,path.getNodeCount()-1);
@@ -69,7 +73,8 @@ public final class WindDash {
             return !cancelled&&DASHES.get(source)==this&&caster.valid()&&target.valid()
                     &&source.rts().commandRevision==commandRevision&&!disabled(source)
                     &&!UnitServerEvents.hasPendingImmediateAction(source.getId())
-                    &&source.canHarm(target.entity())&&source.distanceToSqr(target.entity())<=TETHER_RANGE*TETHER_RANGE
+                    &&source.canHarm(target.entity())&&visibleToCommander(commander,source,target.entity())
+                    &&source.distanceToSqr(target.entity())<=TETHER_RANGE*TETHER_RANGE
                     &&source.level().getGameTime()-startedAt<=MAX_TICKS;
         }
         boolean reach() { return source.distanceToSqr(target.entity())<=STRIKE_RANGE*STRIKE_RANGE
@@ -142,12 +147,24 @@ public final class WindDash {
         }
         return Double.isFinite(distance)&&distance<=remainingDistance?path:null;
     }
-    static SkillResult start(WindKnightUnit source,LivingEntity target) {
+    /** The exact issuing player's fog column, not the caster's physical line of sight or a
+     * ranged reveal. Kept separate from target.isAlive so a just-committed lethal strike can
+     * recheck visibility for its receipt without consulting a replacement body or viewer. */
+    private static boolean visibleToCommander(ServerPlayer viewer,WindKnightUnit source,LivingEntity target) {
+        if(viewer==null||!viewer.isAlive()||viewer.isRemoved()||viewer.serverLevel()!=source.level()
+                ||!viewer.getGameProfile().getName().equals(source.getOwnerName())
+                ||target.level()!=viewer.serverLevel()||target.isRemoved()||target.isInvisible()||target.isSpectator())return false;
+        if(FogOfWarServerEvents.isVisionTableRestrictedFor(viewer)&&viewer.serverLevel().dimension()!=Level.OVERWORLD)return false;
+        BlockPos pos=target.blockPosition();
+        return FogOfWarServerEvents.isBlockVisibleFor(viewer,pos.getX(),pos.getZ());
+    }
+    static SkillResult start(ServerPlayer viewer,WindKnightUnit source,LivingEntity target) {
         if(isActive(source)||STRIKES.containsKey(source))return SkillResult.ALREADY_ACTIVE;
         if(disabled(source)||UnitServerEvents.hasPendingImmediateAction(source.getId()))return SkillResult.DISABLED;
         if(!(target instanceof Unit)||!source.canHarm(target)||target.isSpectator()||!(source.level() instanceof ServerLevel level)
                 ||level.getEntity(target.getUUID())!=target||level.getEntity(target.getId())!=target)return SkillResult.INVALID_TARGET;
         if(source.distanceToSqr(target)>(double)UnitSkill.WIND_DASH.range()*UnitSkill.WIND_DASH.range())return SkillResult.RANGE;
+        if(!visibleToCommander(viewer,source,target))return SkillResult.HIDDEN;
         SkillIdentity.Stamp caster=SkillIdentity.capture(source),victim=SkillIdentity.capture(target);
         long command=source.rts().commandRevision,revision=source.rts().skills().revision();
         boolean alreadyInReach=source.onGround()&&source.hasLineOfSight(target)
@@ -158,6 +175,7 @@ public final class WindDash {
         if(source.rts().commandRevision!=command||source.rts().skills().revision()!=revision
                 ||UnitServerEvents.hasPendingImmediateAction(source.getId()))return SkillResult.REPLAY;
         if(!victim.valid()||!source.canHarm(target))return SkillResult.INVALID_TARGET;
+        if(!visibleToCommander(viewer,source,target))return SkillResult.HIDDEN;
         if(source.distanceToSqr(target)>(double)UnitSkill.WIND_DASH.range()*UnitSkill.WIND_DASH.range())return SkillResult.RANGE;
         // Discard the executed order and its async callbacks, not explicitly shift-queued future commands.
         Unit.fullResetBehaviours(source);
@@ -165,7 +183,8 @@ public final class WindDash {
         if(source.rts().commandRevision!=command+1||source.rts().skills().revision()!=revision
                 ||UnitServerEvents.hasPendingImmediateAction(source.getId()))return SkillResult.REPLAY;
         if(!victim.valid()||!source.canHarm(target)||disabled(source))return SkillResult.INVALID_TARGET;
-        Dash dash=new Dash(source,target,path);DASHES.put(source,dash);return SkillResult.SUCCESS;
+        if(!visibleToCommander(viewer,source,target))return SkillResult.HIDDEN;
+        Dash dash=new Dash(viewer,source,target,path);DASHES.put(source,dash);return SkillResult.SUCCESS;
     }
     public static Goal goal(WindKnightUnit source) {
         return new Goal() {
@@ -302,7 +321,8 @@ public final class WindDash {
                     ||!dash.caster.valid()||!dash.target.identityValid()
                     ||dash.source.rts().commandRevision!=dash.commandRevision||disabled(dash.source)
                     ||UnitServerEvents.hasPendingImmediateAction(dash.source.getId())
-                    ||!dash.source.canHarmOwner(dash.target.owner()))return;
+                    ||!dash.source.canHarmOwner(dash.target.owner())
+                    ||!visibleToCommander(dash.commander,dash.source,dash.target.entity()))return;
             // A real lethal write is accepted despite !isAlive; removal/transfer/replacement is not.
             strike.success=true;DASHES.remove(dash.source,dash);stopOwnedNavigation(dash);
             rally(dash.source);
@@ -325,13 +345,15 @@ public final class WindDash {
         }
     }
     private static void addKnockback(Dash dash) {
-        if(!dash.caster.valid()||!dash.target.valid()||!dash.source.canHarm(dash.target.entity()))return;
+        if(!dash.caster.valid()||!dash.target.valid()||!dash.source.canHarm(dash.target.entity())
+                ||!visibleToCommander(dash.commander,dash.source,dash.target.entity()))return;
         LivingEntity target=dash.target.entity();
         Vec3 away=target.position().subtract(dash.source.position()).multiply(1,0,1);
         if(away.lengthSqr()<1e-8)return;
         // Forge/other-mod vetoes (including freeze/shields) remain honored, but never allow an oversized proc.
         var event=ForgeHooks.onLivingKnockBack(target,(float)KNOCKBACK_DISTANCE,-away.x,-away.z);
         if(event.isCanceled()||!dash.caster.valid()||!dash.target.valid()||!dash.source.canHarm(target)
+                ||!visibleToCommander(dash.commander,dash.source,target)
                 ||!Float.isFinite(event.getStrength())||event.getStrength()<=0
                 ||!Double.isFinite(event.getRatioX())||!Double.isFinite(event.getRatioZ()))return;
         Vec3 direction=new Vec3(-event.getRatioX(),0,-event.getRatioZ());
@@ -358,6 +380,9 @@ public final class WindDash {
     static void clear(LivingEntity entity) {
         for(Dash dash:List.copyOf(DASHES.values()))if(dash.source==entity||dash.target.entity()==entity)cancel(dash.source);
         KNOCKBACKS.entrySet().removeIf(entry->entry.getKey()==entity||entry.getValue().caster.entity()==entity);
+    }
+    static void playerLeft(ServerPlayer viewer) {
+        for(Dash dash:List.copyOf(DASHES.values()))if(dash.commander==viewer)cancel(dash.source);
     }
     static void relationshipsChanged() {
         for(Dash dash:List.copyOf(DASHES.values()))if(!dash.valid())cancel(dash.source);

@@ -3,10 +3,17 @@ package com.dreamseekers.unit;
 import com.solegendary.reignofnether.alliance.AlliancesClient;
 import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
+import com.solegendary.reignofnether.building.BuildingPlacement;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 /** Opt-in stricter paid-unit combat boundary; existing/wild units are not globally altered. */
 public interface TeamSafeCombatUnit extends DreamRtsUnit {
+    @Override default boolean acceptsAutoAttackTarget(LivingEntity target) { return canHarm(target); }
+    @Override default boolean acceptsAutoAttackBuilding(BuildingPlacement target) { return canHarmBuilding(target); }
+    default boolean canHarmBuilding(BuildingPlacement target) {
+        return target != null && mob().isAlive() && target.getLevel() == mob().level()
+                && !target.isDestroyedServerside && canHarmOwner(target.ownerName);
+    }
     @Override default void setUnitAttackTarget(LivingEntity target) {
         DreamRtsUnit.super.setUnitAttackTarget(canHarm(target) ? target : null);
         getTargetGoal().forced=false;
