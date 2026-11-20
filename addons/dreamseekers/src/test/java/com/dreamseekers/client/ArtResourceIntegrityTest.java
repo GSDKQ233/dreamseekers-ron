@@ -88,6 +88,9 @@ class ArtResourceIntegrityTest {
                 JsonObject animations = JsonParser.parseString(new String(stream.readAllBytes(), StandardCharsets.UTF_8))
                         .getAsJsonObject().getAsJsonObject("animations");
                 assertTrue(animations.has(animation), resource + " lacks " + animation);
+                // The name is held on the synced channel for HOLD_TICKS; a shorter animation would play twice.
+                double seconds = animations.getAsJsonObject(animation).get("animation_length").getAsDouble();
+                assertTrue(seconds * 20 >= SkillCastAnimation.HOLD_TICKS * 2, resource + " " + animation + " is too short");
             }
         }
     }

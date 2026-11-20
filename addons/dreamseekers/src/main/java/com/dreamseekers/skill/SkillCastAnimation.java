@@ -38,24 +38,34 @@ public final class SkillCastAnimation {
         };
     }
 
-    private record Pending(Mob caster, UnitSkill skill) {}
+    /** Server ticks the animation name is kept on the synced channel; shorter than every mapped animation. */
+    public static final int HOLD_TICKS = 6;
+
+    private static final class Pending {
+        final Mob caster; final UnitSkill skill; int ticks = HOLD_TICKS;
+        Pending(Mob caster, UnitSkill skill) { this.caster = caster; this.skill = skill; }
+    }
     private static final List<Pending> PENDING = new ArrayList<>();
 
     /**
-     * Server-side. PasterDream's own LivingTick handler consumes the synced animation name on the server too,
-     * so a name written before the caster's tick is cleared before the entity tracker sends it. The name is
-     * therefore written at the end of the server tick, after every entity tick and before the next broadcast.
+     * Server-side. PasterDream's own LivingTick handler consumes the synced animation name on the server one
+     * entity tick after it is written, so on its own the name is a one-tick pulse that a client misses whenever
+     * both data packets reach it between two of its ticks. The name is therefore rewritten at the end of each
+     * server tick for {@link #HOLD_TICKS} ticks, after the entity ticks and before the next tracker broadcast.
      */
     public static void play(Mob caster, UnitSkill skill) {
         if (nativeAnimation(skill) == null || caster == null || caster.level().isClientSide() || !caster.isAlive()) return;
+        PENDING.removeIf(pending -> pending.caster == caster);
         PENDING.add(new Pending(caster, skill));
     }
 
     @SubscribeEvent public static void flush(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || PENDING.isEmpty()) return;
-        List<Pending> due = new ArrayList<>(PENDING);
-        PENDING.clear();
-        for (Pending pending : due) apply(pending.caster(), pending.skill());
+        for (Pending pending : List.copyOf(PENDING)) {
+            boolean live = !pending.caster.isRemoved() && pending.caster.isAlive();
+            if (live) apply(pending.caster, pending.skill);
+            if (!live || --pending.ticks <= 0) PENDING.remove(pending);
+        }
     }
 
     private static void apply(Mob caster, UnitSkill skill) {
