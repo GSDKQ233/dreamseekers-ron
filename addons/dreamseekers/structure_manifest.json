@@ -1924,24 +1924,22 @@
         9,
         11
       ],
-      "non_air_blocks": 323,
+      "non_air_blocks": 386,
       "palette_counts": {
-        "minecraft:amethyst_block": 2,
-        "minecraft:purple_stained_glass": 2,
-        "pasterdream:cracked_shadow_stone_brick": 24,
-        "pasterdream:rust_black_metal_block": 1,
-        "pasterdream:shadow_planks": 24,
+        "minecraft:amethyst_block": 23,
+        "pasterdream:cracked_shadow_stone_brick": 27,
+        "pasterdream:rust_black_metal_block": 3,
+        "pasterdream:shadow_planks": 29,
+        "pasterdream:shadow_planks_slab": 12,
         "pasterdream:shadow_shroomlight": 2,
-        "pasterdream:shadow_stem": 1,
-        "pasterdream:shadow_stone": 55,
-        "pasterdream:shadow_stone_brick": 113,
+        "pasterdream:shadow_stem": 2,
+        "pasterdream:shadow_stone": 145,
+        "pasterdream:shadow_stone_brick": 67,
         "pasterdream:shadow_stone_bricks": 24,
-        "pasterdream:shadow_stone_tiles_slab": 16,
-        "pasterdream:shadow_stone_tiles_stairs": 15,
-        "pasterdream:stripped_shadow_stem": 23,
-        "pasterdream:thick_shadow_block": 21
+        "pasterdream:stripped_shadow_stem": 44,
+        "pasterdream:thick_shadow_block": 8
       },
-      "sha256": "6b8d6bfea24882d3846137bcb9a5d6479facf234c1bcfddb1c01510785c473a1"
+      "sha256": "41a40feea8e2d96956d5e5064e09e3536afcd487d7baae53b64052eb8270f3c9"
     },
     {
       "id": "shadow_furnace_dyedream_v2",
@@ -1951,22 +1949,23 @@
         12,
         11
       ],
-      "non_air_blocks": 393,
+      "non_air_blocks": 386,
       "palette_counts": {
-        "minecraft:purple_stained_glass": 23,
-        "pasterdream:chiseled_shadow_stone_brick": 3,
-        "pasterdream:cracked_shadow_stone_brick": 117,
+        "minecraft:orange_stained_glass": 3,
+        "minecraft:purple_stained_glass": 10,
+        "minecraft:shroomlight": 13,
+        "pasterdream:chiseled_shadow_stone_brick": 7,
+        "pasterdream:cracked_shadow_stone_brick": 113,
         "pasterdream:dyedream_lartern": 1,
-        "pasterdream:shadow_shroomlight": 8,
+        "pasterdream:rust_black_metal_block": 40,
+        "pasterdream:shadow_shroomlight": 2,
         "pasterdream:shadow_stem": 4,
-        "pasterdream:shadow_stone_brick": 108,
-        "pasterdream:shadow_stone_brick_stairs": 2,
-        "pasterdream:shadow_stone_bricks": 62,
-        "pasterdream:shadow_stone_tiles": 37,
-        "pasterdream:shadow_stone_tiles_slab": 4,
-        "pasterdream:shadow_stone_tiles_stairs": 24
+        "pasterdream:shadow_stone_brick": 121,
+        "pasterdream:shadow_stone_bricks": 43,
+        "pasterdream:shadow_stone_tiles": 25,
+        "pasterdream:shadow_stone_tiles_slab": 4
       },
-      "sha256": "b41e78d89e5b9de43b598531825905c9619529393c94b3a9473094b3a5fa1cbb"
+      "sha256": "927552cf45f9d59cb98c4a61da12fb78a4875121c49a9dca12a136a6fe8510fe"
     },
     {
       "id": "beetle_sanctuary_dyedream_v2",
@@ -1976,23 +1975,18 @@
         7,
         11
       ],
-      "non_air_blocks": 248,
+      "non_air_blocks": 244,
       "palette_counts": {
-        "minecraft:amethyst_block": 6,
-        "minecraft:quartz_pillar": 20,
-        "pasterdream:bricks_dyedreamquartz_block": 38,
-        "pasterdream:carve_dyedream_glass": 1,
-        "pasterdream:chiseled_dyedreamquartz_block": 18,
+        "minecraft:amethyst_block": 29,
+        "pasterdream:bricks_dyedreamquartz_block": 52,
+        "pasterdream:chiseled_dyedreamquartz_block": 31,
         "pasterdream:dyedream_grass": 4,
-        "pasterdream:dyedream_lartern": 2,
-        "pasterdream:dyedream_log": 15,
-        "pasterdream:dyedream_planks_slab": 16,
-        "pasterdream:dyedreamquartz_block": 58,
-        "pasterdream:dyedreamquartz_block_stairs": 27,
-        "pasterdream:gold_carve_dyedream_glass": 3,
-        "pasterdream:polished_calcite": 40
+        "pasterdream:dyedream_lartern": 4,
+        "pasterdream:dyedream_log": 8,
+        "pasterdream:dyedreamquartz_block": 108,
+        "pasterdream:polished_calcite": 8
       },
-      "sha256": "f1ae1a26e9186792819ce857c3dd583d6b0e7c453e44e742834487173f0ed132"
+      "sha256": "1b2c5d169cf0aabafc2e02dd1ef2c6ce6e60bd1ef879841bab064b2a5f98498c"
     },
     {
       "id": "dream_hall_dyedream_v2",
