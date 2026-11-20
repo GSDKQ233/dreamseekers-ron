@@ -25,7 +25,7 @@ public final class DreamWatchtowerPlacement extends DreamFunctionalPlacement {
     public static final String RESTYLED_TEMPLATE="shadow_watchtower_dyedream_v2";
     private boolean restyled;
     public static int count(int revision){return count(revision,false);}
-    public static int count(int revision,boolean restyled){return revision==1?236:revision==2?(restyled?225:211):0;}
+    public static int count(int revision,boolean restyled){return revision==1?236:revision==2?(restyled?216:211):0;}
     public static ArrayList<BuildingBlock> template(int revision){return template(revision,false);}
     public static ArrayList<BuildingBlock> template(int revision,boolean restyled) {
         if(revision!=1&&revision!=2||restyled&&revision!=2)throw new IllegalArgumentException("Unknown watchtower model");

@@ -297,7 +297,7 @@ public final class DreamShellFunctionGameTests {
             for(int x=2;x<=4;x++)f.level.setBlock(new BlockPos(x,1,1).offset(origin).above(),Blocks.STONE.defaultBlockState(),2);
             h.assertTrue(definition.getExitPosition(tower,body)==null,"all actual exits blocked refuses unsafe teleport");
             CompoundTag snapshot=tower.structureSnapshot();h.assertTrue(DreamWatchtowerPlacement.validSnapshot(snapshot),"real server snapshot validates");
-            CompoundTag oversized=snapshot.copy();oversized.putInt("placed",212);h.assertTrue(!DreamWatchtowerPlacement.validSnapshot(oversized),"count bounded by trusted revision");
+            CompoundTag oversized=snapshot.copy();oversized.putInt("placed",DreamWatchtowerPlacement.count(2,true)+1);h.assertTrue(!DreamWatchtowerPlacement.validSnapshot(oversized),"count bounded by trusted revision");
             var saved=DataStorage.read(tower.getDataStorage().write(),f.level.getServer());
             var restored=(DreamWatchtowerPlacement)definition.createRestoredBuildingPlacement(f.level,origin,Rotation.NONE,f.owner,saved);
             restored.isBuilt=true;restored.partialBlocksDestroyed=tower.partialBlocksDestroyed;restored.afterRestoredFromSave();

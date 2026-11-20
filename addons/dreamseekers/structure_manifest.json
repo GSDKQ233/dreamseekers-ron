@@ -2104,7 +2104,7 @@
         14,
         7
       ],
-      "non_air_blocks": 225,
+      "non_air_blocks": 216,
       "palette_counts": {
         "minecraft:purple_stained_glass": 6,
         "pasterdream:chiseled_shadow_stone_brick": 1,
@@ -2113,12 +2113,12 @@
         "pasterdream:shadow_stone_brick": 37,
         "pasterdream:shadow_stone_bricks": 59,
         "pasterdream:shadow_stone_bricks_stairs": 8,
-        "pasterdream:shadow_stone_tiles": 60,
+        "pasterdream:shadow_stone_tiles": 51,
         "pasterdream:shadow_stone_tiles_slab": 2,
         "pasterdream:shadow_stone_tiles_stairs": 40,
         "pasterdream:stripped_shadow_stem": 8
       },
-      "sha256": "4ce2155f17e404ad2e2fdb68b13b7174b7dfbaecd1114374f483c22240f60f11"
+      "sha256": "cfade46690059677e747d8ad844a72540067d91d26defcfe573e649f4b173bed"
     }
   ]
 }

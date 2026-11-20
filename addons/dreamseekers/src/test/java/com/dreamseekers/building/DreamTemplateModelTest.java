@@ -105,11 +105,11 @@ class DreamTemplateModelTest {
 
     @Test void restyledWatchtowerKeepsTheGarrisonDeckSeatsAndExits() throws Exception {
         Set<String> solid = solidCells(read("shadow_watchtower_dyedream_v2"));
-        assertEquals(225, solid.size(), "DreamWatchtowerPlacement.count(2, true)");
+        assertEquals(216, solid.size(), "DreamWatchtowerPlacement.count(2, true)");
         for (int x = 1; x <= 5; x++) {
             assertTrue(solid.contains("[" + x + ",7,5]"), "seat row floor at x=" + x);
             for (int z = 3; z <= 5; z++)
-                for (int y = 8; y <= 9; y++) assertFalse(solid.contains("[" + x + "," + y + "," + z + "]"), "garrison headroom");
+                for (int y = 8; y <= (x >= 2 && x <= 4 ? 10 : 9); y++) assertFalse(solid.contains("[" + x + "," + y + "," + z + "]"), "garrison headroom");
         }
         for (int x = 2; x <= 4; x++) {
             assertTrue(solid.contains("[" + x + ",0,1]"), "exit floor");
