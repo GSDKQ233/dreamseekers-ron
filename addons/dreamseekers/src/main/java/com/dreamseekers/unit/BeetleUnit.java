@@ -46,6 +46,8 @@ public class BeetleUnit extends BlackBeetleEntity implements DreamRtsUnit {
     @Override protected void defineSynchedData() { super.defineSynchedData(); SYNC.define(entityData); }
     @Override protected void registerGoals() { rts().register(goalSelector, targetSelector); }
     @Override public ResourceCost getCost() { return COST; }
+    @Override public net.minecraft.resources.ResourceLocation getHudIcon() { return com.dreamseekers.DreamseekersMod.BEETLE_ICON; }
+    @Override public boolean canBeLeashed(Player player) { return false; }
     @Override public void updateAbilityButtons() {
         rts().abilities=new com.solegendary.reignofnether.ability.Abilities();
         rts().abilities.add(com.dreamseekers.skill.UnitSkillAbility.BEETLE_ADVANCE);

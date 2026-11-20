@@ -52,6 +52,8 @@ public class BasaltSnailUnit extends BasaltSnailEntity implements DreamRtsUnit {
     @Override protected void defineSynchedData() { super.defineSynchedData(); SYNC.define(entityData); }
     @Override protected void registerGoals() { rts().register(goalSelector, targetSelector); }
     @Override public ResourceCost getCost() { return COST; }
+    @Override public net.minecraft.resources.ResourceLocation getHudIcon() { return com.dreamseekers.DreamseekersMod.SNAIL_ICON; }
+    @Override public boolean canBeLeashed(net.minecraft.world.entity.player.Player player) { return false; }
     @Override protected PathNavigation createNavigation(Level level) {
         return new com.dreamseekers.skill.SnailShellNavigation(this,level);
     }

@@ -359,7 +359,9 @@ public final class DreamseekersMod {
         String authors = info.getConfig().getConfigElement("authors").map(Object::toString).orElse("");
         if (!authors.contains("异星之尘") && !authors.contains("Aerolite"))
             throw new IllegalStateException("Dreamseekers requires the original PasterDream by Aerolite_Dust, not PasterDream: Reborn. See the installation guide.");
-        for (String entity : new String[]{"firefly", "small_stone_spirit", "shadow_ghost", "black_beetle_mother", "black_beetle", "basalt_snail", "pink_chicken", "golden_fox", "pink_slime", "jellyfish", "bone_wing", "projectile_bone_wing_fire_ball_projectile"})
+        for (String entity : new String[]{"firefly", "small_stone_spirit", "shadow_ghost", "black_beetle_mother", "black_beetle", "basalt_snail", "pink_chicken", "golden_fox", "pink_slime", "jellyfish", "bone_wing", "projectile_bone_wing_fire_ball_projectile",
+                "wind_knight", "shadow_squeal_ghost", "shadow_squeal_ghost_0", "friendly_ghost", "ash_bone_wing", "shadow_hand",
+                "terrorbeak", "crazy_terrorbeak", "shadow_golem", "aaroncos_lefthand_0", "aaroncos_righthand_0", "spore_entity"})
             if (!ForgeRegistries.ENTITY_TYPES.containsKey(paster(entity)))
                 throw new IllegalStateException("Unsupported PasterDream entity profile: missing " + entity);
         for (String block : new String[]{"smooth_dyedreamquartz_block", "chiseled_dyedreamquartz_block", "dyedream_planks"})
