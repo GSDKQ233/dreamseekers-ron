@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers;
 
+import com.dreamseekers.building.DreamBuildingSpec;
 import com.dreamseekers.building.DreamScaffoldBuilding;
 import com.dreamseekers.unit.FireflyWorker;
 import com.dreamseekers.function.*;
@@ -80,6 +81,21 @@ public final class ScaffoldBuildingGameTests {
         PlayerServerEvents.rtsPlayers.removeIf(p -> p.name.startsWith(PREFIX));
         PlayerServerEvents.players.removeIf(p -> p.getGameProfile().getName().startsWith(PREFIX));
         ResourcesServerEvents.resourcesList.removeIf(r -> r.ownerName.startsWith(PREFIX));
+    }
+
+    @GameTest(template = TEMPLATE, batch = BATCH, timeoutTicks = 100)
+    public static void eightBuildingsHaveRoleSpecificHealthAndBuildTime(GameTestHelper helper) {
+        for (Building building : buildings(helper)) {
+            DreamBuildingSpec spec=Arrays.stream(DreamBuildingSpec.values()).filter(v->v.structureName().equals(building.structureName)).findFirst().orElseThrow();
+            double health=switch(spec){case DREAM_DEPOT->120;case RESONANCE_DAIS->160;case SHADOW_FURNACE,CONTRACT_ECOLOGY->200;
+                case SHADOW_MINE,RESONANCE_LABORATORY->220;case SHADOW_WATCHTOWER->240;case DREAM_HALL->260;};
+            float build=switch(spec){case DREAM_DEPOT,RESONANCE_DAIS->0.8f;case DREAM_HALL,CONTRACT_ECOLOGY->0.9f;
+                case SHADOW_MINE,SHADOW_FURNACE,RESONANCE_LABORATORY,SHADOW_WATCHTOWER->1.0f;};
+            helper.assertTrue(building.getMaxHealth(null)==health&&spec.maxHealth()==health,
+                    "role-specific maximum health reaches the registered definition: "+building.structureName);
+            helper.assertTrue(spec.buildTimeModifier()==build,"role-specific build time: "+building.structureName);
+        }
+        helper.succeed();
     }
 
     @GameTest(template = TEMPLATE, batch = BATCH, timeoutTicks = 100)
