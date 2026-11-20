@@ -139,13 +139,13 @@ public final class DreamseekersMod {
     /** Kept for existing entity NBT; no silent world migration or deletion. */
     public static final RegistryObject<EntityType<StoneSpiritWorker>> STONE_SPIRIT_WORKER = ENTITIES.register("stone_spirit_worker", () ->
             EntityType.Builder.<StoneSpiritWorker>of(StoneSpiritWorker::new, MobCategory.MISC)
-                    .sized(0.6F, 0.8F).clientTrackingRange(10).build(id("stone_spirit_worker").toString()));
+                    .sized(0.7F, 1.0F).clientTrackingRange(10).build(id("stone_spirit_worker").toString()));
     public static final RegistryObject<EntityType<BeetleUnit>> BEETLE = ENTITIES.register("beetle", () ->
             EntityType.Builder.<BeetleUnit>of(BeetleUnit::new, MobCategory.MISC)
                     .sized(0.9F, 0.65F).clientTrackingRange(10).build(id("beetle").toString()));
     public static final RegistryObject<EntityType<BasaltSnailUnit>> BASALT_SNAIL = ENTITIES.register("basalt_snail", () ->
             EntityType.Builder.<BasaltSnailUnit>of(BasaltSnailUnit::new, MobCategory.MISC)
-                    .sized(1.1F, 1.1F).clientTrackingRange(10).build(id("basalt_snail").toString()));
+                    .sized(0.8F, 0.8F).clientTrackingRange(10).build(id("basalt_snail").toString()));
 
     public static Faction DREAMSEEKERS;
     public static DreamUnitProduction AARONCOS_LEFT_HAND_PRODUCTION, AARONCOS_RIGHT_HAND_PRODUCTION;
@@ -357,7 +357,9 @@ public final class DreamseekersMod {
         String authors = info.getConfig().getConfigElement("authors").map(Object::toString).orElse("");
         if (!authors.contains("异星之尘") && !authors.contains("Aerolite"))
             throw new IllegalStateException("Dreamseekers requires the original PasterDream by Aerolite_Dust, not PasterDream: Reborn. See the installation guide.");
-        for (String entity : new String[]{"firefly", "small_stone_spirit", "shadow_ghost", "black_beetle_mother", "black_beetle", "basalt_snail", "pink_chicken", "golden_fox", "pink_slime", "jellyfish", "bone_wing", "projectile_bone_wing_fire_ball_projectile"})
+        for (String entity : new String[]{"firefly", "small_stone_spirit", "shadow_ghost", "black_beetle_mother", "black_beetle", "basalt_snail", "pink_chicken", "golden_fox", "pink_slime", "jellyfish", "bone_wing", "projectile_bone_wing_fire_ball_projectile",
+                "wind_knight", "shadow_squeal_ghost", "shadow_squeal_ghost_0", "friendly_ghost", "ash_bone_wing", "shadow_hand",
+                "terrorbeak", "crazy_terrorbeak", "shadow_golem", "aaroncos_lefthand_0", "aaroncos_righthand_0", "spore_entity"})
             if (!ForgeRegistries.ENTITY_TYPES.containsKey(paster(entity)))
                 throw new IllegalStateException("Unsupported PasterDream entity profile: missing " + entity);
         for (String block : new String[]{"smooth_dyedreamquartz_block", "chiseled_dyedreamquartz_block", "dyedream_planks"})

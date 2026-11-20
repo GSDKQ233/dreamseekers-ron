@@ -50,6 +50,7 @@ public class StoneSpiritWorker extends SmallStoneSpiritEntity implements DreamRt
     @Override protected void defineSynchedData() { super.defineSynchedData(); SYNC.define(entityData); }
     @Override protected void registerGoals() { rts().register(goalSelector, targetSelector); }
     @Override public ResourceCost getCost() { return COST; }
+    @Override public boolean canBeLeashed(net.minecraft.world.entity.player.Player player) { return false; }
     @Override public ResourceLocation getHudIcon() { return DreamseekersMod.LEGACY_WORKER_ICON; }
     @Override public BuildRepairGoal getBuildRepairGoal() { return rts().build; }
     @Override public GatherResourcesGoal getGatherResourceGoal() { return rts().gather; }
