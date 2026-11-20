@@ -43,10 +43,10 @@ public final class DreamseekersMod {
     public static final ResourceLocation ASH_BONE_WING_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/ash_bone_wing_unit.png");
     public static final ResourceLocation SHADOW_HAND_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/shadow_hand_unit.png");
     public static final ResourceLocation FRIENDLY_GHOST_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/friendly_ghost_unit.png");
-    public static final ResourceLocation CRAZY_TERRORBEAK_ICON=ResourceLocation.fromNamespaceAndPath("minecraft","textures/item/netherite_scrap.png");
+    public static final ResourceLocation CRAZY_TERRORBEAK_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/crazy_terrorbeak_unit.png");
     public static final ResourceLocation WEEPING_SQUEAL_GHOST_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/weeping_squeal_ghost_unit.png");
-    public static final ResourceLocation AARONCOS_LEFT_HAND_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/shadow_hand_unit.png");
-    public static final ResourceLocation AARONCOS_RIGHT_HAND_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/skill_shadow_hand_grip.png");
+    public static final ResourceLocation AARONCOS_LEFT_HAND_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/aaroncos_left_hand_unit.png");
+    public static final ResourceLocation AARONCOS_RIGHT_HAND_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/aaroncos_right_hand_unit.png");
     public static final ResourceLocation SHADOW_GOLEM_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/shadow_golem_unit.png");
     public static final ResourceLocation TERRORBEAK_ICON=ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/terrorbeak_unit.png");
     public static final ResourceLocation BEETLE_MOTHER_ICON =ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/beetle_mother_unit.png");
