@@ -12,7 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Rotation;
 
-/** The seven dormant roles retain ordinary BuildingPlacement semantics, not production. */
+/** Scaffold roles keep ordinary BuildingPlacement semantics (no production queue); their functions run through DreamFunctionLifecycle. */
 public class DreamFunctionalPlacement extends BuildingPlacement implements DreamFunctionalView {
     /** Compatibility alias: the codec remains registered exactly once under the original key. */
     public static final DataType<DreamFunctionState> STATE = DreamFunctionLifecycle.STATE;
