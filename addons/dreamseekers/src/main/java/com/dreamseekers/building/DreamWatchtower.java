@@ -24,7 +24,7 @@ public final class DreamWatchtower extends DreamScaffoldBuilding implements Garr
         DreamWatchtowerPlacement.bootstrap();
         setActiveAddon(GarrisonableBuildingAddon.class,this,true);
     }
-    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level){return DreamWatchtowerPlacement.template(2);}
+    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level){return DreamWatchtowerPlacement.template(2,true);}
     @Override public BuildingPlacement createBuildingPlacement(Level level,BlockPos pos,Rotation rotation,String owner){return new DreamWatchtowerPlacement(this,level,pos,rotation,owner);}
     @Override public BuildingPlacement createRestoredBuildingPlacement(Level level,BlockPos pos,Rotation rotation,String owner,DataStorage saved){return new DreamWatchtowerPlacement(this,level,pos,rotation,owner,saved);}
     @Override public boolean acceptsInitialStructureSnapshot(CompoundTag snapshot){return DreamWatchtowerPlacement.validSnapshot(snapshot);}

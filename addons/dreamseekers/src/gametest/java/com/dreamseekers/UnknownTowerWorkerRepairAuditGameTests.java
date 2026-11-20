@@ -44,7 +44,7 @@ public final class UnknownTowerWorkerRepairAuditGameTests {
                 level.setBlock(origin.offset(x,0,z),Blocks.STONE.defaultBlockState(),2);
                 for(int y=1;y<=17;y++)level.setBlock(origin.offset(x,y,z),Blocks.AIR.defaultBlockState(),2);
             }
-            for(var b:BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(2),level,origin,Rotation.NONE))
+            for(var b:BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(2,true),level,origin,Rotation.NONE))
                 level.setBlock(b.getBlockPos(),b.getBlockState(),2);
         }
         FireflyWorker spawn(BlockPos at){var worker=DreamseekersMod.FIREFLY_WORKER.get().create(level);
@@ -74,10 +74,10 @@ public final class UnknownTowerWorkerRepairAuditGameTests {
         inert.isBuilt=true;inert.afterRestoredFromSave();f.buildings.add(inert);BuildingServerEvents.getBuildings().add(inert);
         h.assertTrue(inert.modelRevision()==-1&&!definition.isGarrisonEnabled(inert),"unknown model disables garrison before repair");
         var before=new HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();
-        for(var b:BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(2),f.level,origin,Rotation.NONE))before.put(b.getBlockPos(),f.level.getBlockState(b.getBlockPos()));
+        for(var b:BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(2,true),f.level,origin,Rotation.NONE))before.put(b.getBlockPos(),f.level.getBlockState(b.getBlockPos()));
         var known=(DreamWatchtowerPlacement)definition.createBuildingPlacement(f.level,knownOrigin,Rotation.NONE,f.owner);
         f.buildings.add(known);BuildingServerEvents.getBuildings().add(known);known.onBuilt();known.destroyRandomBlocks(10);
-        h.assertTrue(known.modelRevision()==2&&known.getBlocksPlaced()<211&&!known.shouldBeDestroyed(),"known v2 has actual native damage to repair");
+        h.assertTrue(known.modelRevision()==2&&known.getBlocksPlaced()<DreamWatchtowerPlacement.count(2,true)&&!known.shouldBeDestroyed(),"known v2 has actual native damage to repair");
         var unknownWorker=f.spawn(origin.offset(3,2,-3));var knownWorker=f.spawn(knownOrigin.offset(3,2,-3));
         h.startSequence().thenWaitUntil(()->h.assertTrue(f.published(unknownWorker)&&f.published(knownWorker),"both actual workers published before one-shot orders"))
             .thenExecute(()->{
@@ -85,7 +85,7 @@ public final class UnknownTowerWorkerRepairAuditGameTests {
                 UnitServerEvents.addActionItem(f.owner,UnitAction.BUILD_REPAIR,-1,new int[]{knownWorker.getId()},known.originPos,BlockPos.ZERO);
             }).thenWaitUntil(()->{
                 h.assertTrue(unknownWorker.getBuildRepairGoal().getBuildingTarget()==inert&&unknownWorker.getBuildRepairGoal().isBuilding(),"unknown worker really arrives in native repair range");
-            }).thenWaitUntil(()->h.assertTrue(known.getBlocksPlaced()==211&&known.getHealth()==known.getMaxHealth(),"known v2 completes actual worker repair"))
+            }).thenWaitUntil(()->h.assertTrue(known.getBlocksPlaced()==DreamWatchtowerPlacement.count(2,true)&&known.getHealth()==known.getMaxHealth(),"known v2 completes actual worker repair"))
             .thenIdle(120).thenExecute(()->{
                 long changed=before.entrySet().stream().filter(e->!f.level.getBlockState(e.getKey()).equals(e.getValue())).count();
                 before.entrySet().stream().filter(e->!f.level.getBlockState(e.getKey()).equals(e.getValue())).forEach(e->System.out.println("UNKNOWN_TOWER_CHANGED pos="+e.getKey()+" before="+e.getValue()+" after="+f.level.getBlockState(e.getKey())));
@@ -94,7 +94,7 @@ public final class UnknownTowerWorkerRepairAuditGameTests {
                 h.assertTrue(inert.modelRevision()==-1&&!definition.isGarrisonEnabled(inert),"unknown garrison remains disabled");
                 h.assertTrue(inert.getDataStorage().getData(DreamWatchtowerPlacement.MODEL).equals(unknown),"unknown model tag remains byte-semantic equivalent");
                 h.assertTrue(changed==0,"actual worker must not write legacy fallback geometry into unknown tower");
-                h.assertTrue(known.getBlocksPlaced()==211&&known.modelRevision()==2,"known v2 repair remains operational");
+                h.assertTrue(known.getBlocksPlaced()==DreamWatchtowerPlacement.count(2,true)&&known.modelRevision()==2,"known v2 repair remains operational");
             }).thenSucceed();
     }
 }

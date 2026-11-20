@@ -69,7 +69,7 @@ class DreamTemplateModelTest {
         assertFalse(current.accepts(forged));
     }
 
-    @Test void restyledTemplatesKeepEveryCellAndDropTheVanillaShell() throws Exception {
+    @Test void restyledTemplatesKeepThePlateBoundsAndApproachOfTheOriginal() throws Exception {
         var manifest = JsonParser.parseString(Files.readString(ROOT.resolve("structure_manifest.json"))).getAsJsonObject();
         int restyled = 0;
         for (var raw : manifest.getAsJsonArray("structures")) {
@@ -81,15 +81,39 @@ class DreamTemplateModelTest {
             String base = item.get("id").getAsString();
             assertEquals(base, templates.get("legacy_saved_model").getAsString());
             assertEquals(DreamTemplateModel.template(base, DreamTemplateModel.DYEDREAM), current);
-            var legacy = read(base);
+            // The tower's current-geometry predecessor is its garrison model, not the solid legacy column.
+            var original = read(templates.has("garrison_saved_model") ? templates.get("garrison_saved_model").getAsString() : base);
             var next = read(current);
-            assertEquals(legacy.getList("size", 3), next.getList("size", 3), base);
-            assertEquals(solidCells(legacy), solidCells(next), base + " must keep its footprint, entrances and collision");
+            assertEquals(original.getList("size", 3), next.getList("size", 3), base + " keeps its bounding box");
+            Set<String> plate = new LinkedHashSet<>(), nextPlate = new LinkedHashSet<>(), solid = solidCells(next);
+            for (String cell : solidCells(original)) if (cell.matches("\\[\\d+,0,\\d+]")) plate.add(cell);
+            for (String cell : solid) if (cell.matches("\\[\\d+,0,\\d+]")) nextPlate.add(cell);
+            assertEquals(plate, nextPlate, base + " keeps its ground plate");
+            for (var access : item.getAsJsonArray("access_xz")) {
+                var xz = access.getAsJsonArray();
+                for (int y = 1; y <= 3; y++)
+                    assertFalse(solid.contains("[" + xz.get(0).getAsInt() + "," + y + "," + xz.get(1).getAsInt() + "]"),
+                            current + " blocks the approach at " + xz + " y=" + y);
+            }
             var palette = next.getList("palette", 10);
             for (int i = 0; i < palette.size(); i++)
                 assertFalse(VANILLA_SHELL.contains(palette.getCompound(i).getString("Name")), current + " still uses " + palette.getCompound(i));
             restyled++;
         }
-        assertEquals(9, restyled);
+        assertEquals(10, restyled);
+    }
+
+    @Test void restyledWatchtowerKeepsTheGarrisonDeckSeatsAndExits() throws Exception {
+        Set<String> solid = solidCells(read("shadow_watchtower_dyedream_v2"));
+        assertEquals(225, solid.size(), "DreamWatchtowerPlacement.count(2, true)");
+        for (int x = 1; x <= 5; x++) {
+            assertTrue(solid.contains("[" + x + ",7,5]"), "seat row floor at x=" + x);
+            for (int z = 3; z <= 5; z++)
+                for (int y = 8; y <= 9; y++) assertFalse(solid.contains("[" + x + "," + y + "," + z + "]"), "garrison headroom");
+        }
+        for (int x = 2; x <= 4; x++) {
+            assertTrue(solid.contains("[" + x + ",0,1]"), "exit floor");
+            for (int y = 1; y <= 2; y++) assertFalse(solid.contains("[" + x + "," + y + ",1]"), "exit clearance");
+        }
     }
 }

@@ -88,7 +88,9 @@ class BuildingIntegrationMetadataTest {
                 var templates = item.getAsJsonObject("runtime_templates");
                 assertEquals("shadow_watchtower", templates.get("legacy_saved_model").getAsString());
                 String current = templates.get("new_construction").getAsString();
-                assertEquals("shadow_watchtower_garrison_v2", current);
+                assertEquals("shadow_watchtower_dyedream_v2", current);
+                assertEquals("shadow_watchtower_garrison_v2", templates.get("garrison_saved_model").getAsString());
+                assertTrue(Files.isRegularFile(ROOT.resolve("src/main/resources/data/dreamseekers/structures/shadow_watchtower_garrison_v2.nbt")));
                 assertTrue(Files.isRegularFile(ROOT.resolve("src/main/resources/data/dreamseekers/structures/" + current + ".nbt")));
             }
         }

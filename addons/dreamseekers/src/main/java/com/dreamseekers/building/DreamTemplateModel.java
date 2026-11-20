@@ -12,7 +12,8 @@ import java.util.ArrayList;
 /**
  * Template revision of a placed building. New construction uses the PasterDream-styled template;
  * a saved placement without this tag keeps the original template it was built from, so its
- * existing blocks still count as placed. Both revisions share positions and differ only in block states.
+ * existing blocks still count as placed. The restyled template keeps the original bounding box, ground plate
+ * and approach corridor, but its walls and roofs are a new design.
  */
 public final class DreamTemplateModel {
     /** Registered lazily so the pure revision rules stay loadable without a game registry. */
