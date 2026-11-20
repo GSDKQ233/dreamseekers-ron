@@ -49,6 +49,7 @@
 - 行为变化：波点预算修复后，晚期怪物波会按配置人口足量生成，数量明显多于此前。采样成本的可重复基线在 `SpawnPointSearchTest`（固定种子，每点约 1/有效率 次采样，全无效地形上限 1100 次）；实体数量增加后的真实服务器负载未测。该修复单独成一个提交，可单独撤回。
 - 与测试开关清理的交叉：本项在 `gradle/gametest-plan.gradle` 的 `api65Counts` 后加了一行 `api65_followup_hero_xp`，没有动其他开关。
 - 未覆盖：真实两进程停服重启（回归用的是同一份实体 NBT 的存取，不是整服重启）；真实地形和真实波次的 Forge 回归（波点预算只有纯逻辑测试）；双客户端与附属阵营；改名场景没有运行期测试，结论来自源码。
+- 双客户端演练补充项（重启后开局选位未恢复）：不是缺陷，不改。开局选位是大厅里的临时预订，玩家离开时 `StartPosServerEvents.onPlayerLeave` 就会清掉（`LobbySnapshotGameTests` 有覆盖），重启会断开所有人，所以 `StartPosSaveData` 只存位置、颜色和启用状态与此一致。对局开始后的席位是 `RTSPlayerSaveData` 里的 `RTSPlayer`（名字加 UUID），由 `PlayerServerEvents.onServerStarted` 恢复。此结论来自源码，没有重跑该演练。
 - 另记未处理：`UnitServerEvents.spawnMobs` 在实体被其他模组拒绝加入时仍返回该实体，怪物波和村民波会照常扣预算；非中立经验球的数值按一半取整，1 点的球携带 0 经验。
 
 实际测试配对 JAR 摘要（仅供核对，不随仓库分发）：
