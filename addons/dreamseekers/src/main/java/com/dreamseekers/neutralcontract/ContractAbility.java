@@ -15,7 +15,7 @@ public final class ContractAbility extends Ability {
     @Override public boolean shouldResetBehaviours(){return false;}
     @Override public AbilityButton getButton(Keybinding key,Unit unit){var worker=(FireflyWorker)unit;
         var tooltip=new ArrayList<net.minecraft.util.FormattedCharSequence>();
-        for(String suffix:List.of("title","prices","rules","capacity_rules","cancel_rule"))tooltip.add(Component.translatable("neutral_contract."+suffix).getVisualOrderText());
+        for(String suffix:List.of("title","prices","rules","capacity_rules","cancel_rule"))tooltip.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("neutral_contract."+suffix)));
         var button=new AbilityButton("neutral_contract",ResourceLocation.fromNamespaceAndPath("minecraft","textures/item/lead.png"),key,
             ()->ContractClient.armed(worker)||ContractClient.active(worker),()->false,()->ContractClient.available(worker),
             ()->ContractClient.arm(worker),()->ContractClient.cancel(worker),tooltip,this,unit);

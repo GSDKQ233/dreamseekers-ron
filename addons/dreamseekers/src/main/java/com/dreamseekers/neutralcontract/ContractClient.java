@@ -62,7 +62,7 @@ public final class ContractClient {
         if(w==null)return;
         var v=VIEWS.get(w);v.state=packet;v.received=CLOCK.now();if(!packet.status().equals("ready"))message(packet.status());}
     private static FireflyWorker caster(){return UnitClientEvents.getSelectedUnits().stream().filter(e->e instanceof FireflyWorker&&e.getUUID().equals(armed)).map(e->(FireflyWorker)e).filter(ContractClient::own).findFirst().orElse(null);}
-    private static void message(String key){var mc=Minecraft.getInstance();if(mc.player!=null)mc.player.displayClientMessage(Component.translatable("neutral_contract."+key),true);}
+    private static void message(String key){var mc=Minecraft.getInstance();if(mc.player!=null)com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("neutral_contract."+key));}
     @SubscribeEvent(priority=EventPriority.HIGHEST) public static void mouse(ScreenEvent.MouseButtonPressed.Pre e){if(armed==null||!(e.getScreen() instanceof TopdownGui))return;
         if(e.getButton()==GLFW.GLFW_MOUSE_BUTTON_RIGHT){armed=null;swallow=e.getButton();e.setCanceled(true);return;}
         if(e.getButton()!=GLFW.GLFW_MOUSE_BUTTON_LEFT)return;

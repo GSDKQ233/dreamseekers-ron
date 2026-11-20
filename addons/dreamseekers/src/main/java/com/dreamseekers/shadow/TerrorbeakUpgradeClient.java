@@ -50,7 +50,7 @@ public final class TerrorbeakUpgradeClient {
         TerrorbeakUnit source=VIEWS.keySet().stream().filter(s->s.getId()==packet.id()&&s.getUUID().equals(packet.uuid())&&VIEWS.get(s).nonce.equals(packet.view())&&VIEWS.get(s).owner.equals(packet.owner())).findFirst().orElse(null);
         if(source==null)return;
         View view=VIEWS.get(source);view.state=packet;view.received=CLOCK.now();
-        if(!packet.status().equals("ready"))mc.player.displayClientMessage(Component.translatable("dreamseekers.terrorbeak_upgrade."+packet.status()),true);
+        if(!packet.status().equals("ready"))com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("dreamseekers.terrorbeak_upgrade."+packet.status()));
     }
     @SubscribeEvent public static void tick(TickEvent.ClientTickEvent e){if(e.phase!=TickEvent.Phase.END)return;context();if(CLOCK.endTick(Minecraft.getInstance().isPaused()))clearView();}
     @SubscribeEvent public static void login(ClientPlayerNetworkEvent.LoggingIn e){clear();}

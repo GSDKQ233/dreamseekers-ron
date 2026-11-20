@@ -66,14 +66,14 @@ public final class DreamEconomyClientHud {
         gui.drawString(mc.font,amount,x+26,y+18,ShadowHudPresentation.overflow(balance,cap)?0xFFFFD184:0xFFF2ECFF,false);
         if(zone.isMouseOver(event.mouseX(),event.mouseY())){
             var lines=new ArrayList<Component>();
-            lines.add(Component.translatable("hud.dreamseekers.shadow_own"));
+            lines.add(title);
             lines.add(Component.translatable("hud.dreamseekers.shadow_sources"));
             if(sandbox)lines.add(Component.translatable("hud.dreamseekers.shadow_sandbox_refill",cap));
             lines.add(Component.translatable("hud.dreamseekers.shadow_capacity",cap));
             if(ShadowHudPresentation.overflow(balance,cap))lines.add(Component.translatable("hud.dreamseekers.shadow_overflow"));
             if(!dream)lines.add(Component.translatable("hud.dreamseekers.shadow_readonly_reason"));
             lines.add(Component.translatable("hud.dreamseekers.shadow_private"));
-            gui.renderComponentTooltip(mc.font,lines,event.mouseX()+5,event.mouseY());
+            gui.renderTooltip(mc.font,DreamTooltipText.wrap(lines),event.mouseX()+5,event.mouseY());
         }
     }
 }

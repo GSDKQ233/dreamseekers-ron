@@ -225,9 +225,11 @@ public final class SkillClient {
         if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE) {
             cancel(); swallowKeyRelease = event.getKeyCode(); event.setCanceled(true);
         }
+        // Every ability slot belongs to a skill button, whose own release toggles or replaces the armed skill.
         else if (event.getKeyCode() != GLFW.GLFW_KEY_LEFT_SHIFT && event.getKeyCode() != GLFW.GLFW_KEY_RIGHT_SHIFT
-                && event.getKeyCode() != Keybindings.abilitySlot1.getKey()
-                && event.getKeyCode() != Keybindings.abilitySlot2.getKey()) cancel();
+                && !com.dreamseekers.client.DreamTooltipLayout.keepsTargetMode(event.getKeyCode(),
+                    Keybindings.abilitySlot1.getKey(), Keybindings.abilitySlot2.getKey(), Keybindings.abilitySlot3.getKey(),
+                    Keybindings.abilitySlot4.getKey(), Keybindings.abilitySlot5.getKey(), Keybindings.abilitySlot6.getKey())) cancel();
     }
 
     /** RoN dispatches several commands on key release; target-mode Escape must not also dispatch one. */

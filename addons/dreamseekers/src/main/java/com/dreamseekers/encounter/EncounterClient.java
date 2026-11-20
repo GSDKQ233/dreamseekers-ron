@@ -40,7 +40,7 @@ public final class EncounterClient {
     public static List<UnitSpawnButton> append(List<UnitSpawnButton> original){context();if(!editor())return original;query();var result=new ArrayList<>(original);
         for(var kind:NeutralEncounters.Kind.values()){var b=BUTTONS.computeIfAbsent(kind,k->{var button=new UnitSpawnButton("map_encounter_"+k.name().toLowerCase(Locale.ROOT),new ResourceLocation("dreamseekers","textures/icons/"+(k==NeutralEncounters.Kind.BEETLE?"skill_beetle_advance":"skill_snail_shell_formation")+".png"),List.of());
             button.onLeftClick=()->arm(k);button.onRightClick=()->armed=null;button.isSelected=()->armed==k;button.isEnabled=EncounterClient::ready;button.bottomLeftText=()->state==null?"?":!state.supported()?"!":Integer.toString(state.count());return button;});
-            b.tooltipLines=List.of(Component.translatable("map_encounter."+kind.name().toLowerCase(Locale.ROOT)).getVisualOrderText(),Component.translatable("map_encounter.description").getVisualOrderText(),(state!=null&&!state.supported()?Component.translatable("map_encounter.unsupported"):Component.translatable("map_encounter.limit",state==null?"?":state.count())).getVisualOrderText(),Component.translatable("map_encounter.controls").getVisualOrderText());result.add(b);}return result;}
+            b.tooltipLines=com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("map_encounter."+kind.name().toLowerCase(Locale.ROOT)),Component.translatable("map_encounter.description"),(state!=null&&!state.supported()?Component.translatable("map_encounter.unsupported"):Component.translatable("map_encounter.limit",state==null?"?":state.count())),Component.translatable("map_encounter.controls"));result.add(b);}return result;}
     private static boolean ready(){return editor()&&state!=null&&state.supported()&&state.count()<EncounterLedger.LIMIT&&CLOCK.fresh(received,60)&&EconomyActionClient.ready(state.epoch());}
     private static void query(){if(!editor()||level==null||connection==null)return;if(!CLOCK.queryDue(queried,20))return;queried=CLOCK.now();
         EncounterPackets.CHANNEL.sendToServer(new EncounterPackets.Request(new EncounterPackets.Payload(true,level.dimension().location(),NeutralEncounters.Kind.BEETLE,BlockPos.ZERO,view),EncounterPackets.ZERO,EncounterPackets.ZERO,0));}
@@ -56,7 +56,7 @@ public final class EncounterClient {
         if(!EconomyActionClient.accept(p.stream(),p.order(),p.session(),p.epoch(),p.request()))return;
         if(!editor()||level==null||!p.view().equals(view)||!p.dimension().equals(level.dimension().location()))return;
         state=p;received=CLOCK.now();if(!p.status().equals("ready"))message(p.status());}
-    private static void message(String key){var mc=Minecraft.getInstance();if(mc.player!=null)mc.player.displayClientMessage(Component.translatable("map_encounter."+key),true);}
+    private static void message(String key){var mc=Minecraft.getInstance();if(mc.player!=null)com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("map_encounter."+key));}
     @SubscribeEvent(priority=EventPriority.HIGHEST) public static void mouse(ScreenEvent.MouseButtonPressed.Pre e){if(armed==null||!(e.getScreen() instanceof TopdownGui))return;
         if(e.getButton()==GLFW.GLFW_MOUSE_BUTTON_RIGHT){armed=null;swallow=e.getButton();e.setCanceled(true);return;}
         if(e.getButton()!=GLFW.GLFW_MOUSE_BUTTON_LEFT)return;

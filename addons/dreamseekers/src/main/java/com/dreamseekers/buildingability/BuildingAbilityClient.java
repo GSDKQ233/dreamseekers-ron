@@ -188,7 +188,7 @@ public final class BuildingAbilityClient {
         view.snapshot = packet;
         view.received = CLOCK.now();
         if (!"ready".equals(packet.status()))
-            mc.player.displayClientMessage(statusMessage(packet.status()), true);
+            com.dreamseekers.client.DreamTooltipText.hudMessage(statusMessage(packet.status()));
     }
 
     /** A completion may retire its own pending request, but cannot touch any building/page snapshot.
@@ -200,7 +200,7 @@ public final class BuildingAbilityClient {
         if(connection==null||source!=connection||mc.player==null||!packet.valid()
                 ||!mc.player.getGameProfile().getName().equals(packet.owner()))return;
         if(EconomyActionClient.accept(packet.stream(),packet.order(),packet.session(),packet.epoch(),packet.request()))
-            mc.player.displayClientMessage(statusMessage(packet.status()),true);
+            com.dreamseekers.client.DreamTooltipText.hudMessage(statusMessage(packet.status()));
     }
 
     private static Component statusMessage(String status) {
@@ -327,7 +327,8 @@ public final class BuildingAbilityClient {
         if (ability != BuildingAbility.ECOLOGY_CODEX) {
             addTooltip(result, Component.translatable("building_ability.quote", ability.foodCost(), ability.shadowCost(),
                     ability.cooldownTicks() / 20, ability.durationTicks() / 20, ability.range(), ability.maxTargets()));
-            addTooltip(result, Component.translatable("building_ability.cooldown", (cooldown(placement) + 19) / 20));
+            long cooling = cooldown(placement);
+            if (cooling > 0) addTooltip(result, Component.translatable("building_ability.cooldown", (cooling + 19) / 20));
             addTooltip(result, Component.translatable("building_ability.paid_rules"));
         }
         var state = current(placement, null);
@@ -361,7 +362,7 @@ public final class BuildingAbilityClient {
             if (state == null) return "?";
             if (ability == BuildingAbility.ECOLOGY_CODEX) return Integer.toString(state.codex().totalRows());
             long remaining = cooldown(placement);
-            return remaining > 0 ? Long.toString((remaining + 19) / 20)
+            return remaining > 0 ? com.dreamseekers.client.DreamTooltipLayout.cooldownBadge(remaining)
                     : Integer.toString(ability.foodCost() > 0 ? ability.foodCost() : ability.shadowCost());
         };
         out.add(button);
