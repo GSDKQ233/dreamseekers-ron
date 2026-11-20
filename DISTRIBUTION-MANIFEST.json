@@ -23,7 +23,10 @@
     "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
     "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
     "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java",
-    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java"
+    "src/main/java/com/solegendary/reignofnether/building/buildings/monsters/Mausoleum.java",
+    "src/main/resources/assets/reignofnether/textures/item/scroll_of_recall.png",
+    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java",
+    "src/test/java/com/solegendary/reignofnether/client/CoreResourceIntegrityTest.java"
   ],
   "manifest_self_excluded": true,
   "hash_rule": "SHA256 of each uncompressed member, excluding this manifest.",
@@ -5842,7 +5845,7 @@
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/monsters/Mausoleum.java": {
       "bytes": 6120,
-      "sha256": "31745209f2d0afefe2923b6340163a0a85b3ef80b0e745713f613dfa8283c282"
+      "sha256": "e39e4a10c7c20a1172a781037fbb5312393ff3ffb8c0a52af8114682a004081a"
     },
     "src/main/java/com/solegendary/reignofnether/building/buildings/monsters/MonsterMarket.java": {
       "bytes": 5340,
@@ -12549,8 +12552,8 @@
       "sha256": "ee9b9f968079e4032c39eed303993ba3314a21ff1341bf61ddac4733be65dd68"
     },
     "src/main/resources/assets/reignofnether/textures/item/scroll_of_recall.png": {
-      "bytes": 184,
-      "sha256": "8633ca5f0bd4bcb05fc7abcea23a575fc6f90c60ce7e809135f84da5bb960174"
+      "bytes": 424,
+      "sha256": "e55a3c71894d449554b9a339605eb156cc7b814d7f84f2107d640674dca98bae"
     },
     "src/main/resources/assets/reignofnether/textures/item/shadow_shifter.png": {
       "bytes": 6608,
@@ -13431,6 +13434,10 @@
     "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java": {
       "bytes": 6509,
       "sha256": "cc5503c977b699d7d01ed3c76d5794f099ad9e6ad4a9dfc3fba916f9b08a6867"
+    },
+    "src/test/java/com/solegendary/reignofnether/client/CoreResourceIntegrityTest.java": {
+      "bytes": 2496,
+      "sha256": "61e14fe4d619e175da409f1218edef87377177c955dc1b769395c786927f373d"
     },
     "src/test/java/com/solegendary/reignofnether/commands/CommandFeedbackWiringTest.java": {
       "bytes": 2228,
