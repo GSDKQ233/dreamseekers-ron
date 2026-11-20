@@ -36,6 +36,9 @@ public class DreamScaffoldBuilding extends Building {
         // All eight templates have stone-brick foundations at y=0.
         // Only the ordinary first foundation layer is instant; workers build the rest.
         startingBlockTypes.add(Blocks.STONE_BRICKS);
+        DreamTemplateModel.bootstrap();
+        // The restyled templates keep the same foundation cells in PasterDream stone.
+        startingBlockTypes.addAll(DreamBuildingSupport.restyledFoundationBlocks());
         // Explicitly approved logistics; no inherited stockpile research or free resource generation.
         canAcceptResources = spec == DreamBuildingSpec.DREAM_DEPOT;
         // Defaults deliberately retained: no supply, abilities, self-build,
@@ -51,8 +54,18 @@ public class DreamScaffoldBuilding extends Building {
         return new DreamFunctionalPlacement(this, level, pos, rotation, ownerName);
     }
 
+    @Override public BuildingPlacement createRestoredBuildingPlacement(Level level, BlockPos pos, Rotation rotation,
+            String ownerName, com.solegendary.reignofnether.building.data.DataStorage saved) {
+        return new DreamFunctionalPlacement(this, level, pos, rotation, ownerName, saved);
+    }
+
+    @Override public boolean acceptsInitialStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot) {
+        return DreamTemplateModel.acceptsInitialSnapshot(snapshot);
+    }
+
+    /** Preview and new construction use the restyled template. */
     @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) {
-        return DreamBuildingSupport.load(spec.structureName());
+        return DreamTemplateModel.blocks(spec.structureName(), DreamTemplateModel.DYEDREAM);
     }
 
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) {

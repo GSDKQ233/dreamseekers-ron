@@ -27,6 +27,8 @@ public final class ReverieGarden extends AbstractFarm {
         buildTimeModifier = 0.8f;
         explodeChance = 0;
         startingBlockTypes.add(Blocks.STONE_BRICKS);
+        DreamTemplateModel.bootstrap();
+        startingBlockTypes.addAll(DreamBuildingSupport.restyledFoundationBlocks());
         // Retain the existing foundation material contract. Dyedream dirt beds need no water.
         startingBlockTypes.add(BuiltInRegistries.BLOCK.get(
                 ResourceLocation.fromNamespaceAndPath("pasterdream", "dyedream_planks")));
@@ -55,8 +57,9 @@ public final class ReverieGarden extends AbstractFarm {
         com.dreamseekers.economy.DreamPassiveEconomy.tick(level, placement);
     }
     @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) {
-        return com.dreamseekers.economy.DreamGardenPlacement.decoratedTemplate();
+        return com.dreamseekers.economy.DreamGardenPlacement.decoratedTemplate(DreamTemplateModel.DYEDREAM);
     }
+    @Override public boolean acceptsInitialStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot) { return DreamTemplateModel.acceptsInitialSnapshot(snapshot); }
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) { return DreamBuildingSupport.button(this, key); }
     @Override public String getBuildAvailabilityError(String owner) { return DreamBuildingSupport.availability(this, owner); }
     @Override public boolean requiresStrictPlacementOwnerCheck() { return true; }

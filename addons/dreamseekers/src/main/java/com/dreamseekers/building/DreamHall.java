@@ -22,6 +22,8 @@ public final class DreamHall extends ProductionBuilding {
         maxHealth=DreamBuildingSpec.PROVISIONAL_MAX_HEALTH;
         buildTimeModifier=DreamBuildingSpec.PROVISIONAL_BUILD_TIME_MODIFIER;
         startingBlockTypes.add(Blocks.STONE_BRICKS);
+        DreamTemplateModel.bootstrap();
+        startingBlockTypes.addAll(DreamBuildingSupport.restyledFoundationBlocks());
         spawnRadiusOffset=2;
         productions=new com.dreamseekers.production.DreamPagedProductionItemList();
         productions.add(boneWing,Keybindings.abilitySlot1);
@@ -43,7 +45,15 @@ public final class DreamHall extends ProductionBuilding {
     @Override public BuildingPlacement createBuildingPlacement(Level level, BlockPos pos, Rotation rotation, String owner) {
         return new DreamHallPlacement(this,level,pos,rotation,owner);
     }
-    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) { return DreamBuildingSupport.load(spec().structureName()); }
+    @Override public BuildingPlacement createRestoredBuildingPlacement(Level level, BlockPos pos, Rotation rotation, String owner,
+            com.solegendary.reignofnether.building.data.DataStorage saved) {
+        return new DreamHallPlacement(this,level,pos,rotation,owner,saved);
+    }
+    @Override public boolean acceptsInitialStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot) { return DreamTemplateModel.acceptsInitialSnapshot(snapshot); }
+    /** Preview and new construction use the restyled template. */
+    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) {
+        return DreamTemplateModel.blocks(spec().structureName(),DreamTemplateModel.DYEDREAM);
+    }
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) { return DreamBuildingSupport.button(this,key); }
     @Override public String getBuildAvailabilityError(String owner) { return DreamBuildingSupport.availability(this,owner); }
     @Override public boolean requiresStrictPlacementOwnerCheck() { return true; }

@@ -23,10 +23,18 @@ public final class DreamHallPlacement extends DreamProductionPlacement implement
     private String observedUnitOwner;
     private DreamFunctionState.Snapshot lastSupportedUnitState;
     public DreamHallPlacement(DreamHall definition,Level level,BlockPos pos,Rotation rotation,String owner) {
-        super(definition,level,pos,rotation,owner,
-                BuildingUtils.getAbsoluteBlockData(definition.getRelativeBlockData(level),level,pos,rotation),false);
+        this(definition,level,pos,rotation,owner,com.dreamseekers.building.DreamTemplateModel.DYEDREAM);
+    }
+    /** Saved-entry route: a hall saved before the template revision existed keeps its original template. */
+    public DreamHallPlacement(DreamHall definition,Level level,BlockPos pos,Rotation rotation,String owner,DataStorage saved) {
+        this(definition,level,pos,rotation,owner,com.dreamseekers.building.DreamTemplateModel.restoredRevision(saved));
+    }
+    private DreamHallPlacement(DreamHall definition,Level level,BlockPos pos,Rotation rotation,String owner,int revision) {
+        super(definition,level,pos,rotation,owner,BuildingUtils.getAbsoluteBlockData(
+                com.dreamseekers.building.DreamTemplateModel.blocks(definition.spec().structureName(),revision),level,pos,rotation),false);
         lifecycle=new DreamFunctionLifecycle(this,definition.spec(),()->super.getDataStorage());
         observedUnitOwner=owner;
+        withTemplate(definition.spec().structureName(),revision);
     }
     @Override public DreamBuildingSpec spec() { return DreamBuildingSpec.DREAM_HALL; }
     @Override public DataStorage getDataStorage() {

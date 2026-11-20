@@ -20,21 +20,48 @@ public final class DreamGardenPlacement extends FarmPlacement {
 
     private enum RestoreStatus { READY, RETRY_LEGACY, OPAQUE }
     private RestoreStatus restoreStatus=RestoreStatus.READY;
-    public static ArrayList<BuildingBlock> decoratedTemplate() {
-        ArrayList<BuildingBlock> result=DreamBuildingSupport.load(ReverieGarden.STRUCTURE);
+    /** Original-template decoration, as restored for gardens saved before the template revision existed. */
+    public static ArrayList<BuildingBlock> decoratedTemplate() { return decoratedTemplate(com.dreamseekers.building.DreamTemplateModel.LEGACY); }
+    public static ArrayList<BuildingBlock> decoratedTemplate(int revision) {
+        ArrayList<BuildingBlock> result=com.dreamseekers.building.DreamTemplateModel.blocks(ReverieGarden.STRUCTURE,revision);
         for(BuildingBlock block:result)if(block.getBlockState().is(Blocks.WHEAT))
             block.setBlockState(DreamPassiveEconomy.DECORATIVE_WHEAT.get().defaultBlockState());
         return result;
     }
     public DreamGardenPlacement(ReverieGarden building,Level level,BlockPos origin,Rotation rotation,String owner) {
-        super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(decoratedTemplate(),level,origin,rotation),false);
+        super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(decoratedTemplate(com.dreamseekers.building.DreamTemplateModel.DYEDREAM),level,origin,rotation),false);
         getDataStorage().setData(DECOR_SCHEMA,GardenDecorationState.current());
+        template=new com.dreamseekers.building.DreamTemplateModel.State(ReverieGarden.STRUCTURE,com.dreamseekers.building.DreamTemplateModel.DYEDREAM);
+        if(!level.isClientSide())com.dreamseekers.building.DreamTemplateModel.write(getDataStorage(),com.dreamseekers.building.DreamTemplateModel.DYEDREAM);
+    }
+    private com.dreamseekers.building.DreamTemplateModel.State template;
+    public int templateRevision(){return template==null?0:template.revision();}
+    @Override public net.minecraft.nbt.CompoundTag structureSnapshot() {
+        return template==null?super.structureSnapshot():template.snapshot(getLevel().isClientSide(),
+                getHighestBlockCountReached(),getBlocksPlaced(),partialBlocksDestroyed);
+    }
+    @Override public boolean acceptsStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot) {
+        return template==null?super.acceptsStructureSnapshot(snapshot):template.accepts(snapshot);
+    }
+    @Override public void applyStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot,boolean initial) {
+        if(template==null){super.applyStructureSnapshot(snapshot,initial);return;}
+        if(!getLevel().isClientSide())return;
+        boolean legacy=com.dreamseekers.building.DreamTemplateModel.validLegacySnapshot(snapshot);
+        if(template.switchFor(snapshot,initial))
+            restoreGeometry(BuildingUtils.getAbsoluteBlockData(decoratedTemplate(template.revision()),getLevel(),originPos,rotation),
+                    legacy?snapshot.getInt("highest"):2,legacy?snapshot.getDouble("partial"):0);
+        if(legacy)setServerBlocksPlaced(snapshot.getInt("placed"));
     }
     public DreamGardenPlacement(ReverieGarden building,Level level,BlockPos origin,Rotation rotation,String owner,DataStorage saved) {
         // Legacy constructor counts original wheat age=7 before any migration. Other ages remain mismatches.
         super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(
-            saved.getData(DECOR_SCHEMA).knownVersion()==0?DreamBuildingSupport.load(ReverieGarden.STRUCTURE):decoratedTemplate(),level,origin,rotation),false);
+            saved.getData(DECOR_SCHEMA).knownVersion()==0?DreamBuildingSupport.load(ReverieGarden.STRUCTURE)
+                :decoratedTemplate(com.dreamseekers.building.DreamTemplateModel.restoredRevision(saved)),level,origin,rotation),false);
         if(level.isClientSide())throw new IllegalArgumentException("Saved-entry migration is server only");
+        // An undecorated legacy garden predates the template revision, so it is always the original template.
+        int revision=saved.getData(DECOR_SCHEMA).knownVersion()==0?com.dreamseekers.building.DreamTemplateModel.LEGACY:com.dreamseekers.building.DreamTemplateModel.restoredRevision(saved);
+        template=new com.dreamseekers.building.DreamTemplateModel.State(ReverieGarden.STRUCTURE,revision);
+        if(revision==com.dreamseekers.building.DreamTemplateModel.DYEDREAM)com.dreamseekers.building.DreamTemplateModel.write(getDataStorage(),revision);
         GardenDecorationState state=saved.getData(DECOR_SCHEMA);
         // Native restore later installs the full DataStorage. The factory result must also be safe on its own.
         getDataStorage().setData(DECOR_SCHEMA,state);

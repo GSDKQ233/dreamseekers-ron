@@ -40,6 +40,12 @@ public final class DreamBuildingSupport {
      * Direct classpath loading intentionally gives client and server identical geometry;
      * replacing these gameplay templates with client-only resource packs is unsupported.
      */
+    /** Foundation materials of the restyled templates; the first layer of these is placed instantly like stone bricks. */
+    public static java.util.List<net.minecraft.world.level.block.Block> restyledFoundationBlocks() {
+        return java.util.List.of(
+                BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("pasterdream", "bricks_dyedreamquartz_block")),
+                BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("pasterdream", "shadow_stone_bricks")));
+    }
     public static ArrayList<BuildingBlock> load(String name) {
         String path = "/data/dreamseekers/structures/" + name + ".nbt";
         try (InputStream stream = DreamBuildingSupport.class.getResourceAsStream(path)) {

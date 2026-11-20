@@ -30,6 +30,8 @@ public final class BeetleSanctuary extends ProductionBuilding {
         buildTimeModifier = 0.7f;
         spawnRadiusOffset = 2;
         startingBlockTypes.add(Blocks.STONE_BRICKS);
+        DreamTemplateModel.bootstrap();
+        startingBlockTypes.addAll(DreamBuildingSupport.restyledFoundationBlocks());
         Keybinding[] slots = {Keybindings.abilitySlot1, Keybindings.abilitySlot2, Keybindings.abilitySlot3, Keybindings.abilitySlot4, Keybindings.abilitySlot5, Keybindings.abilitySlot6};
         for (int i = 0; i < troops.length; i++)
             productions.add(troops[i], slots[i]);
@@ -38,11 +40,24 @@ public final class BeetleSanctuary extends ProductionBuilding {
     @Override public com.solegendary.reignofnether.building.BuildingPlacement createBuildingPlacement(
             net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos,
             net.minecraft.world.level.block.Rotation rotation, String owner) {
-        return new com.dreamseekers.production.DreamProductionPlacement(this,level,pos,rotation,owner,
-                com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBlockData(getRelativeBlockData(level),level,pos,rotation),isCapitol);
+        return placement(level,pos,rotation,owner,DreamTemplateModel.DYEDREAM);
     }
+    @Override public com.solegendary.reignofnether.building.BuildingPlacement createRestoredBuildingPlacement(
+            net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos,
+            net.minecraft.world.level.block.Rotation rotation, String owner,
+            com.solegendary.reignofnether.building.data.DataStorage saved) {
+        return placement(level,pos,rotation,owner,DreamTemplateModel.restoredRevision(saved));
+    }
+    private com.solegendary.reignofnether.building.BuildingPlacement placement(net.minecraft.world.level.Level level,
+            net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.Rotation rotation, String owner, int revision) {
+        return new com.dreamseekers.production.DreamProductionPlacement(this,level,pos,rotation,owner,
+                com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBlockData(
+                        DreamTemplateModel.blocks(STRUCTURE,revision),level,pos,rotation),isCapitol).withTemplate(STRUCTURE,revision);
+    }
+    @Override public boolean acceptsInitialStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot) { return DreamTemplateModel.acceptsInitialSnapshot(snapshot); }
 
-    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) { return DreamBuildingSupport.load(STRUCTURE); }
+    /** Preview and new construction use the restyled template. */
+    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) { return DreamTemplateModel.blocks(STRUCTURE,DreamTemplateModel.DYEDREAM); }
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) { return DreamBuildingSupport.button(this, key); }
     @Override public String getBuildAvailabilityError(String owner) { return DreamBuildingSupport.availability(this, owner); }
     @Override public boolean requiresStrictPlacementOwnerCheck() { return true; }

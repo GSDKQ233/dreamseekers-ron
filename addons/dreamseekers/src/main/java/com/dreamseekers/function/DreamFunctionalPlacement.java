@@ -2,11 +2,13 @@
 package com.dreamseekers.function;
 import com.dreamseekers.building.DreamBuildingSpec;
 import com.dreamseekers.building.DreamScaffoldBuilding;
+import com.dreamseekers.building.DreamTemplateModel;
 import com.solegendary.reignofnether.building.BuildingPlacement;
 import com.solegendary.reignofnether.building.BuildingUtils;
 import com.solegendary.reignofnether.building.data.DataStorage;
 import com.solegendary.reignofnether.building.data.DataType;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -19,10 +21,40 @@ public class DreamFunctionalPlacement extends BuildingPlacement implements Dream
     private final DreamScaffoldBuilding definition;
     private final DreamFunctionLifecycle lifecycle;
     public static void bootstrap() { }
+    private DreamTemplateModel.State template;
     public DreamFunctionalPlacement(DreamScaffoldBuilding building, Level level, BlockPos pos,
                                     Rotation rotation, String owner) {
-        this(building,level,pos,rotation,owner,
-                BuildingUtils.getAbsoluteBlockData(building.getRelativeBlockData(level),level,pos,rotation));
+        this(building,level,pos,rotation,owner,DreamTemplateModel.DYEDREAM);
+    }
+    /** Saved-entry route: a placement saved before the template revision existed keeps its original template. */
+    public DreamFunctionalPlacement(DreamScaffoldBuilding building, Level level, BlockPos pos,
+                                    Rotation rotation, String owner, DataStorage saved) {
+        this(building,level,pos,rotation,owner,DreamTemplateModel.restoredRevision(saved));
+    }
+    private DreamFunctionalPlacement(DreamScaffoldBuilding building, Level level, BlockPos pos,
+                                    Rotation rotation, String owner, int revision) {
+        this(building,level,pos,rotation,owner,BuildingUtils.getAbsoluteBlockData(
+                DreamTemplateModel.blocks(building.spec().structureName(),revision),level,pos,rotation));
+        template = new DreamTemplateModel.State(building.spec().structureName(),revision);
+        if (revision == DreamTemplateModel.DYEDREAM && !level.isClientSide())
+            DreamTemplateModel.write(super.getDataStorage(),revision);
+    }
+    public int templateRevision() { return template == null ? 0 : template.revision(); }
+    @Override public CompoundTag structureSnapshot() {
+        return template == null ? super.structureSnapshot() : template.snapshot(getLevel().isClientSide(),
+                getHighestBlockCountReached(),getBlocksPlaced(),partialBlocksDestroyed);
+    }
+    @Override public boolean acceptsStructureSnapshot(CompoundTag snapshot) {
+        return template == null ? super.acceptsStructureSnapshot(snapshot) : template.accepts(snapshot);
+    }
+    @Override public void applyStructureSnapshot(CompoundTag snapshot, boolean initial) {
+        if (template == null) { super.applyStructureSnapshot(snapshot,initial); return; }
+        if (!getLevel().isClientSide()) return;
+        boolean legacy = DreamTemplateModel.validLegacySnapshot(snapshot);
+        if (template.switchFor(snapshot,initial))
+            restoreGeometry(BuildingUtils.getAbsoluteBlockData(template.blocks(),getLevel(),originPos,rotation),
+                    legacy ? snapshot.getInt("highest") : 2, legacy ? snapshot.getDouble("partial") : 0);
+        if (legacy) setServerBlocksPlaced(snapshot.getInt("placed"));
     }
     protected DreamFunctionalPlacement(DreamScaffoldBuilding building,Level level,BlockPos pos,
             Rotation rotation,String owner,java.util.ArrayList<com.solegendary.reignofnether.building.BuildingBlock> geometry) {

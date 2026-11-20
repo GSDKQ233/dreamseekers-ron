@@ -173,6 +173,31 @@ public class DreamProductionPlacement extends ProductionPlacement {
                                     String owner, ArrayList<BuildingBlock> blocks, boolean capitol) {
         super(building,level,pos,rotation,owner,blocks,capitol);
     }
+    private com.dreamseekers.building.DreamTemplateModel.State template;
+    /** Opt-in for a building with a restyled template; the anchor keeps its own model. */
+    public final DreamProductionPlacement withTemplate(String base,int revision) {
+        template=new com.dreamseekers.building.DreamTemplateModel.State(base,revision);
+        if(revision==com.dreamseekers.building.DreamTemplateModel.DYEDREAM&&!getLevel().isClientSide())
+            com.dreamseekers.building.DreamTemplateModel.write(super.getDataStorage(),revision);
+        return this;
+    }
+    public int templateRevision(){return template==null?0:template.revision();}
+    @Override public net.minecraft.nbt.CompoundTag structureSnapshot() {
+        return template==null?super.structureSnapshot():template.snapshot(getLevel().isClientSide(),
+                getHighestBlockCountReached(),getBlocksPlaced(),partialBlocksDestroyed);
+    }
+    @Override public boolean acceptsStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot) {
+        return template==null?super.acceptsStructureSnapshot(snapshot):template.accepts(snapshot);
+    }
+    @Override public void applyStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot,boolean initial) {
+        if(template==null){super.applyStructureSnapshot(snapshot,initial);return;}
+        if(!getLevel().isClientSide())return;
+        boolean legacy=com.dreamseekers.building.DreamTemplateModel.validLegacySnapshot(snapshot);
+        if(template.switchFor(snapshot,initial))
+            restoreGeometry(com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBlockData(template.blocks(),getLevel(),originPos,rotation),
+                    legacy?snapshot.getInt("highest"):2,legacy?snapshot.getDouble("partial"):0);
+        if(legacy)setServerBlocksPlaced(snapshot.getInt("placed"));
+    }
     private static RtsUnitState state(Unit unit) {
         if(unit instanceof DreamRtsUnit combat)return combat.rts();
         if(unit instanceof DreamNoncombatUnit support)return support.rts();
