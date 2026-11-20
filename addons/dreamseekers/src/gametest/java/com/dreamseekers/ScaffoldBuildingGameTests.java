@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers;
 
+import com.dreamseekers.building.DreamBuildingSpec;
 import com.dreamseekers.building.DreamScaffoldBuilding;
 import com.dreamseekers.unit.FireflyWorker;
 import com.dreamseekers.function.*;
@@ -114,6 +115,11 @@ public final class ScaffoldBuildingGameTests {
             helper.assertTrue(building.canAcceptResources == (building==DreamseekersMod.DREAM_DEPOT)
                             && !building.isCapitol && building.cost.population == 0,
                     "only approved depot accepts dropoff; no original eight building grants capitol or population");
+            DreamBuildingSpec spec=Arrays.stream(DreamBuildingSpec.values()).filter(v->v.structureName().equals(building.structureName)).findFirst().orElseThrow();
+            double health=switch(spec){case DREAM_DEPOT->120;case RESONANCE_DAIS->160;case SHADOW_FURNACE,CONTRACT_ECOLOGY->200;
+                case SHADOW_MINE,RESONANCE_LABORATORY->220;case SHADOW_WATCHTOWER->240;case DREAM_HALL->260;};
+            helper.assertTrue(building.getMaxHealth(anchor)==health&&spec.maxHealth()==health,
+                    "role-specific maximum health reaches the registered definition: "+building.structureName);
             if (building==DreamseekersMod.DREAM_HALL) {
                 helper.assertTrue(((ProductionBuilding)building).productions.get().equals(List.of(
                         DreamseekersMod.BONE_WING_PRODUCTION,DreamseekersMod.WIND_KNIGHT_PRODUCTION,

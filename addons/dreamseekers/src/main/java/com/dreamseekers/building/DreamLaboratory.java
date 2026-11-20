@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public final class DreamLaboratory extends ProductionBuilding {
  public DreamLaboratory(){super(DreamBuildingSpec.RESONANCE_LABORATORY.structureName(),DreamBuildingSpec.RESONANCE_LABORATORY.newProvisionalCost(),false);
   name=DreamBuildingSpec.RESONANCE_LABORATORY.displayName();portraitBlock=DreamBuildingSpec.RESONANCE_LABORATORY.portraitBlock();icon=DreamBuildingSpec.RESONANCE_LABORATORY.icon();
-  maxHealth=DreamBuildingSpec.PROVISIONAL_MAX_HEALTH;buildTimeModifier=DreamBuildingSpec.PROVISIONAL_BUILD_TIME_MODIFIER;startingBlockTypes.add(Blocks.STONE_BRICKS);canSetRallyPoint=false;
+  maxHealth=DreamBuildingSpec.RESONANCE_LABORATORY.maxHealth();buildTimeModifier=DreamBuildingSpec.RESONANCE_LABORATORY.buildTimeModifier();startingBlockTypes.add(Blocks.STONE_BRICKS);canSetRallyPoint=false;
   productions=new DreamRepeatProductionList();DreamLaboratoryPlacement.bootstrap();}
  @Override public BuildingPlacement createBuildingPlacement(Level level,BlockPos pos,Rotation rotation,String owner){return new DreamLaboratoryPlacement(this,level,pos,rotation,owner);}
  @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level){return DreamBuildingSupport.load(structureName);}

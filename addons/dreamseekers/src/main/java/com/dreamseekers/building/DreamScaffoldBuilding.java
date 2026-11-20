@@ -31,8 +31,8 @@ public class DreamScaffoldBuilding extends Building {
         name = spec.displayName();
         portraitBlock = spec.portraitBlock();
         icon = spec.icon();
-        maxHealth = DreamBuildingSpec.PROVISIONAL_MAX_HEALTH;
-        buildTimeModifier = DreamBuildingSpec.PROVISIONAL_BUILD_TIME_MODIFIER;
+        maxHealth = spec.maxHealth();
+        buildTimeModifier = spec.buildTimeModifier();
         // All eight templates have stone-brick foundations at y=0.
         // Only the ordinary first foundation layer is instant; workers build the rest.
         startingBlockTypes.add(Blocks.STONE_BRICKS);
