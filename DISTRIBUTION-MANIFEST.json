@@ -20,6 +20,7 @@
     "build.gradle",
     "docs/dreamseekers/FEATURES.zh-CN.md",
     "docs/dreamseekers/REPAIR3.1.zh-CN.md",
+    "gradle/gametest-plan.gradle",
     "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
     "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
     "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java",
@@ -41,8 +42,8 @@
       "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
     },
     "COLLABORATION.md": {
-      "bytes": 3585,
-      "sha256": "2b766c04a02a47f15e23b4795490ae26f92b2fe86fc47683a7e60fdff1d2c46d"
+      "bytes": 5901,
+      "sha256": "3e0c4ba4f01a0b633f94ea2b947138d4947b600964bf6be1f36906d9f1438587"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -57,8 +58,8 @@
       "sha256": "3b3a2c471d541f0ea1d30edd55374d8363309d2db756ec581324fe12da6560a0"
     },
     "addons/dreamseekers/build.gradle": {
-      "bytes": 71330,
-      "sha256": "e16e5333ba75ac8052cc931c3b779bb352eb252cf959ee034076da46223bc74e"
+      "bytes": 63744,
+      "sha256": "23bfe9e3ae0cd99bde71682f9444a8d9ed29994b4723ab891815dd07d80d2090"
     },
     "addons/dreamseekers/dependencies.lock.json": {
       "bytes": 2212,
@@ -4413,8 +4414,8 @@
       "sha256": "3002790ece117f0e7907cfee0373f37d21d2d0d8b2edfa970f179a541d5405b9"
     },
     "build.gradle": {
-      "bytes": 11364,
-      "sha256": "90ce05d55a0f702933241ad0cff8760b835c9ccde84c656597d9737447427b97"
+      "bytes": 10961,
+      "sha256": "81ad57dd7080981bc42876031bcbaa32d715ad2eb16b1250d2b3958a6cb4b002"
     },
     "crowdin.yml": {
       "bytes": 169,
@@ -4453,8 +4454,8 @@
       "sha256": "afe45b8c5ecaf916c287fd90db7d91f6dfac7d38f0a2623c9aac101b6346c2cc"
     },
     "gradle/gametest-plan.gradle": {
-      "bytes": 17697,
-      "sha256": "9ce04cfdff98479bc865acca2464ad1b7d484fe4a33923926977e7d7428851a3"
+      "bytes": 18483,
+      "sha256": "c5354e95de3cdeaaa22547d298f5ee812c564f8e6619778440da15a4fbe7f0cb"
     },
     "gradle/repository-test-inputs.gradle": {
       "bytes": 1893,

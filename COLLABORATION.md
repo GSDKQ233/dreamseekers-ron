@@ -22,12 +22,22 @@
 | 文字描述与本地化核查 | 已改，待审 | 中英文各 690 条、键一致；带参数文本占位符一致；技能、兵种、建筑、世界树、科技数值与源码对照无出入。仅统一用词与名称（英文名按中文对齐）、修 1 处笔误、补晶台与守望塔说明，未增删键、未改代码。只做了脚本校验，未进游戏实测显示。 |
 | 正式配对 JAR 双客户端联机 | 延后，未验 | 公开源码不代表此项通过。需两个独立、可联机的客户端并保留正常认证。 |
 | 正式发行与真实存档 | 未验 | 不发布 JAR，不使用任何正式存档做验证。 |
+| 构建占位值与旧附属测试开关清理 | 通过 | 提交 `e676559`。核心与配对构建、JUnit 复跑通过，见下方“构建清理记录”。不改玩法，未重跑 19 次选定 Forge 回归。 |
 
 ## 下一位协作者
 
 1. **双端验收**（未认领）：在独立世界用相同配对 JAR 和四项前置。验证两人入席、准备、重连及定向邀请；补非空开放大厅重启后新玩家实际入席。核对两项同配方仅撤目标且只退一次、科研停复与界面进度、简中 HUD 与技能取消。
 2. **后续玩法审阅**（待定，不是本次发布门槛）：同 UUID 改名后的状态连续性、原生英雄在途经验的正常重启、晚波部分成功时的生成预算。性能变更先建立可重复的基线。
 3. **更新本板**：先标工作项、负责角色和依赖，完成后写清候选提交或哈希、测试入口、实际结果与未覆盖项。互相影响的发现同步给对应负责人。不要把历史或诊断候选通过记到当前构建，也不要提交个人资料。
+
+## 构建清理记录
+
+- 工作项：替换 `build.gradle` 的 Forge 模板占位值；清理 `gradle/gametest-plan.gradle` 的旧附属测试开关。负责角色：构建清理（Devin 会话）。依赖：无，不涉及双端验收和后续玩法审阅。
+- 候选提交：`e676559`，父提交 `30133d7`。
+- 改动：JAR 清单的 `Specification-Vendor`、`Implementation-Vendor` 由 `examplemodsareus` 改为 `SoLegendary`。112 个旧附属开关中，22 个的命名空间已有 `-PresourceTechSuite` 套件，从选择列表和附属分支移除，再传入会报错并提示对应套件。其余 90 个是各自命名空间的唯一入口，保留不动，其中 `dreamseekersShellFunctionsFocused` 虽有同名套件，因在 repair3 回归清单里使用也保留。
+- 测试入口：`bash ./gradlew build`；`bash ./gradlew -Pdreamseekers -PdreamseekersPython=python3.11 build dreamseekersJar verifyDreamseekersJar verifyDreamseekersCoreJar`；`bash ./gradlew -Pdreamseekers -PresourceTechSuite=wind_protocol -PresourceTechRun=cleanup1 runGameTestServer`。
+- 实际结果：核心构建通过，JUnit 245 通过、1 跳过、0 失败。配对构建通过，JUnit 368 通过、1 个既有音频测试跳过、0 失败；两个 JAR 的版本与内容检查通过，核心 JAR 清单厂商为 `SoLegendary`。`wind_protocol` 套件实际启用命名空间 `dreamseekers_wind_protocol`，1 项必需测试通过。抽查 3 个已移除开关均按预期报错；抽查 3 个保留开关，解析出的目录与命名空间和原分支一致。
+- 未覆盖：其余 21 个被替代的套件没有实际启动，只核对了命名空间和阶段键与原分支一致。90 个保留开关没有逐个运行。19 次选定 Forge 回归、专服、图形与语言、双客户端联机都没有重跑。套件入口的世界目录是 `run-resource-tech-<套件>-addon-<后缀>`，不沿用旧开关的目录。`src/main/resources/META-INF/mods.toml` 的模板注释和 `logoFile="examplemod.png"` 未改。下方 JAR 摘要早于本项；本项改了核心 JAR 清单，未重新登记摘要。
 
 实际测试配对 JAR 摘要（仅供核对，不随仓库分发）：
 
