@@ -20,10 +20,19 @@
     "build.gradle",
     "docs/dreamseekers/FEATURES.zh-CN.md",
     "docs/dreamseekers/REPAIR3.1.zh-CN.md",
+    "gradle/gametest-plan.gradle",
     "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
+    "src/gametest/java/com/solegendary/reignofnether/hero/HeroExperienceOrbReloadGameTests.java",
+    "src/gametest/resources/data/api65_followup_hero_xp/structures/ore_mine_test_arena.nbt",
     "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
     "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java",
-    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java"
+    "src/main/java/com/solegendary/reignofnether/hero/HeroExperienceOrb.java",
+    "src/main/java/com/solegendary/reignofnether/survival/spawners/PiglinWaveSpawner.java",
+    "src/main/java/com/solegendary/reignofnether/survival/spawners/SpawnPointSearch.java",
+    "src/main/java/com/solegendary/reignofnether/survival/spawners/WaveSpawner.java",
+    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java",
+    "src/test/java/com/solegendary/reignofnether/hero/HeroExperienceOrbWiringTest.java",
+    "src/test/java/com/solegendary/reignofnether/survival/spawners/SpawnPointSearchTest.java"
   ],
   "manifest_self_excluded": true,
   "hash_rule": "SHA256 of each uncompressed member, excluding this manifest.",
@@ -41,8 +50,8 @@
       "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
     },
     "COLLABORATION.md": {
-      "bytes": 3585,
-      "sha256": "2b766c04a02a47f15e23b4795490ae26f92b2fe86fc47683a7e60fdff1d2c46d"
+      "bytes": 8410,
+      "sha256": "7c21c095ae2b71e5806c092b9eb1e4205eb65540ccfea34b7a5ae74a99a8f766"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -4453,8 +4462,8 @@
       "sha256": "afe45b8c5ecaf916c287fd90db7d91f6dfac7d38f0a2623c9aac101b6346c2cc"
     },
     "gradle/gametest-plan.gradle": {
-      "bytes": 17697,
-      "sha256": "9ce04cfdff98479bc865acca2464ad1b7d484fe4a33923926977e7d7428851a3"
+      "bytes": 17736,
+      "sha256": "7c65bba0a5f7587ddcf61260dcb9dc85f8e8f3bb3238601abc75efd5d5ec2ff0"
     },
     "gradle/repository-test-inputs.gradle": {
       "bytes": 1893,
@@ -4611,6 +4620,10 @@
     "src/gametest/java/com/solegendary/reignofnether/fogofwar/Repair3CapitolFogGameTests.java": {
       "bytes": 2148,
       "sha256": "ef2ded3d246a8cdd2d81059f2575dc11f49f912c0880e4a0a42b0773745f6743"
+    },
+    "src/gametest/java/com/solegendary/reignofnether/hero/HeroExperienceOrbReloadGameTests.java": {
+      "bytes": 6462,
+      "sha256": "feb5a2a1b0a967b1d074e94875b1d903364a9032ced0557428231b3cbfe2978b"
     },
     "src/gametest/java/com/solegendary/reignofnether/hero/repair2/cycle/FallenHeroWorldGameTests.java": {
       "bytes": 9103,
@@ -4945,6 +4958,10 @@
       "sha256": "cd0bdce03111e8bf6e7e7c847cfc29e146b3f41e6fe7520299563337520be10b"
     },
     "src/gametest/resources/data/api65_editor_worlds/structures/ore_mine_test_arena.nbt": {
+      "bytes": 114,
+      "sha256": "cd0bdce03111e8bf6e7e7c847cfc29e146b3f41e6fe7520299563337520be10b"
+    },
+    "src/gametest/resources/data/api65_followup_hero_xp/structures/ore_mine_test_arena.nbt": {
       "bytes": 114,
       "sha256": "cd0bdce03111e8bf6e7e7c847cfc29e146b3f41e6fe7520299563337520be10b"
     },
@@ -6721,8 +6738,8 @@
       "sha256": "72aaa0891e5deb4a2872e84518e2ba8fe8025d41bc0fc7f906a9718c3bf8d174"
     },
     "src/main/java/com/solegendary/reignofnether/hero/HeroExperienceOrb.java": {
-      "bytes": 4297,
-      "sha256": "161d4d5478800f5172852562c95a64712992a654818e6b592ccb48bdfa136bca"
+      "bytes": 6001,
+      "sha256": "4fceaa9a71304e28ca87dc361501b86579b2047738d93aab87851fa8d13abd52"
     },
     "src/main/java/com/solegendary/reignofnether/hero/HeroServerEvents.java": {
       "bytes": 11228,
@@ -8373,12 +8390,16 @@
       "sha256": "5e7a9c34e15332c5b7761cc4760fe4cfe63a5ebd0e1d2d487f7a90c83e97a53a"
     },
     "src/main/java/com/solegendary/reignofnether/survival/spawners/PiglinWaveSpawner.java": {
-      "bytes": 8318,
-      "sha256": "1173d972b6695f3e358a7903c81a0e47e0687ae1945e4983de8413ed34a34109"
+      "bytes": 8448,
+      "sha256": "f2c2c191f03a75e865c282c8547441ab38aa39126abb14e535567779e4db0d12"
+    },
+    "src/main/java/com/solegendary/reignofnether/survival/spawners/SpawnPointSearch.java": {
+      "bytes": 1204,
+      "sha256": "1eba0fd7edb3916cbb6ae5da5c59040348b386b37ffe4adafe4c92b45224cd2e"
     },
     "src/main/java/com/solegendary/reignofnether/survival/spawners/WaveSpawner.java": {
-      "bytes": 8944,
-      "sha256": "273144e7e4633dc9e17ee69f2a29dd61c48f8d1926db651de77cd6ba0843eb1f"
+      "bytes": 8274,
+      "sha256": "a86fd4d6a73fb95162bb1f2028dddce6f84f20163f3c264161ccc931e15ef8d3"
     },
     "src/main/java/com/solegendary/reignofnether/taskscheduler/TaskSchedulerServerEvents.java": {
       "bytes": 1967,
@@ -13460,6 +13481,10 @@
       "bytes": 8540,
       "sha256": "6f24e0f8b7f0a6497bd8d087e589160c3ae89f46d6d3db731a3b37f302a0a52b"
     },
+    "src/test/java/com/solegendary/reignofnether/hero/HeroExperienceOrbWiringTest.java": {
+      "bytes": 1491,
+      "sha256": "91c363fe724037256aab9ac00afbbb57439b831a1ed1088395d882553a3081e0"
+    },
     "src/test/java/com/solegendary/reignofnether/hud/Api65ObserverResourceBindingTest.java": {
       "bytes": 1334,
       "sha256": "c36998aa4e642e4b5e4cbc071b00145501c5562a87499fdb99adba2183a1f511"
@@ -13603,6 +13628,10 @@
     "src/test/java/com/solegendary/reignofnether/survival/WaveFactionSequenceTest.java": {
       "bytes": 3035,
       "sha256": "3516a46b3b942aae1671c97bc6a55cddd5a3d10cfa5a6893dfc7dbeb078952d1"
+    },
+    "src/test/java/com/solegendary/reignofnether/survival/spawners/SpawnPointSearchTest.java": {
+      "bytes": 4661,
+      "sha256": "b826fbadf96d9767f522863f929ad145d2de296b1d57d6b80350642582b70fce"
     },
     "src/test/java/com/solegendary/reignofnether/tutorial/Api65TutorialLogicTest.java": {
       "bytes": 2730,
