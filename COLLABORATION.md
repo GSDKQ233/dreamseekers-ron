@@ -32,3 +32,31 @@
 
 - 核心：`31921285330f40f04f438bd2997546c278d2311c2472168b402b4d5648163c12`
 - 附属：`736d436969720fe2cd81ad51ff03ec90528c6b1b0aea1ac9e91c9d68cad5ae4f`
+
+## 建筑实现核查（建筑会话）
+
+认领项：11 种建筑是否真实实现（注册、模板、造价、生命周期、产出、训练/研究队列、建筑技能、归属与前置、存档还原）。基准提交 `30133d7`。兵种、美术、文案、UI 不在本项内。
+
+- **结论**：11 种建筑都有可运行的实现，没有只挂名的空壳。11 个基础模板在 `data/` 与 `assets/` 字节一致，清单 SHA-256 全部吻合；提示里的间隔、上限、人口、范围、容量与代码常量一致。
+- **已修（范围修复 PR）**：范围效果原先以 `originPos`（建筑一角）为圆心。共鸣晶台 +10% 光环改为按双方占地间距 ≤12、基座高差 ≤8 判定；根冠庇护、庭园休养、术式整备、晶台庇护的目标判定改为按建筑占地计算。新范围是旧范围的超集，费用、冷却、目标上限不变。
+- **有意不改**：守望塔照影标记仍用原点球形判定，因为客户端镜像 `TowerMarkClient` 用同一个球校验。中立契约覆盖、共鸣脉冲、共鸣网络连线仍以原点为圆心，留作后续。
+- **已核对、无需改**：`DreamConstructionPayment.legacyCost` 只是无付款记录的旧存档取消建造时的退款依据，新建筑按实付记录退款。旧的 `dream_anchor` / `dream_anchor_ascended` 模板仍被 `WorldTreeModel.LEGACY_*` 用于还原旧存档，不能删。`DreamBuildingSpec.iconItem` 是无人读取的死字段。
+- **另开 PR**：八种建筑共用的占位生命值 200 / 建造系数 1.0 改为按角色区分的数值（用户已选定建议值）。
+
+测试入口与实际结果（Java 17，四项前置按依赖锁校验哈希，范围修复分支）：
+
+| 入口 | 结果 |
+| --- | --- |
+| `./gradlew -Pdreamseekers test` | 374 项，1 项既有跳过，零失败（含新增 `DreamFootprintRangeTest` 5 项） |
+| `-PdreamseekersShellFunctionsFocused runGameTestServer` | 11/11 通过（修复前基线同为 11/11） |
+| `-PresourceTechSuite=building_abilities` | 31/31 通过 |
+| `-PresourceTechSuite=building_boundary` | 9/9 通过 |
+| `-PresourceTechSuite=building_observation` | 12/12 通过 |
+| `-PresourceTechSuite=resonance` | 15/15 通过 |
+| `-PresourceTechSuite=luminous_research` | 6/6 通过 |
+| `-PresourceTechSuite=building_abilities_restart`（prepare、verify） | 各 1/1 通过 |
+| `-PresourceTechSuite=luminous_restart`（prepare、verify） | 各 1/1 通过 |
+
+两处夹具按新规则更新：`DreamShellFunctionGameTests` 的光环边界用例改为按占地间距断言，并新增远离原点一侧的贴边与 13 格排除；`BuildingAbilityEffectsGameTests` 的礼堂对照单位从原点外 14 格移到占地外 13 格。
+
+未覆盖：没有在真实客户端里实机摆放验证；未跑默认全量 `dreamseekers` 命名空间；`verifyDreamseekersCoreJar`（需 Python 3.11）与正式配对 JAR 未在本次重做。
