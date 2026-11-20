@@ -60,7 +60,7 @@ public final class LightResonanceResearch {
         // A client can preview visible structure prerequisites, never certify opaque server lifecycle data.
         // A nonempty rooted network necessarily has a direct root-to-dais edge. The server rechecks it at debit and every work tick.
         return buildings.stream().anyMatch(b->b instanceof DreamAnchorPlacement&&physical(b,p)
-            &&buildings.stream().anyMatch(d->ResonanceNetwork.isDais(d)&&physical(d,p)&&ResonanceNetwork.linked(b.originPos,d.originPos)));
+            &&buildings.stream().anyMatch(d->ResonanceNetwork.isDais(d)&&physical(d,p)&&ResonanceNetwork.linked(b,d)));
     }
     private static final class Tier extends ReceiptBackedResearchItem {
         private final int tier;

@@ -54,7 +54,7 @@ public final class DaisWardEffects {
             if(revoked)return false;
             if(!ready(source)||nodes.isEmpty()||!(nodes.get(nodes.size()-1).host() instanceof DreamAnchorPlacement)
                     ||nodes.stream().anyMatch(node->!node.valid())){revoked=true;return false;}
-            for(int i=1;i<nodes.size();i++)if(!ResonanceNetwork.linked(nodes.get(i-1).host().originPos,nodes.get(i).host().originPos)){
+            for(int i=1;i<nodes.size();i++)if(!ResonanceNetwork.linked(nodes.get(i-1).host(),nodes.get(i).host())){
                 revoked=true;return false;
             }
             return true;

@@ -31,6 +31,14 @@ public final class DreamFootprintRange {
         return gapX<=radius&&Math.abs(dy)<=radius&&gapZ<=radius&&gapX*gapX+dy*dy+gapZ*gapZ<=(double)radius*radius;
     }
 
+    /** Sphere rule between two footprints: horizontal footprint gaps plus the origin-layer height difference. */
+    public static boolean footprintsWithinSphere(long gapX,long originDy,long gapZ,int range) {
+        return gapX<=range&&Math.abs(originDy)<=range&&gapZ<=range&&gapX*gapX+originDy*originDy+gapZ*gapZ<=(long)range*range;
+    }
+    public static boolean footprintsWithinSphere(BuildingPlacement a,BuildingPlacement b,int range) {
+        return footprintsWithinSphere(spanGap(minX(a),maxX(a),minX(b),maxX(b)),(long)a.originPos.getY()-b.originPos.getY(),
+                spanGap(minZ(a),maxZ(a),minZ(b),maxZ(b)),range);
+    }
     public static boolean footprintsWithin(BuildingPlacement a,BuildingPlacement b,int horizontal,int vertical) {
         return footprintsWithin(spanGap(minX(a),maxX(a),minX(b),maxX(b)),spanGap(minZ(a),maxZ(a),minZ(b),maxZ(b)),
                 (long)a.originPos.getY()-b.originPos.getY(),horizontal,vertical);
