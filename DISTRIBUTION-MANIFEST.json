@@ -20,7 +20,13 @@
     "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
     "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
     "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java",
-    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java"
+    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnitHudIconLeashGameTests.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/DreamseekersMod.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BasaltSnailUnit.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BeetleUnit.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/FireflyWorker.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/StoneSpiritWorker.java"
   ],
   "manifest_self_excluded": true,
   "hash_rule": "SHA256 of each uncompressed member, excluding this manifest.",
@@ -38,8 +44,8 @@
       "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
     },
     "COLLABORATION.md": {
-      "bytes": 3197,
-      "sha256": "3391681deaad811ba9240a081b26fc681b2d96093af6ecb07f7d3dca004503f1"
+      "bytes": 3746,
+      "sha256": "e97fba625d016fc5e64edba28d2202f5cf593365683e2db9c09072b1ca2c2ba1"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -2370,8 +2376,8 @@
       "sha256": "8b85839dedb694f79933805b92a159c97b2a69b222b21df73afe24a8129c1544"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/DreamseekersMod.java": {
-      "bytes": 37827,
-      "sha256": "5fea7ee8be566f6b74af45bb63a3e5c8d9b91c3addf4219427bf78b96571c2f6"
+      "bytes": 38085,
+      "sha256": "032089883b30252e35292bb0df663c1abd3594d995dfd26d30019ddad1d627c1"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/aaroncos/AaroncosArenaAdmission.java": {
       "bytes": 1012,
@@ -3242,16 +3248,16 @@
       "sha256": "fc1ad14749c23865c9cd4e5037c5bc3b74a013b0dc51d6e40168c6b4e3ffd93c"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BasaltSnailUnit.java": {
-      "bytes": 6990,
-      "sha256": "d2a6382f0c4a8ac56cd827e10c05784ffcd70ce2502c7169fa48ac7b8b4fd480"
+      "bytes": 7230,
+      "sha256": "0af133e8bdd3826db867f9af3a26f33610a6be27e9ac06de8340d3a6392921fb"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BeetleMotherUnit.java": {
       "bytes": 10964,
       "sha256": "cdd5f80f05c13fdc2b88e7933736f1ea61a87bb1059f2226af1862a52acfb0c7"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BeetleUnit.java": {
-      "bytes": 5202,
-      "sha256": "1ea3a84a6cacf244e29baaf59dcc2b941645404765586981c617cf9e90dd30bc"
+      "bytes": 5409,
+      "sha256": "60929933f262e46fd68eb8c478aec65fe16f2dc53bdda1ddcba45009b174dbff"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BoneWingUnit.java": {
       "bytes": 9454,
@@ -3282,8 +3288,8 @@
       "sha256": "2e8966b0ca3765b882a98b98364a4c225454b4cc337a6f70a5ce90df398efee6"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/FireflyWorker.java": {
-      "bytes": 8140,
-      "sha256": "02804043f55a7de80f9f8b40a7a11b3cc86de40c2b93d62a07994e17f1f71924"
+      "bytes": 8215,
+      "sha256": "504249f6405b68713c6f6b31d6d0723c8307991a47aac0cc5863eef2de6c05e7"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/FriendlyGhostUnit.java": {
       "bytes": 11839,
@@ -3342,8 +3348,8 @@
       "sha256": "7abf942a16c28585e8a9ac95fe10f7fc670b218fb51fe9f11216c8c5752eac94"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/StoneSpiritWorker.java": {
-      "bytes": 5686,
-      "sha256": "5dc7981fa672f6b2e804ebbc1c61afa5576cbde041818453aab3cad9c4f695ef"
+      "bytes": 5795,
+      "sha256": "1d59bf7bba7691e1ca78a1b3ae75da3737be6ad43444f8fdba0de67d1d0d65ae"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/TeamSafeBuildingAttackGoal.java": {
       "bytes": 2350,
@@ -13648,6 +13654,10 @@
     "src/test/scripts/verify_paired_mods_test.py": {
       "bytes": 2995,
       "sha256": "c522686863b01b4d98399057ba7ca3103b404a288140d116eae1ab0d2a67ab89"
+    },
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnitHudIconLeashGameTests.java": {
+      "bytes": 4040,
+      "sha256": "6c4bdb834e1603b63c26a3a8ecce92e49dafe214b1e26d4ff61706207d6d4e17"
     }
   }
 }
