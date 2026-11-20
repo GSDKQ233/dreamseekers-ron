@@ -138,8 +138,11 @@ public class PiglinWaveSpawner {
             do {
                 tooCloseToAnotherPortal = false;
                 List<BlockPos> spawnBps = WaveSpawner.getValidSpawnPoints(1, level, false, 8);
-                if (!spawnBps.isEmpty())
-                    spawnBp = spawnBps.get(0);
+                if (spawnBps.isEmpty()) {
+                    spawnBp = null; // the search already used its whole attempt budget
+                    break;
+                }
+                spawnBp = spawnBps.get(0);
                 attempts += 1;
 
                 for (BlockPos bp : portalBps)

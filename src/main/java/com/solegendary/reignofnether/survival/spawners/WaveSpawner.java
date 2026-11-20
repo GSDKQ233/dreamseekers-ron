@@ -134,56 +134,32 @@ public class WaveSpawner {
         int numValidBuildings = (int) (MIN_VALID_BUILDINGS + (buildings.size() * PERCENT_VALID_BUILDINGS));
         List<BuildingPlacement> validBuildings = buildings.subList(0, Math.min(buildings.size(), numValidBuildings));
 
-        int spawnAttemptsThisBuilding = 0;
-        BlockState spawnBs;
-        BlockPos spawnBp;
-        double distSqrToNearestBuilding = 999999;
-        double distSqrToNearestEnemyBuilding = 999999;
-        int failedBuildings = 0;
-        ArrayList<BlockPos> validSpawns = new ArrayList<>();
+        // Each requested point gets its own attempts and its own distance checks. A shared counter
+        // used to end the whole search after about 110 samples, however many points were requested.
+        List<BlockPos> validSpawns = SpawnPointSearch.collect(amount, SAMPLE_POINTS_PER_BUILDING, MAX_FAILED_BUILDINGS, () -> {
+            BuildingPlacement building = validBuildings.get(random.nextInt(validBuildings.size()));
 
-        outerloop:
-        do {
-            do {
-                BuildingPlacement building = validBuildings.get(random.nextInt(validBuildings.size()));
+            int x = building.centrePos.getX() + random.nextInt(-MAX_SPAWN_RANGE, MAX_SPAWN_RANGE);
+            int z = building.centrePos.getZ() + random.nextInt(-MAX_SPAWN_RANGE, MAX_SPAWN_RANGE);
+            int y = level.getChunkAt(new BlockPos(x, 0, z)).getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
 
-                int x = building.centrePos.getX() + random.nextInt(-MAX_SPAWN_RANGE, MAX_SPAWN_RANGE);
-                int z = building.centrePos.getZ() + random.nextInt(-MAX_SPAWN_RANGE, MAX_SPAWN_RANGE);
-                int y = level.getChunkAt(new BlockPos(x, 0, z)).getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+            BlockPos spawnBp = MiscUtil.getHighestGroundBlock(level, new BlockPos(x, y, z));
+            BlockState spawnBs = level.getBlockState(spawnBp);
 
-                spawnBp = MiscUtil.getHighestGroundBlock(level, new BlockPos(x, y, z));
-                spawnBs = level.getBlockState(spawnBp);
-                spawnAttemptsThisBuilding += 1;
-                if (spawnAttemptsThisBuilding > 100) {
-                    //ReignOfNether.LOGGER.warn("Gave up trying to find a suitable spawn!");
-                    failedBuildings += 1;
-                    if (failedBuildings > MAX_FAILED_BUILDINGS)
-                        break outerloop;
-                    else
-                        continue;
-                }
-                Vec3 vec3 = new Vec3(x, y, z);
-                BuildingPlacement b = BuildingUtils.findClosestBuilding(false, vec3, (b1) -> !b1.ownerName.equals(ENEMY_OWNER_NAME));
-                BuildingPlacement eb = BuildingUtils.findClosestBuilding(false, vec3, (b1) -> b1.ownerName.equals(ENEMY_OWNER_NAME));
+            Vec3 vec3 = new Vec3(x, y, z);
+            BuildingPlacement b = BuildingUtils.findClosestBuilding(false, vec3, (b1) -> !b1.ownerName.equals(ENEMY_OWNER_NAME));
+            BuildingPlacement eb = BuildingUtils.findClosestBuilding(false, vec3, (b1) -> b1.ownerName.equals(ENEMY_OWNER_NAME));
 
-                if (b != null)
-                    distSqrToNearestBuilding = b.centrePos.distToCenterSqr(vec3);
-                if (eb != null)
-                    distSqrToNearestEnemyBuilding = eb.centrePos.distToCenterSqr(vec3);
-
-            } while (spawnBs.is(BlockTags.LEAVES)
+            boolean invalid = spawnBs.is(BlockTags.LEAVES)
                     || spawnBs.is(BlockTags.LOGS) || spawnBs.is(BlockTags.PLANKS)
-                    || distSqrToNearestBuilding < (MIN_SPAWN_RANGE * MIN_SPAWN_RANGE)
-                    || distSqrToNearestEnemyBuilding < (10 * 10)
+                    || (b != null && b.centrePos.distToCenterSqr(vec3) < (MIN_SPAWN_RANGE * MIN_SPAWN_RANGE))
+                    || (eb != null && eb.centrePos.distToCenterSqr(vec3) < (10 * 10))
                     || (!spawnBs.getFluidState().isEmpty() && !allowLiquid)
                     || BuildingUtils.isPosInsideAnyBuilding(level.isClientSide(), spawnBp)
                     || BuildingUtils.isPosInsideAnyBuilding(level.isClientSide(), spawnBp.above())
-                    || (flatnessRadius > 0 && getYVariance(level, spawnBp, flatnessRadius) >= flatnessRadius / 2f));
-
-            validSpawns.add(spawnBp);
-            amount -= 1;
-
-        } while(amount > 0);
+                    || (flatnessRadius > 0 && getYVariance(level, spawnBp, flatnessRadius) >= flatnessRadius / 2f);
+            return invalid ? null : spawnBp;
+        });
 
         Collections.shuffle(validSpawns);
 
