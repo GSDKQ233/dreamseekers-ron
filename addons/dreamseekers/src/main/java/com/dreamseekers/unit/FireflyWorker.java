@@ -99,6 +99,7 @@ public class FireflyWorker extends net.pasterdream.entity.FireflyEntity implemen
 
     /** Never call the native capture procedure: it consumes a jar and discards the paid worker. */
     @Override public InteractionResult mobInteract(Player player, InteractionHand hand) { return InteractionResult.PASS; }
+    @Override public boolean canBeLeashed(Player player) { return false; }
 
     @Override public List<Button> getAbilityButtons() {
         List<Button> buttons = new ArrayList<>(getAbilities().getButtons(this));

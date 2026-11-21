@@ -229,12 +229,20 @@ public final class EcologyCodexScreen extends Screen {
                 left + 74, footer + 6, panelWidth - 150, MUTED);
         Component footerLine = state != null && state.codex().truncated()
                 ? Component.translatable("building_ability.codex.truncated") : Component.translatable("building_ability.codex.private_rules");
-        drawClipped(graphics, footerLine, left + 10, top + panelHeight - 18, panelWidth - 20, MUTED);
+        boolean footerCut = drawClipped(graphics, footerLine, left + 10, top + panelHeight - 18, panelWidth - 20, MUTED);
         super.render(graphics, mouseX, mouseY, partialTick);
+        // A cut rule line stays readable: hovering it shows the full wrapped sentence.
+        if (footerCut && mouseX >= left + 10 && mouseX < left + panelWidth - 10
+                && mouseY >= top + panelHeight - 20 && mouseY < top + panelHeight - 6)
+            graphics.renderTooltip(font, com.dreamseekers.client.DreamTooltipText.wrap(footerLine), mouseX, mouseY);
     }
 
-    private void drawClipped(GuiGraphics graphics, Component text, int x, int y, int maxWidth, int color) {
-        graphics.drawString(font, font.plainSubstrByWidth(text.getString(), Math.max(1, maxWidth)), x, y, color, false);
+    /** Draws within the pixel budget; a cut text ends with an ellipsis. Returns whether it was cut. */
+    private boolean drawClipped(GuiGraphics graphics, Component text, int x, int y, int maxWidth, int color) {
+        String full = text.getString();
+        String shown = com.dreamseekers.client.DreamTooltipLayout.ellipsize(full, Math.max(1, maxWidth), font::width, font::plainSubstrByWidth);
+        graphics.drawString(font, shown, x, y, color, false);
+        return !shown.equals(full);
     }
 
     @Override public void onClose() {

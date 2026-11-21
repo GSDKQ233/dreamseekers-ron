@@ -30,10 +30,10 @@ public final class ScoutMarkAbility extends Ability {
         return SnapshotSkillButton.bind(new AbilityButton("Reconnaissance Mark", ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/skill_scout_mark.png"),
                 key, () -> ScoutMarkClient.isArmed(scout), () -> false, () -> true,
                 () -> ScoutMarkClient.arm(scout), ScoutMarkClient::cancel,
-                List.of(Component.translatable("ability.dreamseekers.scout_mark").withStyle(Style.EMPTY.withBold(true)).getVisualOrderText(),
+                com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ability.dreamseekers.scout_mark").withStyle(Style.EMPTY.withBold(true)),
                         Component.translatable("ability.dreamseekers.scout_mark.tooltip1", ScoutBalance.MARK_RANGE,
-                                ScoutBalance.MARK_DURATION_TICKS / 20, ScoutBalance.MARK_COOLDOWN_TICKS / 20).getVisualOrderText(),
-                        Component.translatable("ability.dreamseekers.scout_mark.tooltip2").getVisualOrderText(),
-                        Component.translatable("ability.dreamseekers.scout_mark.tooltip3").getVisualOrderText()), this, unit),()->ScoutMarkClient.readiness(scout));
+                                ScoutBalance.MARK_DURATION_TICKS / 20, ScoutBalance.MARK_COOLDOWN_TICKS / 20),
+                        Component.translatable("ability.dreamseekers.scout_mark.tooltip2"),
+                        Component.translatable("ability.dreamseekers.scout_mark.tooltip3")), this, unit),()->ScoutMarkClient.readiness(scout));
     }
 }

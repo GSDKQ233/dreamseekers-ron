@@ -59,6 +59,9 @@ public final class ResonanceNetwork {
         &&actor.getGameProfile().getName().equals(p.ownerName)&&DreamSpecialistResearch.ownerSupported(p.ownerName,false)
         &&isDais(p)&&physical(p);}
     /** Bounds each component before multiplication, so hostile far-apart coordinates cannot overflow. */
+    /** Links are measured between the two building footprints, so a node connects alike on every side. */
+    public static boolean linked(BuildingPlacement a,BuildingPlacement b){
+        return com.dreamseekers.building.DreamFootprintRange.footprintsWithinSphere(a,b,LINK_RANGE);}
     public static boolean linked(BlockPos a,BlockPos b){long dx=(long)a.getX()-b.getX(),dy=(long)a.getY()-b.getY(),dz=(long)a.getZ()-b.getZ();
         return Math.abs(dx)<=LINK_RANGE&&Math.abs(dy)<=LINK_RANGE&&Math.abs(dz)<=LINK_RANGE&&dx*dx+dy*dy+dz*dz<=(long)LINK_RANGE*LINK_RANGE;}
     public static Network network(ServerLevel level,String owner){
@@ -70,8 +73,8 @@ public final class ResonanceNetwork {
         List<BuildingPlacement> active=new ArrayList<>();Map<BuildingPlacement,BuildingPlacement> parents=new IdentityHashMap<>();
         while(!frontier.isEmpty()&&active.size()<limit){
             var from=frontier;List<BuildingPlacement> next=nodes.stream().filter(p->!active.contains(p)
-                &&from.stream().anyMatch(root->linked(root.originPos,p.originPos))).sorted(ORDER).toList();
-            List<BuildingPlacement> accepted=new ArrayList<>();for(var p:next){if(active.size()>=limit)break;active.add(p);accepted.add(p);parents.put(p,from.stream().filter(root->linked(root.originPos,p.originPos)).findFirst().orElseThrow());}frontier=accepted;
+                &&from.stream().anyMatch(root->linked(root,p))).sorted(ORDER).toList();
+            List<BuildingPlacement> accepted=new ArrayList<>();for(var p:next){if(active.size()>=limit)break;active.add(p);accepted.add(p);parents.put(p,from.stream().filter(root->linked(root,p)).findFirst().orElseThrow());}frontier=accepted;
         }
         return new Network(active,nodes.size(),limit,parents);
     }
@@ -110,7 +113,7 @@ public final class ResonanceNetwork {
                 com.dreamseekers.unitprogression.AdvancedUnitResearch.PULSE_RANGE_ID,client)?14:PULSE_RANGE;
     }
     private static boolean inPulseRange(BuildingPlacement p,LivingEntity e,int range) {
-        return e.level()==p.level && e.distanceToSqr(p.originPos.getX()+.5,p.originPos.getY()+.5,p.originPos.getZ()+.5)<=(double)range*range;
+        return e.level()==p.level && com.dreamseekers.building.DreamFootprintRange.pointWithin(p,e.getX(),e.getY(),e.getZ(),range);
     }
     private static boolean eligible(ServerPlayer actor,BuildingPlacement p,LivingEntity e,int range){
         if(!(e instanceof Unit u)||!(e instanceof AttackerUnit)||!e.isAlive()||e.isRemoved()||e.level()!=p.level
@@ -130,7 +133,7 @@ public final class ResonanceNetwork {
         try{
             Source source=new Source(p);
             final int range=pulseRange(p.ownerName,false); // immutable selection radius for this paid pulse; movement does not revoke an existing buff
-            List<SkillIdentity.Stamp> targets=actor.serverLevel().getEntitiesOfClass(LivingEntity.class,new AABB(p.originPos).inflate(range+1),e->eligible(actor,p,e,range))
+            List<SkillIdentity.Stamp> targets=actor.serverLevel().getEntitiesOfClass(LivingEntity.class,new AABB(p.minCorner,p.maxCorner).minmax(new AABB(p.originPos)).inflate(range+1),e->eligible(actor,p,e,range))
                 .stream().filter(e->!SkillEffects.hasNamedBuff(e,EFFECT_KEY,BuffKind.ATTACK_SPEED))
                 .sorted(Comparator.comparingDouble((LivingEntity e)->e.distanceToSqr(p.originPos.getX()+.5,p.originPos.getY()+.5,p.originPos.getZ()+.5)).thenComparing(LivingEntity::getUUID))
                 .limit(MAX_TARGETS).map(SkillIdentity::capture).toList();

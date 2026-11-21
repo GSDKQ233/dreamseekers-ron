@@ -117,8 +117,12 @@ public final class BuildingAbilityEffects {
     private static boolean buffReady(BuildingAbilitySource source,BuildingAbility ability) {
         return ability==BuildingAbility.ROOT_CROWN?rootReady(source):ability==BuildingAbility.HALL_PREPARATION&&hallReady(source);
     }
-    /** Distances are to the registered building origin, not a client-chosen point. */
+    /** Distances are to the registered building footprint (origin layer vertically), not a client-chosen point. */
     static boolean nearby(BuildingAbilitySource source,LivingEntity target,int radius) {
+        return com.dreamseekers.building.DreamFootprintRange.pointWithin(source.host(),target.getX(),target.getY(),target.getZ(),radius);
+    }
+    /** Sphere around the origin block; the watchtower mark keeps it because its client mirror checks the same sphere. */
+    static boolean nearbyOrigin(BuildingAbilitySource source,LivingEntity target,int radius) {
         double x=source.host().originPos.getX()+.5,y=source.host().originPos.getY()+.5,z=source.host().originPos.getZ()+.5;
         double dx=target.getX()-x,dy=target.getY()-y,dz=target.getZ()-z;
         return Math.abs(dx)<=radius&&Math.abs(dy)<=radius&&Math.abs(dz)<=radius&&dx*dx+dy*dy+dz*dz<=(double)radius*radius;

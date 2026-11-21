@@ -65,7 +65,7 @@ public final class EcologyClient {
         BuildingPlacement court=VIEWS.keySet().stream().filter(p->own(p)&&p.originPos.equals(packet.origin())&&VIEWS.get(p).nonce.equals(packet.view())).findFirst().orElse(null);
         if(court==null)return;
         View view=VIEWS.get(court);view.snapshot=packet;view.received=CLOCK.now();
-        if(!packet.status().equals("ready"))mc.player.displayClientMessage(Component.translatable("ecology_workposts."+packet.status()),true);
+        if(!packet.status().equals("ready"))com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("ecology_workposts."+packet.status()));
     }
     private static void send(BuildingPlacement p,EcologyPackets.Action action,UUID lease,List<EcologyPackets.Target> targets){var s=state(p);
         if(s==null||!EconomyActionClient.ready(s.epoch())){query(p);return;}
@@ -79,7 +79,7 @@ public final class EcologyClient {
         var mc=Minecraft.getInstance();var targets=selected.stream().filter(e->e instanceof Unit unit&&e.isAlive()&&e.level()==level&&!unit.isFlyingUnit()
             &&unit.getOwnerName().equals(p.ownerName)).limit(64).map(e->new EcologyPackets.Target(e.getId(),e.getUUID())).toList();
         if(targets.isEmpty())return false;query(p);var s=state(p);
-        if(s==null||!EconomyActionClient.ready(s.epoch())){mc.player.displayClientMessage(Component.translatable("ecology_workposts.waiting"),true);return true;}
+        if(s==null||!EconomyActionClient.ready(s.epoch())){com.dreamseekers.client.DreamTooltipText.hudMessage(Component.translatable("ecology_workposts.waiting"));return true;}
         send(p,EcologyPackets.Action.ASSIGN,EcologyPackets.ZERO,targets);return true;
     }
     /** Read-only codex bridge. This returns only the existing fresh, actual-owner view. */
@@ -100,25 +100,25 @@ public final class EcologyClient {
     }
     private static ResourceLocation icon(String name){return ResourceLocation.fromNamespaceAndPath("minecraft","textures/item/"+name+".png");}
     public static List<AbilityButton> append(BuildingPlacement p,List<AbilityButton> original){context();if(!own(p))return original;query(p);var s=state(p);
-        List<net.minecraft.util.FormattedCharSequence> tip=new ArrayList<>();tip.add(Component.translatable("ecology_workposts.status").getVisualOrderText());
-        if(s==null)tip.add(Component.translatable("ecology_workposts.waiting").getVisualOrderText());else {
+        List<net.minecraft.util.FormattedCharSequence> tip=new ArrayList<>();tip.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ecology_workposts.status")));
+        if(s==null)tip.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ecology_workposts.waiting")));else {
             long arrived=s.occupants().stream().filter(EcologyWorkPosts.Occupant::arrived).count();
-            tip.add(Component.translatable("ecology_workposts.summary",arrived,s.occupants().size()-arrived,EcologyWorkPosts.CAPACITY).getVisualOrderText());
-            if(!s.researched())tip.add(Component.translatable("ecology_workposts.requires_research").getVisualOrderText());
+            tip.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ecology_workposts.summary",arrived,s.occupants().size()-arrived,EcologyWorkPosts.CAPACITY)));
+            if(!s.researched())tip.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ecology_workposts.requires_research")));
         }
-        tip.add(Component.translatable("ecology_workposts.rules").getVisualOrderText());
+        tip.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ecology_workposts.rules")));
         var out=new ArrayList<>(original);var info=new AbilityButton(Component.translatable("ecology_workposts.status").getString(),icon("golden_apple"),null,
             ()->false,()->false,()->true,()->{},null,tip,null,p);
-        info.bottomLeftText=()->{var current=state(p);return current==null?"?":current.occupants().stream().filter(EcologyWorkPosts.Occupant::arrived).count()+"/2";};out.add(info);
+        info.bottomLeftText=()->{var current=state(p);return current==null?"?":current.occupants().stream().filter(EcologyWorkPosts.Occupant::arrived).count()+"/"+EcologyWorkPosts.CAPACITY;};out.add(info);
         out.add(new AbilityButton(Component.translatable("ecology_workposts.release_all").getString(),icon("oak_door"),null,()->false,()->false,
             ()->{var current=state(p);return current!=null&&!current.occupants().isEmpty()&&EconomyActionClient.ready(current.epoch());},
-            ()->send(p,EcologyPackets.Action.RELEASE_ALL,EcologyPackets.ZERO,List.of()),null,List.of(Component.translatable("ecology_workposts.release_all").getVisualOrderText()),null,p));
+            ()->send(p,EcologyPackets.Action.RELEASE_ALL,EcologyPackets.ZERO,List.of()),null,com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ecology_workposts.release_all")),null,p));
         if(s!=null)for(var entry:s.occupants()) {
             var entity=level.getEntity(entry.id());String name=entity!=null&&entity.getUUID().equals(entry.uuid())?entity.getName().getString():"#"+entry.id();
             out.add(new AbilityButton(Component.translatable("ecology_workposts.release_one",name).getString(),icon("leather_boots"),null,()->false,()->false,
                 ()->{var current=state(p);return current!=null&&current.occupants().stream().anyMatch(o->o.lease().equals(entry.lease()));},
                 ()->send(p,EcologyPackets.Action.RELEASE,entry.lease(),List.of()),null,
-                List.of(Component.translatable("ecology_workposts.release_one",name).getVisualOrderText()),null,p));
+                com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("ecology_workposts.release_one",name)),null,p));
         }
         return out;
     }

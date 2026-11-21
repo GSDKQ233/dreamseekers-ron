@@ -27,11 +27,8 @@ public enum DreamBuildingSpec {
     }
 
     // Historical public constants retained for compatibility; current prices are explicit below.
-    // Health/build-time/supply remain unchanged by price-only calibration.
     public static final int PROVISIONAL_WOOD_COST = 100;
     public static final int PROVISIONAL_ORE_COST = 50;
-    public static final double PROVISIONAL_MAX_HEALTH = 200.0d;
-    public static final float PROVISIONAL_BUILD_TIME_MODIFIER = 1.0f;
 
     private final String structureName;
     private final String displayName;
@@ -55,7 +52,29 @@ public enum DreamBuildingSpec {
     }
     public Block portraitBlock() { return portraitBlock; }
 
-    /** Role-specific construction costs; supply, income, health and build time are configured separately. */
+    /** Role-specific durability: cheap logistics and the open dais are fragile, the hall and the tower are sturdy. */
+    public double maxHealth() {
+        return switch (this) {
+            case DREAM_DEPOT -> 120.0d;
+            case SHADOW_MINE -> 220.0d;
+            case SHADOW_FURNACE -> 200.0d;
+            case DREAM_HALL -> 260.0d;
+            case RESONANCE_LABORATORY -> 220.0d;
+            case CONTRACT_ECOLOGY -> 200.0d;
+            case RESONANCE_DAIS -> 160.0d;
+            case SHADOW_WATCHTOWER -> 240.0d;
+        };
+    }
+    /** Build-time multiplier applied by the core to the block-count based construction time. */
+    public float buildTimeModifier() {
+        return switch (this) {
+            case DREAM_DEPOT, RESONANCE_DAIS -> 0.8f;
+            case DREAM_HALL, CONTRACT_ECOLOGY -> 0.9f;
+            case SHADOW_MINE, SHADOW_FURNACE, RESONANCE_LABORATORY, SHADOW_WATCHTOWER -> 1.0f;
+        };
+    }
+
+    /** Role-specific construction costs; supply and income are configured separately. */
     public ResourceCost newProvisionalCost() {
         return switch (this) {
             case DREAM_DEPOT -> ResourceCost.Building(0,75,0,0);

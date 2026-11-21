@@ -251,9 +251,10 @@ public final class BuildingAbilityEffectsGameTests {
     public static void hallActualPaidLeftPressSamplesTenPercentOnceWithoutChangingSkillClockOrMultiplier(GameTestHelper h){
         var f=fixture(h,"PaidAD",108);var hall=f.install(DreamseekersMod.DREAM_HALL,f.origin.offset(64,0,0));var lab=f.install(DreamseekersMod.RESONANCE_LABORATORY,f.origin.offset(96,0,0));
         var boosted=publish(f,hall,DreamseekersMod.AARONCOS_LEFT_HAND_UNIT.get().create(f.level),-5,-5,f.owner);
-        var control=publish(f,hall,DreamseekersMod.AARONCOS_LEFT_HAND_UNIT.get().create(f.level),14,-5,f.owner);
+        // The control stands 13 blocks past the hall's far edge: range is measured from the footprint, not the origin corner.
+        var control=publish(f,hall,DreamseekersMod.AARONCOS_LEFT_HAND_UNIT.get().create(f.level),24,-5,f.owner);
         var a=publish(f,hall,DreamseekersMod.GOLDEN_FOX_UNIT.get().create(f.level),-1,-5,f.owner+"_enemy");
-        var b=publish(f,hall,DreamseekersMod.GOLDEN_FOX_UNIT.get().create(f.level),18,-5,f.owner+"_enemy");
+        var b=publish(f,hall,DreamseekersMod.GOLDEN_FOX_UNIT.get().create(f.level),28,-5,f.owner+"_enemy");
         for(var target:List.of(a,b)){neutralDamage(target);target.getAttribute(Attributes.MAX_HEALTH).setBaseValue(1000);target.setHealth(1000);target.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(1);}
         for(var hand:List.of(boosted,control)){hand.getAttribute(AttributeRegistrar.CRITICAL_HIT_CHANCE.get()).setBaseValue(0);hand.getAttribute(AttributeRegistrar.AGGRO_RANGE.get()).setBaseValue(0);}
         int[] writes={0,0},cooldownAtRelease={-1,-1};double[] plainAd={0};long[] started={-1},released={-1,-1};

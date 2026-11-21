@@ -1,46 +1,55 @@
 // Evaluated by settings.gradle, before plugin resolution. Presence of a -P switch
 // has the same meaning as Project.hasProperty, including a switch with no value.
-// The large legacy addon profiles still own their original worlds/diagnostics;
-// no other selector may share their invocation or rewrite their namespace.
+// The remaining legacy addon profiles are the only entry to their namespaces and
+// still own their original worlds/diagnostics; no other selector may share their
+// invocation or rewrite their namespace.
 def addonProbes = [
-    'dreamseekersFoundationFocused', 'dreamseekersWindProtocolFocused', 'dreamseekersWindProgressionFocused',
-    'dreamseekersWindTrainingFocused', 'dreamseekersShellFunctionsFocused', 'dreamseekersBranchesFocused',
-    'dreamseekersWindRestart', 'dreamseekersUnitReceiptRestart', 'dreamseekersUnitReceiptsFocused',
-    'dreamseekersShadowGolemStrikeBuildingTestPhase', 'dreamseekersShadowGolemStrikeFogFocused', 'dreamseekersShadowGolemStrikeFocused',
-    'dreamseekersShadowGolemStrikeTestPhase', 'dreamseekersLightFeatherAlertFocused', 'dreamseekersLightFeatherAlertTestPhase',
-    'dreamseekersAshEmberParticlesFocused', 'dreamseekersAshEmberLandingFocused', 'dreamseekersAshEmberLandingTestPhase',
-    'dreamseekersShadowHandGripFocused', 'dreamseekersShadowHandGripTestPhase', 'dreamseekersFriendlyDebtContractFocused',
-    'dreamseekersFriendlyDebtContractTestPhase', 'dreamseekersTerrorbeakDreadRoarFocused', 'dreamseekersTerrorbeakDreadRoarTestPhase',
-    'dreamseekersSquealSuppressionWaveFocused', 'dreamseekersSquealSuppressionWaveTestPhase', 'dreamseekersShadowCorrosionTouchFocused',
-    'dreamseekersShadowCorrosionTouchTestPhase', 'dreamseekersStoneHeavyShotFocused', 'dreamseekersStoneHeavyShotTestPhase',
+    'dreamseekersFoundationFocused', 'dreamseekersShellFunctionsFocused', 'dreamseekersWindRestart',
+    'dreamseekersUnitReceiptRestart', 'dreamseekersShadowGolemStrikeBuildingTestPhase', 'dreamseekersShadowGolemStrikeFogFocused',
+    'dreamseekersShadowGolemStrikeFocused', 'dreamseekersShadowGolemStrikeTestPhase', 'dreamseekersLightFeatherAlertFocused',
+    'dreamseekersLightFeatherAlertTestPhase', 'dreamseekersAshEmberParticlesFocused', 'dreamseekersAshEmberLandingFocused',
+    'dreamseekersAshEmberLandingTestPhase', 'dreamseekersShadowHandGripFocused', 'dreamseekersShadowHandGripTestPhase',
+    'dreamseekersFriendlyDebtContractFocused', 'dreamseekersTerrorbeakDreadRoarTestPhase', 'dreamseekersSquealSuppressionWaveTestPhase',
+    'dreamseekersShadowCorrosionTouchFocused', 'dreamseekersShadowCorrosionTouchTestPhase', 'dreamseekersStoneHeavyShotTestPhase',
     'dreamseekersSnailShellFormationFocused', 'dreamseekersSnailShellFormationTestPhase', 'dreamseekersBeetleAdvanceFocused',
     'dreamseekersBeetleAdvanceTestPhase', 'dreamseekersFireflyRushFocused', 'dreamseekersFireflyRushTestPhase',
     'dreamseekersFoxSporeFocused', 'dreamseekersFoxSporeTestPhase', 'dreamseekersMotherNativeDiagnostic',
-    'dreamseekersBoneMarkFocused', 'dreamseekersBoneMarkTestPhase', 'dreamseekersWindDashFocused',
-    'dreamseekersWindDashTestPhase', 'dreamseekersFoxBlessingFocused', 'dreamseekersFoxBlessingTestPhase',
-    'dreamseekersJellyFlowFocused', 'dreamseekersJellyFlowTestPhase', 'dreamseekersGelSkillFocused',
-    'dreamseekersGelSkillTestPhase', 'dreamseekersRosterCompleteTest', 'dreamseekersAaroncosFocused',
-    'dreamseekersAaroncosBoundary', 'dreamseekersAaroncosTestPhase', 'dreamseekersWeepingFocused',
+    'dreamseekersBoneMarkTestPhase', 'dreamseekersWindDashFocused', 'dreamseekersWindDashTestPhase',
+    'dreamseekersFoxBlessingTestPhase', 'dreamseekersJellyFlowTestPhase', 'dreamseekersGelSkillTestPhase',
+    'dreamseekersRosterCompleteTest', 'dreamseekersAaroncosBoundary', 'dreamseekersWeepingFocused',
     'dreamseekersWeepingTestPhase', 'dreamseekersGolemNativeProbe', 'dreamseekersGolemFocused',
-    'dreamseekersGolemBoundary', 'dreamseekersGolemTestPhase', 'dreamseekersCrazyTerrorbeakFocused',
-    'dreamseekersCrazyTerrorbeakTestPhase', 'dreamseekersAshBoundary', 'dreamseekersAshBoneWingFocused',
-    'dreamseekersAshBoneWingTestPhase', 'dreamseekersShadowHandFocused', 'dreamseekersShadowHandTestPhase',
-    'dreamseekersFriendlyGhostFocused', 'dreamseekersFriendlyGhostTestPhase', 'dreamseekersTerrorbeakFocused',
+    'dreamseekersGolemBoundary', 'dreamseekersGolemTestPhase', 'dreamseekersAshBoundary',
+    'dreamseekersAshBoneWingFocused', 'dreamseekersAshBoneWingTestPhase', 'dreamseekersShadowHandFocused',
+    'dreamseekersShadowHandTestPhase', 'dreamseekersFriendlyGhostFocused', 'dreamseekersFriendlyGhostTestPhase',
     'dreamseekersTerrorbeakTestPhase', 'dreamseekersShadowSquealFocused', 'dreamseekersShadowSquealTestPhase',
     'dreamseekersShadowGhostBoundary', 'dreamseekersShadowGhostFocused', 'dreamseekersShadowGhostTestPhase',
-    'dreamseekersMotherBoundary', 'dreamseekersMotherFocused', 'dreamseekersMotherTestPhase',
     'dreamseekersStoneBoundary', 'dreamseekersStoneFocused', 'dreamseekersStoneTestPhase',
-    'dreamseekersLightHoldFocused', 'dreamseekersLightCompleteTest', 'dreamseekersSporeFocused',
-    'dreamseekersSporeTestPhase', 'dreamseekersWindKnightBoundary', 'dreamseekersWindKnightFocused',
-    'dreamseekersWindKnightTestPhase', 'dreamseekersBoneWingTest', 'dreamseekersBoneWingSpawnBoundary',
-    'dreamseekersBoneWingFocused', 'dreamseekersBoneWingTestPhase', 'dreamseekersTestBatch',
-    'dreamseekersMarkVisionFocused', 'dreamseekersJellyfishRallyLifecycle', 'dreamseekersJellyfishRallyBoundary',
-    'dreamseekersJellyfishFocused', 'dreamseekersJellyfishTest', 'dreamseekersJellyfishTestPhase',
-    'dreamseekersSlimeFocused', 'dreamseekersSlimeTest', 'dreamseekersSlimeTestPhase',
-    'dreamseekersFoxFocused', 'dreamseekersFoxTest', 'dreamseekersFoxTestPhase',
-    'dreamseekersScoutFocused', 'dreamseekersLightTest', 'dreamseekersScoutTestPhase',
-    'dreamseekersFireflyWorkTest', 'dreamseekersFireflyTestPhase', 'dreamseekersTestPhase',
-    'dreamseekersScaffoldTestPhase',
+    'dreamseekersLightHoldFocused', 'dreamseekersLightCompleteTest', 'dreamseekersSporeTestPhase',
+    'dreamseekersWindKnightBoundary', 'dreamseekersWindKnightFocused', 'dreamseekersWindKnightTestPhase',
+    'dreamseekersBoneWingTest', 'dreamseekersBoneWingSpawnBoundary', 'dreamseekersBoneWingFocused',
+    'dreamseekersBoneWingTestPhase', 'dreamseekersTestBatch', 'dreamseekersMarkVisionFocused',
+    'dreamseekersJellyfishRallyLifecycle', 'dreamseekersJellyfishRallyBoundary', 'dreamseekersJellyfishFocused',
+    'dreamseekersJellyfishTest', 'dreamseekersJellyfishTestPhase', 'dreamseekersSlimeFocused',
+    'dreamseekersSlimeTest', 'dreamseekersSlimeTestPhase', 'dreamseekersFoxFocused',
+    'dreamseekersFoxTest', 'dreamseekersFoxTestPhase', 'dreamseekersScoutFocused',
+    'dreamseekersLightTest', 'dreamseekersScoutTestPhase', 'dreamseekersFireflyWorkTest',
+    'dreamseekersFireflyTestPhase', 'dreamseekersTestPhase', 'dreamseekersScaffoldTestPhase',
+]
+
+// Retired addon switches whose namespace is a canonical suite. Without this
+// check a stale switch would be ignored and the default addon set would run.
+def retiredAddonProbes = [
+    dreamseekersWindProtocolFocused: 'wind_protocol', dreamseekersWindProgressionFocused: 'wind_progression',
+    dreamseekersWindTrainingFocused: 'wind_training', dreamseekersBranchesFocused: 'branches',
+    dreamseekersUnitReceiptsFocused: 'unit_receipts', dreamseekersFriendlyDebtContractTestPhase: 'friendly_debt_restart',
+    dreamseekersTerrorbeakDreadRoarFocused: 'dread_roar', dreamseekersSquealSuppressionWaveFocused: 'wave',
+    dreamseekersStoneHeavyShotFocused: 'heavy', dreamseekersBoneMarkFocused: 'bone_mark',
+    dreamseekersFoxBlessingFocused: 'fox_blessing', dreamseekersJellyFlowFocused: 'jelly_flow',
+    dreamseekersGelSkillFocused: 'gel_skill', dreamseekersAaroncosFocused: 'old_aaroncos',
+    dreamseekersAaroncosTestPhase: 'old_aaroncos_restart', dreamseekersCrazyTerrorbeakFocused: 'old_crazy',
+    dreamseekersCrazyTerrorbeakTestPhase: 'old_crazy_restart', dreamseekersTerrorbeakFocused: 'old_terrorbeak',
+    dreamseekersMotherBoundary: 'mother_boundary', dreamseekersMotherFocused: 'old_mother',
+    dreamseekersMotherTestPhase: 'old_mother_restart', dreamseekersSporeFocused: 'old_spore',
 ]
 
 def suites = [
@@ -164,6 +173,7 @@ def api65Counts = [
     api65_units: 24, api65_world: 16, api65_world_table: 2, api65_addon: 7, api65_addon_restart: 1,
     api65_editor_worlds: 2, api65_repair_play: 4, api65_repair2_cargo: 1, api65_repair2_survival: 1, api65_repair2_training: 3, api65_repair2_lobby: 2, api65_repair2_hero: 1, api65_repair2_beacon: 2, api65_repair3_survival_result: 1, api65_repair3_scenario: 3
 ]
+api65Counts.api65_followup_hero_xp = 3
 api65Counts.each { namespace, count ->
     def phased = [
         api65_addon_restart: 'api65.addon.restart.phase',
@@ -185,6 +195,9 @@ def resolve = { Closure prop ->
         killValueRestartPhase: ['reignofnether_kill_restart', addon ? 'run-kill-economy-addon-restart-v8' : 'run-kill-economy-restart-v8', 'resource.kill.restart.phase'],
         oreRestartPhase: ['reignofnether', addon ? 'run-dreamseekers-gametest' : 'run-gametest', 'ore.mine.restart.phase']
     ]
+    def retired = retiredAddonProbes.keySet().find { prop(it) != null }
+    if (retired != null)
+        throw new GradleException("${retired} was retired; use -Pdreamseekers -PresourceTechSuite=${retiredAddonProbes[retired]}")
     def selected = (['resourceTechSuite'] + coreProbes.keySet() + addonProbes).findAll { prop(it) != null }
     if (selected.size() > 1)
         throw new GradleException('Choose exactly one GameTest selector; conflicting properties: ' + selected.join(', '))

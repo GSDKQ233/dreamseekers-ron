@@ -19,8 +19,8 @@ public final class DreamHall extends ProductionBuilding {
         super(DreamBuildingSpec.DREAM_HALL.structureName(), DreamBuildingSpec.DREAM_HALL.newProvisionalCost(), false);
         DreamFunctionalPlacement.bootstrap();
         name=spec().displayName(); portraitBlock=spec().portraitBlock(); icon=spec().icon();
-        maxHealth=DreamBuildingSpec.PROVISIONAL_MAX_HEALTH;
-        buildTimeModifier=DreamBuildingSpec.PROVISIONAL_BUILD_TIME_MODIFIER;
+        maxHealth=DreamBuildingSpec.DREAM_HALL.maxHealth();
+        buildTimeModifier=DreamBuildingSpec.DREAM_HALL.buildTimeModifier();
         startingBlockTypes.add(Blocks.STONE_BRICKS);
         spawnRadiusOffset=2;
         productions=new com.dreamseekers.production.DreamPagedProductionItemList();

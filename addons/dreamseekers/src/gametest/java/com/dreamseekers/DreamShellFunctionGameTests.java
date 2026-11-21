@@ -213,8 +213,16 @@ public final class DreamShellFunctionGameTests {
         var beyond=f.install(DreamseekersMod.RESONANCE_DAIS,origin.offset(0,9,12),Rotation.NONE);
         h.assertTrue(!DreamResonanceAura.active(host),"vertical9 excluded");
         beyond.isBuilt=false;
-        var diagonal=f.install(DreamseekersMod.RESONANCE_DAIS,origin.offset(12,0,1),Rotation.NONE);
-        h.assertTrue(!DreamResonanceAura.active(host),"Euclidean radius excludes12,1 diagonal");
+        // Range is footprint to footprint: gaps are measured from the placements' real corners.
+        var diagonal=f.install(DreamseekersMod.RESONANCE_DAIS,new BlockPos(host.maxCorner.getX()+12,origin.getY(),host.maxCorner.getZ()+2),Rotation.NONE);
+        h.assertTrue(diagonal.minCorner.getX()-host.maxCorner.getX()==12&&diagonal.minCorner.getZ()-host.maxCorner.getZ()==2,"fixture gap12,2");
+        h.assertTrue(!DreamResonanceAura.active(host),"Euclidean radius excludes a12,2 footprint gap");
+        diagonal.isBuilt=false;
+        var west=f.install(DreamseekersMod.RESONANCE_DAIS,new BlockPos(host.minCorner.getX()-21,origin.getY(),origin.getZ()),Rotation.NONE);
+        h.assertTrue(host.minCorner.getX()-west.maxCorner.getX()==13&&!DreamResonanceAura.active(host),"footprint gap13 on the far side excluded");
+        west.isBuilt=false;
+        var touching=f.install(DreamseekersMod.RESONANCE_DAIS,new BlockPos(host.minCorner.getX()-9,origin.getY(),origin.getZ()),Rotation.NONE);
+        h.assertTrue(host.minCorner.getX()-touching.maxCorner.getX()==1&&DreamResonanceAura.active(host),"dais touching the side away from the origin corner is covered");
         f.pass("DAIS_RANGE_OWNER_OVERLAP");
     }
     private static void assertDaisRates(GameTestHelper h,ProductionPlacement host,int training,int research,String phase) {

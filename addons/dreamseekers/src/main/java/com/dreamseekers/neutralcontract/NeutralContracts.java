@@ -103,7 +103,7 @@ public final class NeutralContracts {
         court.getDataStorage();var s=((DreamFunctionalPlacement)court).stateSnapshot();
         return s.supported()&&s.instanceId()!=null&&s.owner().equals(worker.getOwnerName())&&s.built();
     }
-    private static boolean inCoverage(Entity e,BuildingPlacement court){return e.level()==court.level&&e.position().distanceToSqr(Vec3.atCenterOf(court.originPos))<=COVERAGE*COVERAGE;}
+    private static boolean inCoverage(Entity e,BuildingPlacement court){return e.level()==court.level&&com.dreamseekers.building.DreamFootprintRange.pointWithin(court,e.getX(),e.getY(),e.getZ(),COVERAGE);}
     private static BuildingPlacement courtFor(FireflyWorker worker,LivingEntity target){return BuildingServerEvents.getBuildings().stream()
         .filter(c->courtOwn(worker,c)&&inCoverage(worker,c)&&(target==null||inCoverage(target,c)))
         .min(Comparator.<BuildingPlacement>comparingDouble(c->worker.position().distanceToSqr(Vec3.atCenterOf(c.originPos)))

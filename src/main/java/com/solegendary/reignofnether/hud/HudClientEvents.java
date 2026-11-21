@@ -433,7 +433,7 @@ public class HudClientEvents {
                     } else {
                         ResourceLocation rl = ReignOfNetherRegistries.BUILDING.getKey(building.getBuilding());
                         if (rl != null) {
-                            name = I18n.get("buildings.reignofnether." + rl.getPath());
+                            name = I18n.get("buildings." + rl.getNamespace() + "." + rl.getPath());
                         }
                     }
                     buildingButtons.add(new ButtonBuilder(name)
@@ -497,7 +497,7 @@ public class HudClientEvents {
                                 Building building = placement.getBuilding();
                                 ResourceLocation rl = ReignOfNetherRegistries.BUILDING.getKey(building);
                                 if (rl != null) {
-                                    String buildingName = I18n.get("buildings.reignofnether." + rl.getPath());
+                                    String buildingName = I18n.get("buildings." + rl.getNamespace() + "." + rl.getPath());
                                     if (extraBuildingsMap.containsKey(buildingName))
                                         extraBuildingsMap.put(buildingName, extraBuildingsMap.get(buildingName) + 1);
                                     else

@@ -14,7 +14,7 @@ public final class TerrorbeakUpgradeAbility extends Ability {
     private TerrorbeakUpgradeAbility(){super(null,0,0,0,true,true);showRangeCircle=false;showRangeLine=false;showRadiusCircle=false;}
     @Override public boolean shouldResetBehaviours(){return false;}
     @Override public AbilityButton getButton(Keybinding key,Unit unit){var source=(TerrorbeakUnit)unit;
-        var tooltip=List.of(Component.translatable("dreamseekers.terrorbeak_upgrade.title").getVisualOrderText(),Component.translatable("dreamseekers.terrorbeak_upgrade.cost").getVisualOrderText(),Component.translatable("dreamseekers.terrorbeak_upgrade.rules").getVisualOrderText());
+        var tooltip=com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("dreamseekers.terrorbeak_upgrade.title"),Component.translatable("dreamseekers.terrorbeak_upgrade.cost"),Component.translatable("dreamseekers.terrorbeak_upgrade.rules"));
         return new AbilityButton(Component.translatable("dreamseekers.terrorbeak_upgrade.title").getString(),DreamseekersMod.CRAZY_TERRORBEAK_ICON,key,()->false,()->false,
             ()->TerrorbeakUpgradeClient.available(source),()->TerrorbeakUpgradeClient.upgrade(source),null,tooltip,this,source);
     }
