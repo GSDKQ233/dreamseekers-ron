@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.building;
+import net.minecraft.nbt.CompoundTag;
+import com.solegendary.reignofnether.building.data.DataStorage;
 
 import com.dreamseekers.function.DreamFunctionalPlacement;
 import com.dreamseekers.production.DreamHallPlacement;
@@ -18,6 +20,7 @@ public final class DreamHall extends ProductionBuilding {
     public DreamHall(ProductionItem boneWing,ProductionItem windKnight,ProductionItem stoneThrower,ProductionItem beetleMother,ProductionItem shadowGhost,ProductionItem shadowSquealGhost,ProductionItem terrorbeak,ProductionItem friendlyGhost,ProductionItem shadowHand,ProductionItem ashBoneWing,ProductionItem shadowGolem,ProductionItem weepingSquealGhost,ProductionItem leftHand,ProductionItem rightHand) {
         super(DreamBuildingSpec.DREAM_HALL.structureName(), DreamBuildingSpec.DREAM_HALL.newProvisionalCost(), false);
         DreamFunctionalPlacement.bootstrap();
+        DreamTemplateModel.bootstrap();
         name=spec().displayName(); portraitBlock=spec().portraitBlock(); icon=spec().icon();
         maxHealth=DreamBuildingSpec.DREAM_HALL.maxHealth();
         buildTimeModifier=DreamBuildingSpec.DREAM_HALL.buildTimeModifier();
@@ -43,7 +46,15 @@ public final class DreamHall extends ProductionBuilding {
     @Override public BuildingPlacement createBuildingPlacement(Level level, BlockPos pos, Rotation rotation, String owner) {
         return new DreamHallPlacement(this,level,pos,rotation,owner);
     }
-    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) { return DreamBuildingSupport.load(spec().structureName()); }
+    @Override public BuildingPlacement createRestoredBuildingPlacement(Level level, BlockPos pos, Rotation rotation, String owner, DataStorage saved) {
+        return new DreamHallPlacement(this, level, pos, rotation, owner, DreamTemplateModel.HALL.restore(saved));
+    }
+    @Override public boolean acceptsInitialStructureSnapshot(CompoundTag snapshot) {
+        return DreamTemplateModel.HALL.validSnapshot(snapshot);
+    }
+    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) {
+        return DreamTemplateModel.HALL.blocks(DreamTemplateModel.Revision.REVIEWED);
+    }
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) { return DreamBuildingSupport.button(this,key); }
     @Override public String getBuildAvailabilityError(String owner) { return DreamBuildingSupport.availability(this,owner); }
     @Override public boolean requiresStrictPlacementOwnerCheck() { return true; }

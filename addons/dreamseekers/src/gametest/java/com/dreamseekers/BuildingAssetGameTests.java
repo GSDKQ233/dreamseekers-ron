@@ -65,7 +65,22 @@ public final class BuildingAssetGameTests {
 
     @GameTest(template = TEMPLATE, batch = BATCH, timeoutTicks = 100)
     public static void allElevenPalettesAndRotationsUseActualRegistries(GameTestHelper helper) throws Exception {
-        for (String id : ASSETS) {
+        checkPalettesAndRotations(helper, ASSETS);
+    }
+
+    @GameTest(template = TEMPLATE, batch = BATCH, timeoutTicks = 100)
+    public static void allThirteenReviewedPalettesAndRotationsUseActualRegistries(GameTestHelper helper) throws Exception {
+        checkPalettesAndRotations(helper, new String[]{
+                "dream_anchor_base_v5", "dream_anchor_shadow_v5", "dream_anchor_wind_v5",
+                "shadow_watchtower_garrison_v3", "reverie_garden_rework_v1",
+                "dream_depot_rework_v1", "shadow_mine_rework_v1", "shadow_furnace_rework_v1",
+                "beetle_sanctuary_rework_v1", "dream_hall_rework_v1",
+                "resonance_laboratory_rework_v1", "contract_ecology_rework_v1", "resonance_dais_rework_v1"
+        });
+    }
+
+    private static void checkPalettesAndRotations(GameTestHelper helper, String[] assets) throws Exception {
+        for (String id : assets) {
             byte[] server;
             try (InputStream stream = BuildingAssetGameTests.class.getResourceAsStream("/data/dreamseekers/structures/" + id + ".nbt")) {
                 helper.assertTrue(stream != null, "server asset present: " + id);

@@ -105,9 +105,9 @@ public final class LightResonanceResearchGameTests {
             // This fixture isolates FINAL prerequisites. Full paid FIRST and both natural completions are separate tests/restart.
             ResearchServerEvents.addResearch(f.owner,LightResonanceResearch.FIRST_ID);
             h.assertTrue(!LightResonanceResearch.prerequisites(p,false,2)&&start(f,p,LightResonanceResearch.FINAL).equals("forbidden"),"base tree cannot qualify via research flag");
-            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V4).equals("started"),"actual paid wind morph starts");
+            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V5).equals("started"),"actual paid wind morph starts");
             root.tree().remaining=1; // Explicit geometry prerequisite fixture acceleration, never a research-duration assertion.
-        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V4&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"native paid morph committed actual wind geometry"))
+        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"native paid morph committed actual wind geometry"))
         .thenExecute(()->{
             h.assertTrue(!root.ascended()&&LightResonanceResearch.prerequisites(p,false,2),"legal high wind branch accepted without shadow-only ascended() trap");
             h.assertTrue(ProductionWorkRates.percent(p,LightResonanceResearch.FINAL)==125&&ProductionWorkRates.estimatedSeconds(1500,125)==60,"earned wind modifies actual research time, not hardcoded 75 seconds");

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.building;
+import com.solegendary.reignofnether.building.data.DataStorage;
+import net.minecraft.nbt.CompoundTag;
 
 import com.dreamseekers.function.DreamFunctionalPlacement;
 import com.solegendary.reignofnether.building.Building;
@@ -27,6 +29,7 @@ public class DreamScaffoldBuilding extends Building {
         super(Objects.requireNonNull(spec).structureName(), spec.newProvisionalCost(), false);
         // Register the persisted codec before ordinary world save-data decoding.
         DreamFunctionalPlacement.bootstrap();
+        DreamTemplateModel.bootstrap();
         this.spec = spec;
         name = spec.displayName();
         portraitBlock = spec.portraitBlock();
@@ -51,8 +54,18 @@ public class DreamScaffoldBuilding extends Building {
         return new DreamFunctionalPlacement(this, level, pos, rotation, ownerName);
     }
 
+    @Override public BuildingPlacement createRestoredBuildingPlacement(Level level, BlockPos pos, Rotation rotation,
+                                                                      String ownerName, DataStorage saved) {
+        return new DreamFunctionalPlacement(this, level, pos, rotation, ownerName,
+                DreamTemplateModel.forBuilding(spec.structureName()).restore(saved));
+    }
+
+    @Override public boolean acceptsInitialStructureSnapshot(CompoundTag snapshot) {
+        return DreamTemplateModel.forBuilding(spec.structureName()).validSnapshot(snapshot);
+    }
+
     @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) {
-        return DreamBuildingSupport.load(spec.structureName());
+        return DreamTemplateModel.forBuilding(spec.structureName()).blocks(DreamTemplateModel.Revision.REVIEWED);
     }
 
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) {

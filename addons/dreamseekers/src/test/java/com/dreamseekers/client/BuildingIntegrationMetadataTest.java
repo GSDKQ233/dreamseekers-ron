@@ -56,7 +56,7 @@ class BuildingIntegrationMetadataTest {
     }
     @Test void allElevenManifestRolesDescribeEnabledCurrentServices() throws Exception {
         var manifest = read("structure_manifest.json");
-        assertEquals(2, manifest.get("runtime_integration_revision").getAsInt());
+        assertEquals(3, manifest.get("runtime_integration_revision").getAsInt());
         var structures = manifest.getAsJsonArray("structures");
         assertEquals(11, structures.size());
         Set<String> ids = new LinkedHashSet<>();
@@ -88,9 +88,39 @@ class BuildingIntegrationMetadataTest {
                 var templates = item.getAsJsonObject("runtime_templates");
                 assertEquals("shadow_watchtower", templates.get("legacy_saved_model").getAsString());
                 String current = templates.get("new_construction").getAsString();
-                assertEquals("shadow_watchtower_garrison_v2", current);
+                assertEquals("shadow_watchtower_garrison_v3", current);
                 assertTrue(Files.isRegularFile(ROOT.resolve("src/main/resources/data/dreamseekers/structures/" + current + ".nbt")));
             }
         }
     }
+    @Test void allThirteenReviewedRuntimeTemplatesHaveSeparateIdsAndPinnedCounts() throws Exception {
+        var manifest = read("structure_manifest.json");
+        var expected = java.util.Map.ofEntries(
+                java.util.Map.entry("dream_anchor_base_v5",376),
+                java.util.Map.entry("dream_anchor_shadow_v5",351),
+                java.util.Map.entry("dream_anchor_wind_v5",393),
+                java.util.Map.entry("shadow_watchtower_garrison_v3",176),
+                java.util.Map.entry("reverie_garden_rework_v1",314),
+                java.util.Map.entry("dream_depot_rework_v1",332),
+                java.util.Map.entry("shadow_mine_rework_v1",342),
+                java.util.Map.entry("shadow_furnace_rework_v1",477),
+                java.util.Map.entry("beetle_sanctuary_rework_v1",251),
+                java.util.Map.entry("dream_hall_rework_v1",427),
+                java.util.Map.entry("resonance_laboratory_rework_v1",404),
+                java.util.Map.entry("contract_ecology_rework_v1",400),
+                java.util.Map.entry("resonance_dais_rework_v1",137));
+        var observed = new java.util.LinkedHashMap<String,Integer>();
+        for (var raw : manifest.getAsJsonArray("runtime_template_assets")) {
+            var item = raw.getAsJsonObject();
+            if (!item.has("review_revision")) continue;
+            assertEquals(5,item.get("review_revision").getAsInt());
+            var id = item.get("id").getAsString();
+            assertNull(observed.put(id,item.get("non_air_blocks").getAsInt()),id);
+            var total = item.getAsJsonObject("palette_counts").entrySet().stream()
+                    .mapToInt(e -> e.getValue().getAsInt()).sum();
+            assertEquals(item.get("non_air_blocks").getAsInt(),total,id);
+        }
+        assertEquals(expected,observed);
+    }
+
 }

@@ -37,7 +37,7 @@ public final class DreamFoundationGameTests {
     int low=blocks.stream().mapToInt(b->b.getBlockPos().getY()).min().orElseThrow();
     long eligible=blocks.stream().filter(b->b.getBlockPos().getY()<=low+building.foundationYLayers-1&&building.startingBlockTypes.contains(b.getBlockState().getBlock())&&!b.getBlockState().isAir()).count();
     check(eligible>0,"nonempty real starting whitelist/template intersection: "+building.structureName+" / "+rotation);
-    if(building==DreamseekersMod.DREAM_ANCHOR)check(eligible==37,"precise PD brick foundation count37, not all99floorcells");
+    if(building==DreamseekersMod.DREAM_ANCHOR)check(eligible==33,"precise PD brick foundation count33, not all99floorcells");
    }
    check(DreamseekersMod.DREAM_ANCHOR.startingBlockTypes.contains(Blocks.STONE_BRICKS),"legacy stone foundation compatibility retained");
    site=h.absolutePos(new BlockPos(60,1,60));
@@ -52,9 +52,9 @@ public final class DreamFoundationGameTests {
    PlayerServerEvents.startRTS(peer.actor.getId(),new Vec3(site.getX(),site.getY(),site.getZ()),DreamseekersMod.DREAMSEEKERS,1);
    var rts=PlayerServerEvents.getRTSPlayer(owner);check(rts!=null&&rts.faction==DreamseekersMod.DREAMSEEKERS,"native readied start creates correct RTS player");
    anchor=(DreamAnchorPlacement)BuildingServerEvents.getBuildings().stream().filter(b->b.ownerName.equals(owner)&&b.getBuilding()==DreamseekersMod.DREAM_ANCHOR).findFirst().orElseThrow();
-   check(anchor.model()==WorldTreeModel.BASE_V3&&!anchor.isBuilt&&!anchor.selfBuilding,"native newBASEv3 remains unfinished and not editor-self-building");
+   check(anchor.model()==WorldTreeModel.BASE_V5&&!anchor.isBuilt&&!anchor.selfBuilding,"native newBASEv5 remains unfinished and not editor-self-building");
    System.out.println("DREAM_FOUNDATION_INITIAL placed="+anchor.getBlocksPlaced()+" queued="+DreamFoundationQueueProbe.queued(anchor)+" origin="+anchor.originPos+" min="+anchor.minCorner+" high="+anchor.getHighestBlockCountReached()+" scaffold="+anchor.getScaffoldBlocks().size()+" site="+site+" floor="+level.getBlockState(anchor.minCorner.below()));
-   check(anchor.getBlocksPlaced()==0&&DreamFoundationQueueProbe.queued(anchor)==37,"native placement queues37foundations while zero blocks prebuilt; placed="+anchor.getBlocksPlaced()+" queued="+DreamFoundationQueueProbe.queued(anchor));
+   check(anchor.getBlocksPlaced()==0&&DreamFoundationQueueProbe.queued(anchor)==33,"native placement queues33foundations while zero blocks prebuilt; placed="+anchor.getBlocksPlaced()+" queued="+DreamFoundationQueueProbe.queued(anchor));
    check(!anchor.shouldBeDestroyed(),"queued foundations prevent immediate empty-building destruction");
    var r=ExtendedResourcesSync.account(owner);check(r.food==ResourcesServerEvents.STARTING_FOOD_READIED&&r.wood==ResourcesServerEvents.STARTING_WOOD_READIED&&r.ore==ResourcesServerEvents.STARTING_ORE_READIED,"readied starting capitol is free; exact standard starting economy");
   }
@@ -70,13 +70,13 @@ public final class DreamFoundationGameTests {
    }
    if(ticks==60)check(anchor.getBlocksPlaced()>0,"real queued foundation blocks placed beyond old2second defeat window");
    if(anchor.isBuilt&&completedTick<0){
-    check(anchor.getBlocksTotal()==325&&anchor.getBlocksPlaced()==325&&anchor.getHealth()==380&&anchor.partialBlocksDestroyed==0,"actual worker completes all325blocks at380HP");
+    check(anchor.getBlocksTotal()==376&&anchor.getBlocksPlaced()==376&&anchor.getHealth()==380&&anchor.partialBlocksDestroyed==0,"actual worker completes all376blocks at380HP");
     check(BuildingServerEvents.getTotalPopulationSupply(owner)==DreamseekersMod.DREAM_ANCHOR.cost.population,"native completion grants exact capitol population");completedTick=ticks;
     paidPlacementAndCancel();
    }
    if(completedTick>=0&&ticks-completedTick>=100&&paidAnchor!=null&&paidAnchor.isBuilt){
-    check(paidAnchor.getBlocksPlaced()==325&&paidAnchor.getHealth()==380&&BuildingServerEvents.getTotalPopulationSupply(owner)==30,"ordinary paid second Anchor really worker-completes at fullHP and adds population");
-    System.out.println("DREAM_FOUNDATION_NATIVE_PASS native_readied_start queued37 no_autodefeat five_workers complete325_hp380 population paid_400_100_refund paid_worker_complete325_pop30 all11_rotations");finished=true;h.succeed();}
+    check(paidAnchor.getBlocksPlaced()==376&&paidAnchor.getHealth()==380&&BuildingServerEvents.getTotalPopulationSupply(owner)==30,"ordinary paid second Anchor really worker-completes at fullHP and adds population");
+    System.out.println("DREAM_FOUNDATION_NATIVE_PASS native_readied_start queued33 no_autodefeat five_workers complete376_hp380 population paid_400_100_refund paid_worker_complete376_pop30 all11_rotations");finished=true;h.succeed();}
   }
   void paidPlacementAndCancel(){
    // Explicit fixture funding through the real ledger; no editor placement/cheat path.
@@ -86,7 +86,7 @@ public final class DreamFoundationGameTests {
    System.out.println("DREAM_FOUNDATION_PAID_PREFLIGHT site="+paidSite+" validity="+BuildingValidators.getPlacementValidityError(level,DreamseekersMod.DREAM_ANCHOR,paidSite,owner,Rotation.CLOCKWISE_90,false,false,true)+" resources="+food+","+wood+","+ore+" ground="+level.getBlockState(paidSite)+" firstCompleteTicks="+ticks);
    var paid=BuildingServerEvents.placeBuilding(DreamseekersMod.DREAM_ANCHOR,paidSite,Rotation.CLOCKWISE_90,owner,new int[0],false,false,false,true);
    System.out.println("DREAM_FOUNDATION_PAID_ACTUAL "+(paid==null?"null":"placed="+paid.getBlocksPlaced()+" queued="+DreamFoundationQueueProbe.queued(paid)+" built="+paid.isBuilt+" self="+paid.selfBuilding+" origin="+paid.originPos));
-   check(paid!=null&&!paid.isBuilt&&!paid.selfBuilding&&DreamFoundationQueueProbe.queued(paid)==37,"ordinary paid rotated anchor queues37 real foundations");
+   check(paid!=null&&!paid.isBuilt&&!paid.selfBuilding&&DreamFoundationQueueProbe.queued(paid)==33,"ordinary paid rotated anchor queues33 real foundations");
    check(r.food==food&&r.wood==wood-400&&r.ore==ore-100,"ordinary paid placement exact400wood100ore");
    check(BuildingServerEvents.placeBuilding(DreamseekersMod.DREAM_ANCHOR,paidSite,Rotation.CLOCKWISE_90,owner,new int[0],false,false,false,true)==null,"duplicate ordinary placement rejected");
    check(r.wood==wood-400&&r.ore==ore-100,"rejected duplicate no second charge");

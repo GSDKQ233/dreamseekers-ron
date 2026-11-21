@@ -71,7 +71,7 @@ public final class ResourceAuditAdministrativeRemovalGameTests {
             for(int i=0;i<reasons.size();i++){
                 var f=setup(h,"Cleanup"+i,i*40);fixtures.add(f);var before=snapshot(f.account);
                 f.tree.onRemoved(reasons.get(i));
-                h.assertTrue(snapshot(f.account).equals(before)&&f.account.paidReceipts.get(f.receipt).purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V3)),"cleanup "+reasons.get(i)+" does not settle, refund, or forfeit paid gameplay state");
+                h.assertTrue(snapshot(f.account).equals(before)&&f.account.paidReceipts.get(f.receipt).purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V5)),"cleanup "+reasons.get(i)+" does not settle, refund, or forfeit paid gameplay state");
             }
             System.out.println("RESOURCE_ADMIN_REMOVE_PASS reload_replaced_stop_cleanup_unchanged");h.succeed();
         }finally{fixtures.forEach(ResourceAuditAdministrativeRemovalGameTests::cleanup);}

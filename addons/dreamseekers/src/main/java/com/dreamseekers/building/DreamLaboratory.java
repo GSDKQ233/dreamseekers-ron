@@ -1,4 +1,6 @@
 package com.dreamseekers.building;
+import net.minecraft.nbt.CompoundTag;
+import com.solegendary.reignofnether.building.data.DataStorage;
 import com.dreamseekers.progression.*;
 import com.solegendary.reignofnether.building.*;
 import com.solegendary.reignofnether.building.production.ProductionBuilding;
@@ -12,9 +14,13 @@ public final class DreamLaboratory extends ProductionBuilding {
  public DreamLaboratory(){super(DreamBuildingSpec.RESONANCE_LABORATORY.structureName(),DreamBuildingSpec.RESONANCE_LABORATORY.newProvisionalCost(),false);
   name=DreamBuildingSpec.RESONANCE_LABORATORY.displayName();portraitBlock=DreamBuildingSpec.RESONANCE_LABORATORY.portraitBlock();icon=DreamBuildingSpec.RESONANCE_LABORATORY.icon();
   maxHealth=DreamBuildingSpec.RESONANCE_LABORATORY.maxHealth();buildTimeModifier=DreamBuildingSpec.RESONANCE_LABORATORY.buildTimeModifier();startingBlockTypes.add(Blocks.STONE_BRICKS);canSetRallyPoint=false;
-  productions=new DreamRepeatProductionList();DreamLaboratoryPlacement.bootstrap();}
+  productions=new DreamRepeatProductionList();DreamLaboratoryPlacement.bootstrap();DreamTemplateModel.bootstrap();}
  @Override public BuildingPlacement createBuildingPlacement(Level level,BlockPos pos,Rotation rotation,String owner){return new DreamLaboratoryPlacement(this,level,pos,rotation,owner);}
- @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level){return DreamBuildingSupport.load(structureName);}
+ @Override public BuildingPlacement createRestoredBuildingPlacement(Level level,BlockPos pos,Rotation rotation,String owner,DataStorage saved){
+     return new DreamLaboratoryPlacement(this,level,pos,rotation,owner,DreamTemplateModel.LABORATORY.restore(saved));
+ }
+ @Override public boolean acceptsInitialStructureSnapshot(CompoundTag snapshot){return DreamTemplateModel.LABORATORY.validSnapshot(snapshot);}
+ @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level){return DreamTemplateModel.LABORATORY.blocks(DreamTemplateModel.Revision.REVIEWED);}
  @Override public BuildingPlaceButton getBuildButton(Keybinding key){return DreamBuildingSupport.button(this,key);}
  @Override public String getBuildAvailabilityError(String owner){return DreamBuildingSupport.availability(this,owner);}
  @Override public boolean requiresStrictPlacementOwnerCheck(){return true;}

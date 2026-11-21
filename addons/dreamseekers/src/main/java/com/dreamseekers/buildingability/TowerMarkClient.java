@@ -172,7 +172,7 @@ public final class TowerMarkClient {
                 || e.host.isDestroyedServerside || e.host.shouldBeDestroyed() || e.host.getHealth() <= 0
                 || !e.host.originPos.equals(e.origin) || e.host.rotation != e.rotation
                 || e.host.getCaptureRevision() != e.localCapture || !(e.host instanceof DreamWatchtowerPlacement tower)
-                || tower.modelRevision() != 2 || !tower.stateSnapshot().supported() || !footprintLoaded(e)
+                || !tower.hasGarrisonDeck() || !tower.stateSnapshot().supported() || !footprintLoaded(e)
                 || PlayerClientEvents.getRTSPlayer(e.owner) == null || !ExtendedResourcesClient.ready()
                 || !e.key.epoch().equals(ExtendedResourcesClient.epoch())
                 || !EconomyActionClient.matchesContext(e.key.session(), e.key.epoch())) return false;

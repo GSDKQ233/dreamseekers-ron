@@ -54,9 +54,9 @@ public final class AdvancedUnitResearchGameTests {
         h.startSequence().thenWaitUntil(()->h.assertTrue(p.available(),"actual lab ready")).thenExecute(()->{
             ResearchServerEvents.addResearch(f.owner,ResonanceResearch.ID);
             ResearchServerEvents.addResearch(f.owner,LightResonanceResearch.FIRST_ID);
-            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V4).equals("started"),"real paid wind tree morph prerequisite");
+            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V5).equals("started"),"real paid wind tree morph prerequisite");
             root.tree().remaining=1; // Explicit geometry fixture acceleration, never a research-duration assertion.
-        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V4&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"completed upgraded physical tree"))
+        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"completed upgraded physical tree"))
         .thenExecute(()->{
             int[][] costs={{0,100,125,0},{0,150,125,25},{125,100,100,30},{200,0,150,50},{150,150,125,40}};
             for(int i=0;i<5;i++){

@@ -305,11 +305,11 @@ public final class DreamShellFunctionGameTests {
             for(int x=2;x<=4;x++)f.level.setBlock(new BlockPos(x,1,1).offset(origin).above(),Blocks.STONE.defaultBlockState(),2);
             h.assertTrue(definition.getExitPosition(tower,body)==null,"all actual exits blocked refuses unsafe teleport");
             CompoundTag snapshot=tower.structureSnapshot();h.assertTrue(DreamWatchtowerPlacement.validSnapshot(snapshot),"real server snapshot validates");
-            CompoundTag oversized=snapshot.copy();oversized.putInt("placed",212);h.assertTrue(!DreamWatchtowerPlacement.validSnapshot(oversized),"count bounded by trusted revision");
+            CompoundTag oversized=snapshot.copy();oversized.putInt("placed",177);h.assertTrue(!DreamWatchtowerPlacement.validSnapshot(oversized),"count bounded by trusted revision");
             var saved=DataStorage.read(tower.getDataStorage().write(),f.level.getServer());
             var restored=(DreamWatchtowerPlacement)definition.createRestoredBuildingPlacement(f.level,origin,Rotation.NONE,f.owner,saved);
             restored.isBuilt=true;restored.partialBlocksDestroyed=tower.partialBlocksDestroyed;restored.afterRestoredFromSave();
-            h.assertTrue(restored.modelRevision()==2&&restored.getBlocksTotal()==211,"actual DataStorage roundtrip retains new descriptor");
+            h.assertTrue(restored.modelRevision()==3&&restored.getBlocksTotal()==176,"actual DataStorage roundtrip retains new descriptor");
             var oldOrigin=origin.offset(25,0,0);
             for(var block:BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(1),f.level,oldOrigin,Rotation.NONE))f.level.setBlock(block.getBlockPos(),block.getBlockState(),2);
             var legacy=new DreamWatchtowerPlacement(definition,f.level,oldOrigin,Rotation.NONE,f.owner,new DataStorage());
@@ -354,9 +354,9 @@ public final class DreamShellFunctionGameTests {
             "completed legacy reload preserves damage: rev="+oldReload.modelRevision()+" total="+oldReload.getBlocksTotal()+" placed="+oldReload.getBlocksPlaced()+" expected="+oldPlaced+" highest="+oldReload.getHighestBlockCountReached()+" partial="+oldReload.partialBlocksDestroyed+" hp="+oldReload.getHealth()+" expectedHp="+oldHealth);
         for(var entry:oldWorld.entrySet())h.assertTrue(f.level.getBlockState(entry.getKey()).equals(entry.getValue()),"legacy restore never changes a world block");
 
-        // Build only 120/211 new blocks, then lose 20. Saved maximum must remain120, not current100 or complete211.
+        // Build only 120/176 new blocks, then lose 20. Saved maximum must remain120, not current100 or complete176.
         var newOrigin=oldOrigin.offset(80,0,0);f.prepare(newOrigin);
-        var newGeometry=BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(2),f.level,newOrigin,Rotation.NONE);
+        var newGeometry=BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(3),f.level,newOrigin,Rotation.NONE);
         var newSolid=newGeometry.stream().filter(b->!b.getBlockState().isAir()).toList();
         for(int i=0;i<120;i++){var block=newSolid.get(i);f.level.setBlock(block.getBlockPos(),block.getBlockState(),2);}
         var partial=new DreamWatchtowerPlacement(definition,f.level,newOrigin,Rotation.NONE,f.owner);
@@ -374,10 +374,10 @@ public final class DreamShellFunctionGameTests {
         for(var block:newGeometry)newWorld.put(block.getBlockPos(),f.level.getBlockState(block.getBlockPos()));
         var partialReload=(DreamWatchtowerPlacement)definition.createRestoredBuildingPlacement(f.level,newOrigin,Rotation.NONE,f.owner,saved);
         partialReload.isBuilt=false;partialReload.partialBlocksDestroyed=partial.partialBlocksDestroyed;partialReload.afterRestoredFromSave();
-        h.assertTrue(partialReload.modelRevision()==2&&!partialReload.isBuilt&&partialReload.getBlocksTotal()==211
+        h.assertTrue(partialReload.modelRevision()==3&&!partialReload.isBuilt&&partialReload.getBlocksTotal()==176
             &&partialReload.getBlocksPlaced()==actualPartialPlaced&&partialReload.getHighestBlockCountReached()==120
             &&partialReload.partialBlocksDestroyed==.375&&partialReload.getHealth()==partialHealth,
-            "incomplete model reload keeps actual world count, historical120, total211, fraction and health exactly");
+            "incomplete model reload keeps actual world count, historical120, total176, fraction and health exactly");
         for(var entry:newWorld.entrySet())h.assertTrue(f.level.getBlockState(entry.getKey()).equals(entry.getValue()),"incomplete restore never builds or heals a world block");
         f.pass("TOWER_LEGACY_DAMAGE_INCOMPLETE_RESTORE");
     }

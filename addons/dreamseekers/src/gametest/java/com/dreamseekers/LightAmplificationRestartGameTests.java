@@ -68,10 +68,10 @@ public final class LightAmplificationRestartGameTests {
         dais=install(level,DreamseekersMod.RESONANCE_DAIS,DAIS);
         lab=(DreamLaboratoryPlacement)install(level,DreamseekersMod.RESONANCE_LABORATORY,LAB);
         h.assertTrue(!com.dreamseekers.building.DreamResonanceAura.active(lab),"research host outside local work-rate aura");
-        h.assertTrue(WorldTreeMorph.plan(root,WorldTreeModel.SHADOW_V3).valid(),"real physical upgrade preflight");
-        h.assertTrue(DreamWorldTreeService.start(peer.actor,root,root.tree().instance,WorldTreeModel.SHADOW_V3).equals("started"),"actual paid 2400 tick tree upgrade");
+        h.assertTrue(WorldTreeMorph.plan(root,WorldTreeModel.SHADOW_V5).valid(),"real physical upgrade preflight");
+        h.assertTrue(DreamWorldTreeService.start(peer.actor,root,root.tree().instance,WorldTreeModel.SHADOW_V5).equals("started"),"actual paid 2400 tick tree upgrade");
         PURCHASES.putUUID("treeReceipt",root.tree().receipt);PURCHASES.putLong("treeStartedAt",level.getGameTime());
-        h.startSequence().thenWaitUntil(()->h.assertTrue(root.ascended()&&root.model()==WorldTreeModel.SHADOW_V3&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"natural tree upgrade completion, no edited remaining"))
+        h.startSequence().thenWaitUntil(()->h.assertTrue(root.ascended()&&root.model()==WorldTreeModel.SHADOW_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"natural tree upgrade completion, no edited remaining"))
         .thenExecute(()->{
             h.assertTrue(level.getGameTime()-PURCHASES.getLong("treeStartedAt")>=2399,"full real tree duration (same-tick first advance allowed)");
             h.assertTrue(!account.paidReceipts.containsKey(PURCHASES.getUUID("treeReceipt")),"tree receipt consumed exactly once");
@@ -154,7 +154,7 @@ public final class LightAmplificationRestartGameTests {
         root=(DreamAnchorPlacement)find(level,ROOT);dais=find(level,DAIS);lab=(DreamLaboratoryPlacement)find(level,LAB);peer=new PassiveIncomePeer(level,OWNER);
         h.startSequence().thenWaitUntil(()->{for(var key:KEYS){var body=level.getEntity(saved.getUUID(key));h.assertTrue(body instanceof Mob&&body instanceof SkillUnit,"normal asynchronous saved UUID restoration: "+key);ready(h,(Mob)body);}})
         .thenExecute(()->{
-            h.assertTrue(root.tree().instance.equals(saved.getUUID("rootInstance"))&&root.model()==WorldTreeModel.SHADOW_V3&&root.ascended(),"same actually upgraded root identity and geometry");
+            h.assertTrue(root.tree().instance.equals(saved.getUUID("rootInstance"))&&root.model()==WorldTreeModel.SHADOW_V5&&root.ascended(),"same actually upgraded root identity and geometry");
             h.assertTrue(ResonanceNetwork.view(dais).instance().equals(saved.getUUID("daisInstance"))&&ResonanceNetwork.network(level,OWNER).rank(dais)>0,"same saved dais and connected network");
             h.assertTrue(ResearchPlacementIdentity.serverIdentity(lab).equals(saved.getUUID("labInstance"))&&lab.productionQueue.isEmpty(),"same laboratory, no reconstructed completed queue");
             h.assertTrue(LightResonanceResearch.tier(OWNER,false)==2&&ResearchServerEvents.playerHasResearch(OWNER,LightResonanceResearch.FIRST_ID)&&ResearchServerEvents.playerHasResearch(OWNER,LightResonanceResearch.FINAL_ID),"both real paid research grants saved");

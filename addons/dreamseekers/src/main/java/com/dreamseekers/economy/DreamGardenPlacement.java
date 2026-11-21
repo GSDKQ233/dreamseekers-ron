@@ -1,4 +1,6 @@
 package com.dreamseekers.economy;
+import com.dreamseekers.building.DreamTemplateModel;
+import net.minecraft.nbt.CompoundTag;
 
 import com.dreamseekers.building.ReverieGarden;
 import com.dreamseekers.building.DreamBuildingSupport;
@@ -20,26 +22,31 @@ public final class DreamGardenPlacement extends FarmPlacement {
 
     private enum RestoreStatus { READY, RETRY_LEGACY, OPAQUE }
     private RestoreStatus restoreStatus=RestoreStatus.READY;
+    private final DreamTemplateModel.State template;
+    /** Used only by old garden decoration migration and its downgrade/quarantine fixtures. */
     public static ArrayList<BuildingBlock> decoratedTemplate() {
-        ArrayList<BuildingBlock> result=DreamBuildingSupport.load(ReverieGarden.STRUCTURE);
-        for(BuildingBlock block:result)if(block.getBlockState().is(Blocks.WHEAT))
-            block.setBlockState(DreamPassiveEconomy.DECORATIVE_WHEAT.get().defaultBlockState());
-        return result;
+        return DreamTemplateModel.GARDEN.blocks(DreamTemplateModel.Revision.ORIGINAL);
     }
     public DreamGardenPlacement(ReverieGarden building,Level level,BlockPos origin,Rotation rotation,String owner) {
-        super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(decoratedTemplate(),level,origin,rotation),false);
-        getDataStorage().setData(DECOR_SCHEMA,GardenDecorationState.current());
+        this(building,level,origin,rotation,owner,DreamTemplateModel.GARDEN.fresh(level),
+                GardenDecorationState.current(),null);
     }
     public DreamGardenPlacement(ReverieGarden building,Level level,BlockPos origin,Rotation rotation,String owner,DataStorage saved) {
-        // Legacy constructor counts original wheat age=7 before any migration. Other ages remain mismatches.
-        super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(
-            saved.getData(DECOR_SCHEMA).knownVersion()==0?DreamBuildingSupport.load(ReverieGarden.STRUCTURE):decoratedTemplate(),level,origin,rotation),false);
-        if(level.isClientSide())throw new IllegalArgumentException("Saved-entry migration is server only");
-        GardenDecorationState state=saved.getData(DECOR_SCHEMA);
+        this(building,level,origin,rotation,owner,DreamTemplateModel.GARDEN.restore(saved),saved.getData(DECOR_SCHEMA),saved);
+    }
+    private DreamGardenPlacement(ReverieGarden building, Level level, BlockPos origin, Rotation rotation, String owner,
+                                 DreamTemplateModel.State template, GardenDecorationState state, DataStorage saved) {
+        // Only an original, pre-decoration save counts raw age=7 wheat before its existing migration.
+        super(building,level,origin,rotation,owner,state.knownVersion()==0 && template.revision()==DreamTemplateModel.Revision.ORIGINAL
+                ? BuildingUtils.getAbsoluteBlockData(DreamBuildingSupport.load(ReverieGarden.STRUCTURE),level,origin,rotation)
+                : template.absolute(level,origin,rotation),false);
+        this.template=template;
+        if(saved!=null && level.isClientSide())throw new IllegalArgumentException("Saved-entry migration is server only");
+        template.save(this,super.getDataStorage());
         // Native restore later installs the full DataStorage. The factory result must also be safe on its own.
         getDataStorage().setData(DECOR_SCHEMA,state);
         int schema=state.knownVersion();
-        if(schema<0){restoreStatus=RestoreStatus.OPAQUE;com.solegendary.reignofnether.ReignOfNether.LOGGER.warn("Preserving unsupported garden decoration at {}; automatic garden work is paused",origin);return;}
+        if(schema<0 || (schema==0 && template.revision()!=DreamTemplateModel.Revision.ORIGINAL)){restoreStatus=RestoreStatus.OPAQUE;com.solegendary.reignofnether.ReignOfNether.LOGGER.warn("Preserving unsupported garden decoration at {}; automatic garden work is paused",origin);return;}
         if(schema==0) {
             // The superclass has already read these same positions to initialize placed/health.
             java.util.Map<BlockPos,net.minecraft.world.level.block.state.BlockState> originals=new java.util.LinkedHashMap<>();
@@ -65,6 +72,27 @@ public final class DreamGardenPlacement extends FarmPlacement {
             saved.setData(DECOR_SCHEMA,migrated);
             getDataStorage().setData(DECOR_SCHEMA,migrated);
         }
+    }
+    @Override public DataStorage getDataStorage() {
+        var storage = super.getDataStorage();
+        if (template != null) template.save(this, storage);
+        return storage;
+    }
+    // Ordinary revisions are fixed at construction; never look up an arbitrary CHANGE_STRUCTURE path.
+    @Override public void changeStructure(String name) {
+    }
+    @Override public CompoundTag structureSnapshot() {
+        return template.snapshot(this);
+    }
+    @Override public boolean acceptsStructureSnapshot(CompoundTag tag) {
+        return template.accepts(tag);
+    }
+    @Override public void applyStructureSnapshot(CompoundTag tag, boolean initial) {
+        template.apply(this, tag, initial, this::restoreGeometry, value -> highestBlockCountReached = value);
+    }
+    @Override public void afterRestoredFromSave() {
+        super.afterRestoredFromSave();
+        highestBlockCountReached = template.restoredHighest(this);
     }
     @Override public boolean shouldBeDestroyed() {
         // The server checks this before tick(). Counts against a fallback footprint cannot establish damage.

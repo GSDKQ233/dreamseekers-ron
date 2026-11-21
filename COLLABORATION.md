@@ -177,3 +177,7 @@
 - 实际结果：配对构建通过，两个 JAR 的版本与内容检查通过。JUnit 400 项，399 通过、1 个既有音频测试跳过、零失败。全量 Forge 回归（命名空间 `reignofnether,dreamseekers`）：本分支 567 项、8 项失败；`main` 565 项、8 项失败；两边失败名单完全相同，多出的 2 项是 #8 和 #9 新增的测试，均通过。`api65_followup_hero_xp` 3/3 通过，`wind_protocol` 1/1 通过。
 - 两边都失败的 8 项（既有问题，本分支未处理）：`originalpayerrefundsbeforetickandmutablecostscannotchangereceipts`、`savedrefundsnapshotusesoriginalpayerandimmutablepayment`、`alleightregisteredfactionfactoriespaidrotationsandcancel`、`eightactualworkerscompletethensurvivecodecandtakedamage`、`gardenworkerharvestsreplantsanddeliversfood`、`queuedfogconstructionusescollisionflightandstopclearsit`、`thresholdautomaticallyreturnsthenresumesfarmwithoutduplicatecredit`、`realreadiedmatchstart`。
 - 未覆盖：没有进游戏实测，各 PR 的界面、图标、动画和建筑数值叠加后的实际显示未看；专服、双客户端联机、19 次选定 Forge 回归的独立进程入口没有重跑；除上面两个套件外，其余 `-PresourceTechSuite` 套件和保留的旧附属开关没有逐个运行；全量回归每边只跑了一次，且两次同时在一台机器上运行。
+
+## 已审阅的建筑造型接入
+
+基于已含 #4 美术改动的 `main`，接入独立核对的 13 个造型。[建筑造型接入说明](docs/dreamseekers/BUILDINGS-REVIEWED.zh-CN.md) 记录模板、旧档和配对版本的范围。本工作不合并 #11 的替代造型，也不修改既有单位/技能美术。

@@ -15,7 +15,7 @@ import java.util.List;
 
 /** Test-only selection: original methods, annotation budgets, templates and original batch hooks.
  * The historical 115-method selection is extended by the three light explicit-attack
- * methods and five shadow-ghost native/peaceful methods (123, NOT the full 564).
+ * methods and five shadow-ghost native/peaceful methods, then two additional building checks (125 total).
  * No production mixin, no skipped assertions, no manual ticking, no automatic retries.
  * Forge registers original @AfterBatch hooks independently of namespace filtering.
  */
@@ -65,8 +65,8 @@ public final class SplitRegressionGameTests {
             originalCount++;
             if (test.batch().equals(selected) && (selectedCase.isBlank() || method.getName().equals(selectedCase))) methods.add(method);
         }
-        if (originalCount != 123 || methods.isEmpty() || (!selectedCase.isBlank() && methods.size() != 1))
-            throw new IllegalArgumentException("Expected123 explicitly listed original cases and nonempty unambiguous selection; total=" + originalCount + " selected=" + methods.size());
+        if (originalCount != 125 || methods.isEmpty() || (!selectedCase.isBlank() && methods.size() != 1))
+            throw new IllegalArgumentException("Expected 125 explicitly listed original cases and nonempty unambiguous selection; total=" + originalCount + " selected=" + methods.size());
         methods.sort(Comparator.comparing(m -> m.getDeclaringClass().getName()+"."+m.getName()));
         List<TestFunction> tests = new ArrayList<>();
         for (Method method : methods) {

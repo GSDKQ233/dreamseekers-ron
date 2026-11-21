@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.production;
+import com.dreamseekers.building.DreamTemplateModel;
+import net.minecraft.nbt.CompoundTag;
+import com.solegendary.reignofnether.building.data.DataStorage;
 
 import com.dreamseekers.unit.*;
 import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
@@ -172,6 +175,37 @@ public class DreamProductionPlacement extends ProductionPlacement {
     public DreamProductionPlacement(Building building, Level level, BlockPos pos, Rotation rotation,
                                     String owner, ArrayList<BuildingBlock> blocks, boolean capitol) {
         super(building,level,pos,rotation,owner,blocks,capitol);
+    }
+    // Optional: the anchor retains its independent versioned world-tree model.
+    private DreamTemplateModel.State template;
+    public DreamProductionPlacement(Building building, Level level, BlockPos pos, Rotation rotation,
+                                    String owner, DreamTemplateModel.State template, boolean capitol) {
+        this(building, level, pos, rotation, owner, template.absolute(level, pos, rotation), capitol);
+        this.template = template;
+        template.save(this, super.getDataStorage());
+    }
+    @Override public DataStorage getDataStorage() {
+        var storage = super.getDataStorage();
+        if (template != null) template.save(this, storage);
+        return storage;
+    }
+    // Ordinary revisions are fixed at construction; never look up an arbitrary CHANGE_STRUCTURE path.
+    @Override public void changeStructure(String name) {
+        if (template == null) super.changeStructure(name);
+    }
+    @Override public CompoundTag structureSnapshot() {
+        return template == null ? super.structureSnapshot() : template.snapshot(this);
+    }
+    @Override public boolean acceptsStructureSnapshot(CompoundTag tag) {
+        return template == null ? super.acceptsStructureSnapshot(tag) : template.accepts(tag);
+    }
+    @Override public void applyStructureSnapshot(CompoundTag tag, boolean initial) {
+        if (template == null) { super.applyStructureSnapshot(tag, initial); return; }
+        template.apply(this, tag, initial, this::restoreGeometry, value -> highestBlockCountReached = value);
+    }
+    @Override public void afterRestoredFromSave() {
+        super.afterRestoredFromSave();
+        if (template != null) highestBlockCountReached = template.restoredHighest(this);
     }
     private static RtsUnitState state(Unit unit) {
         if(unit instanceof DreamRtsUnit combat)return combat.rts();

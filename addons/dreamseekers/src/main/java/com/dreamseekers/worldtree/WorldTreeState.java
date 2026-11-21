@@ -5,7 +5,7 @@ import java.util.UUID;
 public final class WorldTreeState {
     public enum Phase { IDLE, RUNNING, BLOCKED, REFUND_PENDING, COMPLETE }
     public boolean supported=true;
-    public WorldTreeModel model=WorldTreeModel.BASE_V3,target;
+    public WorldTreeModel model=WorldTreeModel.CURRENT_BASE,target;
     private CompoundTag unknown;
     public UUID instance=UUID.randomUUID(),receipt,payerEpoch,incomeEpoch;
     public String payer="",incomeOwner="",blockedReason="";
@@ -37,8 +37,7 @@ public final class WorldTreeState {
             boolean pending=s.phase==Phase.RUNNING||s.phase==Phase.BLOCKED||s.phase==Phase.REFUND_PENDING;
             if(pending&&(s.receipt==null||s.payerEpoch==null||s.payer.isBlank()||s.ascended))throw new IllegalArgumentException();
             if(s.ascended!=(s.model.branch==WorldTreeModel.Branch.SHADOW))throw new IllegalArgumentException();
-            if(pending&&(s.model.branch!=WorldTreeModel.Branch.BASE||s.target==null||
-                !(WorldTreeModel.newTarget(s.target)||(s.model==WorldTreeModel.LEGACY_BASE&&s.target==WorldTreeModel.LEGACY_SHADOW))))throw new IllegalArgumentException();
+            if(pending&&!WorldTreeModel.supportsSavedTarget(s.model,s.target))throw new IllegalArgumentException();
             if(!pending&&s.target!=null)throw new IllegalArgumentException();
             if((s.model.branch!=WorldTreeModel.Branch.BASE)!=(s.phase==Phase.COMPLETE)||(!pending&&(s.receipt!=null||s.payerEpoch!=null)))throw new IllegalArgumentException();
         } catch(RuntimeException e){s.supported=false;}

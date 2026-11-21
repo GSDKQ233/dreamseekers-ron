@@ -64,7 +64,7 @@ public final class ResourceAuditWorldTreeGameTests {
             h.assertTrue(f.tree.ownerName.equals(other)&&f.tree.getCaptureRevision()==revision+1,
                 "ordinary command transfer advances authority immediately");
             h.assertTrue(f.tree.tree().phase==WorldTreeState.Phase.REFUND_PENDING
-                &&f.account.paidReceipts.get(receipt).purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V3)+":refund"),
+                &&f.account.paidReceipts.get(receipt).purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V5)+":refund"),
                 "capture callback establishes persistent refund before any subsequent tick");
             h.assertTrue(BuildingOwnerCommandFixture.transfer(h,f.tree,other,f.owner)==1,"same-tick return transfer succeeds");
             h.assertTrue(f.tree.ownerName.equals(f.owner)&&f.tree.getCaptureRevision()==revision+2
@@ -124,7 +124,7 @@ public final class ResourceAuditWorldTreeGameTests {
                 var receipt=f.account.paidReceipts.get(id);
                 System.out.println("RESOURCE_AUDIT_REMOVE surviving_receipt="+receipt);
                 // Administrative destruction may refund or forfeit by policy; neither should stay pending forever.
-                h.assertTrue(receipt==null||!receipt.purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V3)),
+                h.assertTrue(receipt==null||!receipt.purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V5)),
                     "permanently removed tree must assign refund/forfeit disposition instead of orphan pending receipt");
                 h.succeed();
             } finally {cleanup(f);}

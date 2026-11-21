@@ -180,9 +180,9 @@ public final class SurvivalBeaconGameTests {
     @GameTest(templateNamespace=NS,template=TEMPLATE,batch=WIN,timeoutTicks=1600)
     public static void soloWindOwnerBuysAndUpgradesTheOrdinaryBeaconAndActuallyWins(GameTestHelper h)throws Exception{
         var f=new Fixture(h,"BeaconWindGT");f.start(true);
-        var sequence=h.startSequence().thenWaitUntil(f::readyWorkers).thenExecute(()->f.startTree(WorldTreeModel.WIND_V4))
+        var sequence=h.startSequence().thenWaitUntil(f::readyWorkers).thenExecute(()->f.startTree(WorldTreeModel.WIND_V5))
             .thenWaitUntil(()->h.assertTrue(f.lab.available()
-                && f.tree.model()==WorldTreeModel.WIND_V4,"completed wind tree and lab"))
+                && f.tree.model()==WorldTreeModel.WIND_V5,"completed wind tree and lab"))
             .thenExecute(()->{
                 h.assertTrue(Buildings.BEACON.getBuildAvailabilityError(f.owner)==null,"Wind qualifies");
                 var p=f.base.offset(42,0,0); int ore=f.account.ore;
@@ -209,8 +209,8 @@ public final class SurvivalBeaconGameTests {
     @GameTest(templateNamespace=NS,template=TEMPLATE,batch=GUARDS,timeoutTicks=200)
     public static void shadowRequiresOwnCompletedBuildingsOrdinaryRulesAndUnoccupiedWorld(GameTestHelper h)throws Exception{
         var f=new Fixture(h,"BeaconShadowGT");f.start(false);
-        h.startSequence().thenWaitUntil(f::readyWorkers).thenExecute(()->f.startTree(WorldTreeModel.SHADOW_V3))
-        .thenWaitUntil(()->h.assertTrue(f.lab.available() && f.tree.model()==WorldTreeModel.SHADOW_V3,"shadow tree and lab"))
+        h.startSequence().thenWaitUntil(f::readyWorkers).thenExecute(()->f.startTree(WorldTreeModel.SHADOW_V5))
+        .thenWaitUntil(()->h.assertTrue(f.lab.available() && f.tree.model()==WorldTreeModel.SHADOW_V5,"shadow tree and lab"))
         .thenExecute(()->{
             h.assertTrue(Buildings.BEACON.getBuildAvailabilityError(f.owner)!=null,"qualified Classic player still cannot build");
             SurvivalServerEvents.enable(WaveDifficulty.BEGINNER); // isolate mode gate; full admission is covered in companion test

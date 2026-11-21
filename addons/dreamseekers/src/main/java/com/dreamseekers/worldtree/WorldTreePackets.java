@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /** Addon transport; its mutations use the same connection/session/sequence authority as core research. */
 public final class WorldTreePackets {
     public static final UUID ZERO=new UUID(0,0);
-    public static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(ResourceLocation.fromNamespaceAndPath("dreamseekers","world_tree"),()->"2","2"::equals,"2"::equals);
+    public static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(ResourceLocation.fromNamespaceAndPath("dreamseekers","world_tree"),()->"3","3"::equals,"3"::equals);
     private static boolean registered;
     public enum Action{QUERY,START,CANCEL,START_WIND}
     public static void register(){if(registered)return;registered=true;
@@ -33,7 +33,7 @@ public final class WorldTreePackets {
             var fingerprint=new EconomyActionGate.Fingerprint("dream_world_tree",new Payload(action,dimension,origin,instance,capture));
             var result=EconomyActionGate.execute(actor,connection,session,epoch,sequence,fingerprint,account->{
                 if(p==null||p.getCaptureRevision()<0||p.getCaptureRevision()!=capture||!DreamWorldTreeService.owns(actor,p))return "forbidden";
-                return switch(action){case START->DreamWorldTreeService.start(actor,p,instance,WorldTreeModel.SHADOW_V3);case START_WIND->DreamWorldTreeService.start(actor,p,instance,WorldTreeModel.WIND_V4);case CANCEL->DreamWorldTreeService.cancel(actor,p,instance);default->"invalid_action";};
+                return switch(action){case START->DreamWorldTreeService.start(actor,p,instance,WorldTreeModel.CURRENT_SHADOW);case START_WIND->DreamWorldTreeService.start(actor,p,instance,WorldTreeModel.CURRENT_WIND);case CANCEL->DreamWorldTreeService.cancel(actor,p,instance);default->"invalid_action";};
             });
             if(p!=null&&DreamWorldTreeService.owns(actor,p))send(actor,connection,p,result,sequence);else EconomyActionResultPacket.send(actor,connection,result,sequence);
         });context.setPacketHandled(true);}
