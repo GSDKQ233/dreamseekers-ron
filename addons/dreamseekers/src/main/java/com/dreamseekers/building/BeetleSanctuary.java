@@ -1,5 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.building;
+import com.solegendary.reignofnether.building.BuildingPlacement;
+import net.minecraft.world.level.Level;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.nbt.CompoundTag;
+import com.solegendary.reignofnether.building.data.DataStorage;
+import com.dreamseekers.production.DreamProductionPlacement;
 
 import com.solegendary.reignofnether.building.BuildingBlock;
 import com.solegendary.reignofnether.building.BuildingPlaceButton;
@@ -30,19 +37,24 @@ public final class BeetleSanctuary extends ProductionBuilding {
         buildTimeModifier = 0.7f;
         spawnRadiusOffset = 2;
         startingBlockTypes.add(Blocks.STONE_BRICKS);
+        DreamTemplateModel.bootstrap();
         Keybinding[] slots = {Keybindings.abilitySlot1, Keybindings.abilitySlot2, Keybindings.abilitySlot3, Keybindings.abilitySlot4, Keybindings.abilitySlot5, Keybindings.abilitySlot6};
         for (int i = 0; i < troops.length; i++)
             productions.add(troops[i], slots[i]);
     }
 
-    @Override public com.solegendary.reignofnether.building.BuildingPlacement createBuildingPlacement(
-            net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos,
-            net.minecraft.world.level.block.Rotation rotation, String owner) {
-        return new com.dreamseekers.production.DreamProductionPlacement(this,level,pos,rotation,owner,
-                com.solegendary.reignofnether.building.BuildingUtils.getAbsoluteBlockData(getRelativeBlockData(level),level,pos,rotation),isCapitol);
+    @Override public BuildingPlacement createBuildingPlacement(Level level, BlockPos pos, Rotation rotation, String owner) {
+        return new DreamProductionPlacement(this, level, pos, rotation, owner, DreamTemplateModel.SANCTUARY.fresh(level), isCapitol);
     }
-
-    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) { return DreamBuildingSupport.load(STRUCTURE); }
+    @Override public BuildingPlacement createRestoredBuildingPlacement(Level level, BlockPos pos, Rotation rotation, String owner, DataStorage saved) {
+        return new DreamProductionPlacement(this, level, pos, rotation, owner, DreamTemplateModel.SANCTUARY.restore(saved), isCapitol);
+    }
+    @Override public boolean acceptsInitialStructureSnapshot(CompoundTag snapshot) {
+        return DreamTemplateModel.SANCTUARY.validSnapshot(snapshot);
+    }
+    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) {
+        return DreamTemplateModel.SANCTUARY.blocks(DreamTemplateModel.Revision.REVIEWED);
+    }
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) { return DreamBuildingSupport.button(this, key); }
     @Override public String getBuildAvailabilityError(String owner) { return DreamBuildingSupport.availability(this, owner); }
     @Override public boolean requiresStrictPlacementOwnerCheck() { return true; }

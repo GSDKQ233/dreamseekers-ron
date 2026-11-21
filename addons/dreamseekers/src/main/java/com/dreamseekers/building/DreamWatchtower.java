@@ -24,7 +24,7 @@ public final class DreamWatchtower extends DreamScaffoldBuilding implements Garr
         DreamWatchtowerPlacement.bootstrap();
         setActiveAddon(GarrisonableBuildingAddon.class,this,true);
     }
-    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level){return DreamWatchtowerPlacement.template(2);}
+    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level){return DreamWatchtowerPlacement.template(DreamWatchtowerPlacement.CURRENT_REVISION);}
     @Override public BuildingPlacement createBuildingPlacement(Level level,BlockPos pos,Rotation rotation,String owner){return new DreamWatchtowerPlacement(this,level,pos,rotation,owner);}
     @Override public BuildingPlacement createRestoredBuildingPlacement(Level level,BlockPos pos,Rotation rotation,String owner,DataStorage saved){return new DreamWatchtowerPlacement(this,level,pos,rotation,owner,saved);}
     @Override public boolean acceptsInitialStructureSnapshot(CompoundTag snapshot){return DreamWatchtowerPlacement.validSnapshot(snapshot);}
@@ -41,7 +41,7 @@ public final class DreamWatchtower extends DreamScaffoldBuilding implements Garr
     @Override public BlockPos getExitPosition(BuildingPlacement placement){return null;}
     @Override public boolean isGarrisonEnabled(BuildingPlacement p) {
         var buildings=p.getLevel().isClientSide()?BuildingClientEvents.getBuildings():BuildingServerEvents.getBuildings();
-        return p instanceof DreamWatchtowerPlacement tower&&tower.modelRevision()==2&&tower.stateSnapshot().supported()
+        return p instanceof DreamWatchtowerPlacement tower&&tower.hasGarrisonDeck()&&tower.stateSnapshot().supported()
             &&buildings.contains(p)&&p.isBuilt&&!p.isDestroyedServerside&&!p.shouldBeDestroyed()
             &&p.getHealth()>0&&!p.ownerName.isBlank()&&p.getLevel().hasChunksAt(p.minCorner,p.maxCorner);
     }

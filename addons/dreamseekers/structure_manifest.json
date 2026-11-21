@@ -1,6 +1,6 @@
 {
-  "style_revision": 4,
-  "runtime_integration_revision": 2,
+  "style_revision": 5,
+  "runtime_integration_revision": 3,
   "reference_urls": [
     "https://www.mcmod.cn/item/674092.html",
     "https://www.mcmod.cn/item/788163.html",
@@ -127,7 +127,19 @@
       },
       "sha256": "ca2e9c21c2e03f751d7c3d25198f1dd48b23b7f91fe69b483bdf359e4d21c948",
       "base_asset_id": "dream_anchor",
-      "runtime_transform": "DreamWorldTreeService selects versioned WorldTreeModel geometry for paid branch upgrades; base asset fields here describe only the initial capitol."
+      "runtime_transform": "DreamWorldTreeService chooses a versioned WorldTreeModel for paid upgrades; original named base data is retained for legacy saves.",
+      "runtime_templates": {
+        "new_construction": "dream_anchor_base_v5",
+        "shadow_upgrade": "dream_anchor_shadow_v5",
+        "wind_upgrade": "dream_anchor_wind_v5",
+        "legacy_saved_models": [
+          "dream_anchor",
+          "dream_anchor_ascended",
+          "dream_anchor_base_v3",
+          "dream_anchor_shadow_v3",
+          "dream_anchor_wind_v4"
+        ]
+      }
     },
     {
       "id": "reverie_garden",
@@ -401,7 +413,11 @@
       },
       "sha256": "78498615c7806fef08c765195d6da336b544a4ecc7548ed74bfaec7070db0dce",
       "base_asset_id": "reverie_garden",
-      "runtime_transform": "DreamGardenPlacement replaces template minecraft:wheat with dreamseekers:decorative_garden_wheat. Saved-entry migration preserves legacy wheat ages."
+      "runtime_transform": "DreamGardenPlacement replaces template minecraft:wheat with dreamseekers:decorative_garden_wheat. Saved-entry migration preserves legacy wheat ages.",
+      "runtime_templates": {
+        "new_construction": "reverie_garden_rework_v1",
+        "legacy_saved_model": "reverie_garden"
+      }
     },
     {
       "id": "dream_depot",
@@ -673,7 +689,11 @@
         "pasterdream:dyedream_lartern": 5
       },
       "sha256": "aec2b0c85b40be92a999dfcf917da6949bb0d950aecc6b09c4f9a415553ed46c",
-      "base_asset_id": "dream_depot"
+      "base_asset_id": "dream_depot",
+      "runtime_templates": {
+        "new_construction": "dream_depot_rework_v1",
+        "legacy_saved_model": "dream_depot"
+      }
     },
     {
       "id": "shadow_mine",
@@ -816,7 +836,11 @@
         "pasterdream:polished_calcite": 1
       },
       "sha256": "871461c902b5c19b29930998174d349293b51089ee3cba04aa52e1093053d45a",
-      "base_asset_id": "shadow_mine"
+      "base_asset_id": "shadow_mine",
+      "runtime_templates": {
+        "new_construction": "shadow_mine_rework_v1",
+        "legacy_saved_model": "shadow_mine"
+      }
     },
     {
       "id": "shadow_furnace",
@@ -946,7 +970,11 @@
         "pasterdream:dyedream_lartern": 5
       },
       "sha256": "c32384837d9a299fe9aa6d99a650bd57fa15a4960fdc1692c0453063ad2d4e13",
-      "base_asset_id": "shadow_furnace"
+      "base_asset_id": "shadow_furnace",
+      "runtime_templates": {
+        "new_construction": "shadow_furnace_rework_v1",
+        "legacy_saved_model": "shadow_furnace"
+      }
     },
     {
       "id": "beetle_sanctuary",
@@ -1104,7 +1132,11 @@
         "pasterdream:polished_calcite": 18
       },
       "sha256": "c7c1317392b9ad14e2069f7aba687f27bfefb66debe211a625415d3e0e4dc485",
-      "base_asset_id": "beetle_sanctuary"
+      "base_asset_id": "beetle_sanctuary",
+      "runtime_templates": {
+        "new_construction": "beetle_sanctuary_rework_v1",
+        "legacy_saved_model": "beetle_sanctuary"
+      }
     },
     {
       "id": "dream_hall",
@@ -1248,7 +1280,11 @@
         "pasterdream:polished_calcite_wall": 1
       },
       "sha256": "5337eccbd17d70886a3fbf64daee005180547db381d07a2a3ea17c490f5770c3",
-      "base_asset_id": "dream_hall"
+      "base_asset_id": "dream_hall",
+      "runtime_templates": {
+        "new_construction": "dream_hall_rework_v1",
+        "legacy_saved_model": "dream_hall"
+      }
     },
     {
       "id": "resonance_laboratory",
@@ -1396,7 +1432,11 @@
         "pasterdream:polished_calcite": 72
       },
       "sha256": "e79313d53f8e836d2f9f8472b4fa7ef4c42e86915058541c8a62c0ff42393271",
-      "base_asset_id": "resonance_laboratory"
+      "base_asset_id": "resonance_laboratory",
+      "runtime_templates": {
+        "new_construction": "resonance_laboratory_rework_v1",
+        "legacy_saved_model": "resonance_laboratory"
+      }
     },
     {
       "id": "contract_ecology",
@@ -1525,7 +1565,11 @@
         "pasterdream:polished_calcite": 78
       },
       "sha256": "4a5920413c9d78ac4a68a493f3de00a7c0e7a3404b7d41047269468fc201020f",
-      "base_asset_id": "contract_ecology"
+      "base_asset_id": "contract_ecology",
+      "runtime_templates": {
+        "new_construction": "contract_ecology_rework_v1",
+        "legacy_saved_model": "contract_ecology"
+      }
     },
     {
       "id": "resonance_dais",
@@ -1604,7 +1648,11 @@
         "pasterdream:polished_calcite": 9
       },
       "sha256": "767ee35143cc6a5f743c39403a492cd267f64c6b8fd0b2e11582d48035c23dac",
-      "base_asset_id": "resonance_dais"
+      "base_asset_id": "resonance_dais",
+      "runtime_templates": {
+        "new_construction": "resonance_dais_rework_v1",
+        "legacy_saved_model": "resonance_dais"
+      }
     },
     {
       "id": "shadow_watchtower",
@@ -1677,12 +1725,15 @@
       "sha256": "783432e49375e4569d89393a997308723a7a07856fc447f3e664f43f19c86bb2",
       "base_asset_id": "shadow_watchtower",
       "runtime_templates": {
-        "new_construction": "shadow_watchtower_garrison_v2",
-        "legacy_saved_model": "shadow_watchtower"
+        "new_construction": "shadow_watchtower_garrison_v3",
+        "legacy_saved_model": "shadow_watchtower",
+        "other_saved_models": [
+          "shadow_watchtower_garrison_v2"
+        ]
       }
     }
   ],
-  "asset_scope": "size_xyz, palette_counts, non_air_blocks and sha256 describe the original named base NBT asset. Runtime roles are current; versioned runtime templates and decoration transforms are listed separately. No original geometry or authorship is rewritten by this integration manifest.",
+  "asset_scope": "size_xyz, palette_counts, non_air_blocks and sha256 on structures describe the original named base NBT asset. runtime_template_assets lists separately versioned shapes; review_revision 5 marks the thirteen reviewed redesigns. All original geometry and authorship are retained.",
   "reserved_extensions": [
     "Generic DreamFunctionService role interface remains disabled; enabled functions use their dedicated services.",
     "No automatic logistics, terrain excavation, or blanket neutral-creature taming is implied by building models."
@@ -1828,6 +1879,435 @@
         "pasterdream:flower_14": 2
       },
       "sha256": "17b194ad0d315a960ac1c4333459360354499e9cce5c67fc65e1c341c6cf6214"
+    },
+    {
+      "id": "dream_anchor_base_v5",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        11,
+        9
+      ],
+      "non_air_blocks": 376,
+      "palette_counts": {
+        "dreamseekers:meltdream_crown_crystal": 1,
+        "minecraft:amethyst_block": 3,
+        "minecraft:chain": 2,
+        "minecraft:lantern": 4,
+        "pasterdream:bricks_dyedreamquartz_block": 33,
+        "pasterdream:chiseled_dyedreamquartz_block": 14,
+        "pasterdream:dyedream_bud_wall": 2,
+        "pasterdream:dyedream_glass": 7,
+        "pasterdream:dyedream_lartern": 2,
+        "pasterdream:dyedream_log": 107,
+        "pasterdream:dyedream_planks": 7,
+        "pasterdream:dyedream_worldtree_leaves": 110,
+        "pasterdream:dyedreamquartz_block": 42,
+        "pasterdream:dyedreamquartz_block_slab": 28,
+        "pasterdream:dyedreamquartz_block_stairs": 4,
+        "pasterdream:polished_calcite": 10
+      },
+      "sha256": "edda57c0a7ccd5b7773c0fe17ba080c7dea4fd7fa74e0c0e9a558a14c879a94a",
+      "review_revision": 5,
+      "branch": "BASE"
+    },
+    {
+      "id": "dream_anchor_shadow_v5",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        17,
+        9
+      ],
+      "non_air_blocks": 351,
+      "palette_counts": {
+        "dreamseekers:meltdream_crown_crystal": 1,
+        "minecraft:amethyst_block": 42,
+        "minecraft:chain": 5,
+        "minecraft:crying_obsidian": 7,
+        "minecraft:lantern": 5,
+        "minecraft:polished_blackstone_bricks": 5,
+        "minecraft:purple_stained_glass": 8,
+        "pasterdream:bricks_dyedreamquartz_block": 33,
+        "pasterdream:chiseled_dyedreamquartz_block": 14,
+        "pasterdream:dyedream_bud_wall": 2,
+        "pasterdream:dyedream_lartern": 2,
+        "pasterdream:dyedream_log": 104,
+        "pasterdream:dyedream_planks": 7,
+        "pasterdream:dyedream_worldtree_leaves": 32,
+        "pasterdream:dyedreamquartz_block": 42,
+        "pasterdream:dyedreamquartz_block_slab": 28,
+        "pasterdream:dyedreamquartz_block_stairs": 4,
+        "pasterdream:polished_calcite": 10
+      },
+      "sha256": "bf374acd8ce7bbbd08de4ab21ca0afca8d555e6083ca310d9f2109801b7b5f9d",
+      "review_revision": 5,
+      "branch": "SHADOW"
+    },
+    {
+      "id": "dream_anchor_wind_v5",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        18,
+        9
+      ],
+      "non_air_blocks": 393,
+      "palette_counts": {
+        "dreamseekers:meltdream_crown_crystal": 1,
+        "minecraft:chain": 2,
+        "minecraft:lantern": 3,
+        "minecraft:light_blue_stained_glass": 6,
+        "pasterdream:bricks_dyedreamquartz_block": 33,
+        "pasterdream:chiseled_dyedreamquartz_block": 14,
+        "pasterdream:dyedream_bud_wall": 2,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:dyedream_log": 73,
+        "pasterdream:dyedream_planks": 7,
+        "pasterdream:dyedreamquartz_block": 42,
+        "pasterdream:dyedreamquartz_block_slab": 28,
+        "pasterdream:dyedreamquartz_block_stairs": 4,
+        "pasterdream:polished_calcite": 10,
+        "pasterdream:windmoor_leaves_0": 50,
+        "pasterdream:windmoor_leaves_1": 51,
+        "pasterdream:windmoor_planks": 45,
+        "pasterdream:windrunner_crystal_block": 21
+      },
+      "sha256": "8715fa5849eb801d60ac0757e47e8adba7db2f73f68f8b6c7682e5d772b883f9",
+      "review_revision": 5,
+      "branch": "WIND"
+    },
+    {
+      "id": "shadow_watchtower_garrison_v3",
+      "base_building": "shadow_watchtower",
+      "size_xyz": [
+        7,
+        14,
+        7
+      ],
+      "non_air_blocks": 176,
+      "palette_counts": {
+        "minecraft:amethyst_block": 2,
+        "minecraft:deepslate_tile_slab": 8,
+        "minecraft:deepslate_tiles": 19,
+        "minecraft:lantern": 3,
+        "minecraft:polished_deepslate": 28,
+        "minecraft:purple_stained_glass": 2,
+        "minecraft:stone_bricks": 17,
+        "minecraft:waxed_cut_copper": 17,
+        "minecraft:waxed_cut_copper_slab": 6,
+        "pasterdream:bricks_dyedreamquartz_block": 29,
+        "pasterdream:chiseled_dyedreamquartz_block": 9,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:dyedream_log": 6,
+        "pasterdream:dyedream_planks": 6,
+        "pasterdream:dyedreamquartz_block": 9,
+        "pasterdream:dyedreamquartz_block_slab": 4,
+        "pasterdream:dyedreamquartz_block_stairs": 4,
+        "pasterdream:polished_calcite": 6
+      },
+      "sha256": "47127a08ed431a2c505f2e86a0f442e10ab4d8bba588e3ea0771628d5d2f9eaa",
+      "review_revision": 5
+    },
+    {
+      "id": "dream_depot_rework_v1",
+      "base_building": "dream_depot",
+      "size_xyz": [
+        13,
+        8,
+        10
+      ],
+      "non_air_blocks": 332,
+      "palette_counts": {
+        "minecraft:deepslate_tile_stairs": 11,
+        "minecraft:lantern": 1,
+        "minecraft:light_blue_stained_glass": 8,
+        "minecraft:purple_stained_glass": 3,
+        "minecraft:rail": 8,
+        "minecraft:spruce_log": 23,
+        "minecraft:spruce_planks": 78,
+        "minecraft:stone_bricks": 52,
+        "minecraft:waxed_cut_copper": 4,
+        "minecraft:waxed_cut_copper_slab": 25,
+        "pasterdream:chiseled_dyedreamquartz_block": 5,
+        "pasterdream:dyedream_glass": 5,
+        "pasterdream:dyedream_lartern": 4,
+        "pasterdream:dyedream_log": 42,
+        "pasterdream:dyedream_planks": 20,
+        "pasterdream:dyedream_planks_slab": 7,
+        "pasterdream:dyedream_planks_stairs": 10,
+        "pasterdream:dyedreamquartz_block": 9,
+        "pasterdream:dyedreamquartz_block_slab": 4,
+        "pasterdream:polished_calcite": 2,
+        "pasterdream:polished_calcite_stairs": 11
+      },
+      "sha256": "57e292cef88c2338c554ea6ab157057807bbe0c440c8d8a3f73c1ae5dbf21421",
+      "review_revision": 5
+    },
+    {
+      "id": "reverie_garden_rework_v1",
+      "base_building": "reverie_garden",
+      "size_xyz": [
+        13,
+        8,
+        11
+      ],
+      "non_air_blocks": 314,
+      "palette_counts": {
+        "minecraft:grass_block": 5,
+        "minecraft:lantern": 2,
+        "minecraft:light_blue_stained_glass": 13,
+        "minecraft:purple_stained_glass": 3,
+        "minecraft:stone_bricks": 73,
+        "minecraft:wheat": 16,
+        "pasterdream:chiseled_dyedreamquartz_block": 9,
+        "pasterdream:dyedream_dirt": 16,
+        "pasterdream:dyedream_glass": 7,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:dyedream_leaves": 18,
+        "pasterdream:dyedream_log": 31,
+        "pasterdream:dyedream_planks": 49,
+        "pasterdream:dyedream_planks_slab": 8,
+        "pasterdream:dyedreamquartz_block": 6,
+        "pasterdream:dyedreamquartz_block_slab": 8,
+        "pasterdream:flower_14": 5,
+        "pasterdream:polished_calcite": 44
+      },
+      "sha256": "5a7a3c9cec5fbb1ad186c8ad90c06ff07210a3188aed446db96210831948840e",
+      "review_revision": 5
+    },
+    {
+      "id": "shadow_furnace_rework_v1",
+      "base_building": "shadow_furnace",
+      "size_xyz": [
+        11,
+        12,
+        11
+      ],
+      "non_air_blocks": 477,
+      "palette_counts": {
+        "minecraft:amethyst_block": 10,
+        "minecraft:deepslate_bricks": 84,
+        "minecraft:deepslate_tile_slab": 14,
+        "minecraft:deepslate_tiles": 58,
+        "minecraft:lantern": 1,
+        "minecraft:polished_blackstone_bricks": 151,
+        "minecraft:purple_stained_glass": 32,
+        "minecraft:stone_bricks": 31,
+        "minecraft:waxed_cut_copper": 26,
+        "minecraft:waxed_cut_copper_slab": 6,
+        "pasterdream:chiseled_dyedreamquartz_block": 7,
+        "pasterdream:dyedream_glass": 1,
+        "pasterdream:dyedream_lartern": 11,
+        "pasterdream:dyedream_log": 4,
+        "pasterdream:dyedreamquartz_block": 2,
+        "pasterdream:dyedreamquartz_block_slab": 16,
+        "pasterdream:polished_calcite": 23
+      },
+      "sha256": "152eec2b7a73165be886d540e6fbe0540afea8caeea781b15d07654cbf347381",
+      "review_revision": 5
+    },
+    {
+      "id": "shadow_mine_rework_v1",
+      "base_building": "shadow_mine",
+      "size_xyz": [
+        11,
+        9,
+        11
+      ],
+      "non_air_blocks": 342,
+      "palette_counts": {
+        "minecraft:amethyst_block": 10,
+        "minecraft:blackstone": 6,
+        "minecraft:chain": 6,
+        "minecraft:cobbled_deepslate": 58,
+        "minecraft:deepslate_bricks": 105,
+        "minecraft:deepslate_tile_slab": 2,
+        "minecraft:deepslate_tile_stairs": 9,
+        "minecraft:lantern": 1,
+        "minecraft:polished_blackstone_bricks": 7,
+        "minecraft:purple_stained_glass": 4,
+        "minecraft:spruce_log": 20,
+        "minecraft:stone_bricks": 24,
+        "minecraft:waxed_cut_copper": 12,
+        "minecraft:waxed_cut_copper_slab": 6,
+        "pasterdream:chiseled_dyedreamquartz_block": 6,
+        "pasterdream:dyedream_lartern": 2,
+        "pasterdream:dyedream_log": 35,
+        "pasterdream:dyedream_planks": 24,
+        "pasterdream:polished_calcite": 4,
+        "pasterdream:polished_calcite_slab": 1
+      },
+      "sha256": "c22183312731db0ca69d8fb220fcf4507384a0c4ab55d6c362c9060a4c7aa342",
+      "review_revision": 5
+    },
+    {
+      "id": "beetle_sanctuary_rework_v1",
+      "base_building": "beetle_sanctuary",
+      "size_xyz": [
+        11,
+        7,
+        11
+      ],
+      "non_air_blocks": 251,
+      "palette_counts": {
+        "minecraft:amethyst_block": 13,
+        "minecraft:deepslate_tile_stairs": 26,
+        "minecraft:grass_block": 4,
+        "minecraft:lantern": 2,
+        "minecraft:polished_deepslate": 4,
+        "minecraft:purple_stained_glass": 6,
+        "minecraft:stone_bricks": 38,
+        "minecraft:waxed_cut_copper": 3,
+        "minecraft:waxed_cut_copper_slab": 6,
+        "pasterdream:chiseled_dyedreamquartz_block": 32,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:dyedream_log": 33,
+        "pasterdream:dyedream_planks": 16,
+        "pasterdream:dyedreamquartz_block": 59,
+        "pasterdream:dyedreamquartz_block_slab": 4,
+        "pasterdream:flower_13": 2,
+        "pasterdream:windmoor_planks": 2
+      },
+      "sha256": "52133db946d834ef38d8f4f0f89f908db1c763e1fc605337abe55d479493d7b3",
+      "review_revision": 5
+    },
+    {
+      "id": "contract_ecology_rework_v1",
+      "base_building": "contract_ecology",
+      "size_xyz": [
+        13,
+        10,
+        13
+      ],
+      "non_air_blocks": 400,
+      "palette_counts": {
+        "minecraft:cyan_stained_glass": 13,
+        "minecraft:grass_block": 4,
+        "minecraft:lantern": 2,
+        "minecraft:light_blue_stained_glass": 32,
+        "minecraft:stone_bricks": 62,
+        "minecraft:waxed_cut_copper": 7,
+        "pasterdream:chiseled_dyedreamquartz_block": 27,
+        "pasterdream:dyedream_glass": 8,
+        "pasterdream:dyedream_lartern": 2,
+        "pasterdream:dyedream_leaves": 35,
+        "pasterdream:dyedream_log": 40,
+        "pasterdream:dyedream_planks": 37,
+        "pasterdream:dyedream_planks_slab": 4,
+        "pasterdream:dyedreamquartz_block_slab": 8,
+        "pasterdream:flower_14": 4,
+        "pasterdream:polished_calcite": 74,
+        "pasterdream:polished_calcite_slab": 22,
+        "pasterdream:windmoor_leaves_0": 17,
+        "pasterdream:windmoor_planks": 2
+      },
+      "sha256": "2149e784399a3c7dc9ad390a49768cb13d6de203ae216f89a69bb3bf52e1c73f",
+      "review_revision": 5
+    },
+    {
+      "id": "dream_hall_rework_v1",
+      "base_building": "dream_hall",
+      "size_xyz": [
+        11,
+        12,
+        11
+      ],
+      "non_air_blocks": 427,
+      "palette_counts": {
+        "minecraft:amethyst_block": 15,
+        "minecraft:deepslate_bricks": 15,
+        "minecraft:deepslate_tile_slab": 6,
+        "minecraft:deepslate_tile_stairs": 22,
+        "minecraft:grass_block": 4,
+        "minecraft:lantern": 2,
+        "minecraft:polished_deepslate": 4,
+        "minecraft:purple_stained_glass": 34,
+        "minecraft:stone_bricks": 45,
+        "minecraft:waxed_cut_copper": 10,
+        "minecraft:waxed_cut_copper_slab": 1,
+        "pasterdream:chiseled_dyedreamquartz_block": 40,
+        "pasterdream:dyedream_glass": 8,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:dyedream_log": 77,
+        "pasterdream:dyedream_planks": 3,
+        "pasterdream:dyedream_planks_slab": 3,
+        "pasterdream:dyedream_planks_stairs": 8,
+        "pasterdream:dyedreamquartz_block": 102,
+        "pasterdream:dyedreamquartz_block_slab": 1,
+        "pasterdream:flower_13": 4,
+        "pasterdream:polished_calcite": 6,
+        "pasterdream:polished_calcite_slab": 4,
+        "pasterdream:polished_calcite_stairs": 12
+      },
+      "sha256": "18c8877ed5dd0de67b450d28f1e80b73a5f2c3e7deb3e0425613c3a3cc03715b",
+      "review_revision": 5
+    },
+    {
+      "id": "resonance_dais_rework_v1",
+      "base_building": "resonance_dais",
+      "size_xyz": [
+        9,
+        7,
+        9
+      ],
+      "non_air_blocks": 137,
+      "palette_counts": {
+        "minecraft:amethyst_block": 6,
+        "minecraft:chain": 6,
+        "minecraft:lantern": 2,
+        "minecraft:polished_deepslate": 1,
+        "minecraft:purple_stained_glass": 1,
+        "minecraft:stone_bricks": 20,
+        "minecraft:waxed_cut_copper": 2,
+        "pasterdream:chiseled_dyedreamquartz_block": 11,
+        "pasterdream:dyedream_lartern": 1,
+        "pasterdream:dyedream_log": 5,
+        "pasterdream:dyedream_planks": 19,
+        "pasterdream:dyedreamquartz_block": 47,
+        "pasterdream:dyedreamquartz_block_slab": 14,
+        "pasterdream:polished_calcite_stairs": 2
+      },
+      "sha256": "a280aca805b982c475d3fb73e0dab30a8b821d76a3b5cc03b643df7404f0713b",
+      "review_revision": 5
+    },
+    {
+      "id": "resonance_laboratory_rework_v1",
+      "base_building": "resonance_laboratory",
+      "size_xyz": [
+        13,
+        8,
+        11
+      ],
+      "non_air_blocks": 404,
+      "palette_counts": {
+        "minecraft:amethyst_block": 4,
+        "minecraft:cyan_stained_glass": 1,
+        "minecraft:deepslate_bricks": 4,
+        "minecraft:deepslate_tile_slab": 15,
+        "minecraft:deepslate_tile_stairs": 16,
+        "minecraft:deepslate_tiles": 21,
+        "minecraft:grass_block": 3,
+        "minecraft:lantern": 2,
+        "minecraft:light_blue_stained_glass": 26,
+        "minecraft:polished_deepslate": 4,
+        "minecraft:purple_stained_glass": 15,
+        "minecraft:stone_bricks": 41,
+        "minecraft:waxed_cut_copper": 14,
+        "minecraft:waxed_cut_copper_slab": 14,
+        "pasterdream:chiseled_dyedreamquartz_block": 24,
+        "pasterdream:dyedream_glass": 17,
+        "pasterdream:dyedream_log": 25,
+        "pasterdream:dyedream_planks": 18,
+        "pasterdream:dyedreamquartz_block": 111,
+        "pasterdream:dyedreamquartz_block_slab": 8,
+        "pasterdream:flower_13": 3,
+        "pasterdream:polished_calcite": 13,
+        "pasterdream:windmoor_planks": 2,
+        "pasterdream:windrunner_crystal_block": 3
+      },
+      "sha256": "458f8bfa1e92b1d08158f00fbf761d88d031fd76d38c9d656b9afecff32a9e2d",
+      "review_revision": 5
     }
   ]
 }

@@ -59,14 +59,41 @@ public final class UnknownTowerWorkerRepairAuditGameTests {
             for(long id:forced){var c=new ChunkPos(id);level.setChunkForced(c.x,c.z,false);}
         }
     }
+    private static DataStorage savedV2(){
+        var tag=new net.minecraft.nbt.CompoundTag();
+        tag.putInt("schema",1);tag.putInt("modelRevision",2);tag.putInt("highest",211);tag.putUUID("instance",UUID.randomUUID());
+        var storage=new DataStorage();storage.setData(DreamWatchtowerPlacement.MODEL,tag);return storage;
+    }
+    @GameTest(templateNamespace="dreamseekers_audit_fixes",template="branch_arena",batch="unknown_tower_audit",timeoutTicks=20)
+    public static void sameRevisionForeignDeckIsParkedWithoutLoadingOrRewriting(GameTestHelper h){
+        for(int variant=0;variant<4;variant++){
+            var storage=savedV2();var model=storage.getData(DreamWatchtowerPlacement.MODEL);
+            // A half-built foreign deck can have a count valid for stock v2, so count alone is not a discriminator.
+            model.putInt("highest",75);
+            if(variant==1)model.putBoolean("restyled",false);
+            if(variant==2)model.putBoolean("restyled",true);
+            if(variant==3)model.putString("restyled","not a boolean");
+            var snap=model.copy();snap.putString("kind","dream_watchtower");snap.putInt("placed",70);snap.putDouble("partial",.25);
+            h.assertTrue(DreamWatchtowerPlacement.validSnapshot(snap)==(variant<2),"only the stock v2 deck may bind a client snapshot");
+            var row=new net.minecraft.nbt.CompoundTag();
+            row.putString("buildingKey","dreamseekers:shadow_watchtower");row.putString("rotation","NONE");row.putString("portalType","BASIC");
+            row.put("dataStorage",storage.write());row.putDouble("partialBlocksDestroyed",.25);
+            var pending=new net.minecraft.nbt.CompoundTag();pending.putString("witness","retain-whole-row");row.put("pendingConstruction",pending);
+            var rows=new net.minecraft.nbt.ListTag();rows.add(row);var root=new net.minecraft.nbt.CompoundTag();root.put("buildings",rows);
+            var parsed=BuildingSaveData.load(root,h.getLevel().getServer());
+            h.assertTrue(parsed.buildings.size()==(variant<2?1:0),"native loader must not construct foreign geometry");
+            if(variant>=2)h.assertTrue(parsed.save(new net.minecraft.nbt.CompoundTag()).equals(root),"complete foreign row survives round-trip untouched");
+        }
+        h.succeed();
+    }
     @GameTest(templateNamespace="dreamseekers_audit_fixes",template="branch_arena",batch="unknown_tower_audit",timeoutTicks=1200)
     public static void opaqueTowerNeverRepairsFallbackButKnownV2StillRepairs(GameTestHelper h){
         var f=new Fixture(h);var origin=h.absolutePos(new BlockPos(20,1,20));var knownOrigin=origin.offset(40,0,0);
         f.prepare(origin);f.prepare(knownOrigin);
         var definition=(DreamWatchtower)DreamseekersMod.SHADOW_WATCHTOWER;
-        // Use an actual newly-created v2 codec, then make only its version unknown.
-        var prior=(DreamWatchtowerPlacement)definition.createBuildingPlacement(f.level,origin,Rotation.NONE,f.owner);
-        prior.isBuilt=true;
+        // Restore a real historical v2 fixture, then make only its saved version unknown.
+        var prior=(DreamWatchtowerPlacement)definition.createRestoredBuildingPlacement(f.level,origin,Rotation.NONE,f.owner,savedV2());
+        prior.isBuilt=true;prior.afterRestoredFromSave();
         var saved=DataStorage.read(prior.getDataStorage().write(),f.level.getServer());
         var unknown=saved.getData(DreamWatchtowerPlacement.MODEL).copy();unknown.putInt("schema",99);unknown.putString("futurePayload","preserve-me");
         saved.setData(DreamWatchtowerPlacement.MODEL,unknown);
@@ -75,8 +102,11 @@ public final class UnknownTowerWorkerRepairAuditGameTests {
         h.assertTrue(inert.modelRevision()==-1&&!definition.isGarrisonEnabled(inert),"unknown model disables garrison before repair");
         var before=new HashMap<BlockPos,net.minecraft.world.level.block.state.BlockState>();
         for(var b:BuildingUtils.getAbsoluteBlockData(DreamWatchtowerPlacement.template(2),f.level,origin,Rotation.NONE))before.put(b.getBlockPos(),f.level.getBlockState(b.getBlockPos()));
-        var known=(DreamWatchtowerPlacement)definition.createBuildingPlacement(f.level,knownOrigin,Rotation.NONE,f.owner);
+        var known=(DreamWatchtowerPlacement)definition.createRestoredBuildingPlacement(f.level,knownOrigin,Rotation.NONE,f.owner,savedV2());
+        known.isBuilt=true;known.afterRestoredFromSave();
         f.buildings.add(known);BuildingServerEvents.getBuildings().add(known);known.onBuilt();known.destroyRandomBlocks(10);
+        h.assertTrue(definition.isGarrisonEnabled(known)&&DreamWatchtowerPlacement.validSnapshot(known.structureSnapshot()),
+            "historical v2 keeps its garrison and is recognized by the current client");
         h.assertTrue(known.modelRevision()==2&&known.getBlocksPlaced()<211&&!known.shouldBeDestroyed(),"known v2 has actual native damage to repair");
         var unknownWorker=f.spawn(origin.offset(3,2,-3));var knownWorker=f.spawn(knownOrigin.offset(3,2,-3));
         h.startSequence().thenWaitUntil(()->h.assertTrue(f.published(unknownWorker)&&f.published(knownWorker),"both actual workers published before one-shot orders"))

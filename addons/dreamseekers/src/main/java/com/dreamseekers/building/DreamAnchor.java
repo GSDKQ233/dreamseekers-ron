@@ -57,7 +57,7 @@ public final class DreamAnchor extends ProductionBuilding {
     @Override public boolean acceptsInitialStructureSnapshot(net.minecraft.nbt.CompoundTag snapshot){return com.dreamseekers.worldtree.DreamAnchorPlacement.validSnapshot(snapshot);}
     @Override public int getUpgradeLevel(com.solegendary.reignofnether.building.BuildingPlacement p){return com.dreamseekers.worldtree.DreamWorldTreeService.isAscended(p)?1:0;}
     @Override public String getUpgradedStructureName(int level){return level==1?com.dreamseekers.worldtree.DreamWorldTreeService.STRUCTURE:STRUCTURE;}
-    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) { return com.dreamseekers.worldtree.WorldTreeModel.BASE_V3.blocks(); }
+    @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) { return com.dreamseekers.worldtree.WorldTreeModel.CURRENT_BASE.blocks(); }
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) { return DreamBuildingSupport.button(this, key); }
     @Override public String getBuildAvailabilityError(String owner) { return DreamBuildingSupport.availability(this, owner); }
     @Override public boolean requiresStrictPlacementOwnerCheck() { return true; }

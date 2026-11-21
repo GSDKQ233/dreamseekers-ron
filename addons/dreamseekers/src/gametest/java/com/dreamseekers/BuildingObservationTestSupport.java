@@ -92,7 +92,7 @@ final class BuildingObservationTestSupport {
             "same original UUID/body naturally ticked and reached both indexes exactly once");}
         void readyAll(){h.assertTrue(host.isBuilt,"real original template completed");for(var body:bodies)ready(body);}
         void enter(StoneSpiritThrowerUnit guard){
-            h.assertTrue(host instanceof DreamWatchtowerPlacement tower&&tower.modelRevision()==2,"actual rev2 host");
+            h.assertTrue(host instanceof DreamWatchtowerPlacement tower&&tower.modelRevision()==3,"actual rev3 host");
             h.assertTrue(guard.canGarrison()&&GarrisonableBuildingAddon.getGarrison(guard)==null,"real eligible unseated body");
             UnitServerEvents.addActionItem(owner,UnitAction.GARRISON,-1,new int[]{guard.getId()},host.originPos,BlockPos.ZERO);
         }

@@ -1,6 +1,6 @@
 {
-  "release": "API65-repair3.1",
-  "status": "work-in-progress source; automated and dedicated-server acceptance passed; packaged dual-client acceptance deferred; no binary release",
+  "release": "API65-repair3.1-buildings.1",
+  "status": "work-in-progress reviewed building source; no binary release",
   "runtime_change": true,
   "baseline_archive": "API65-repair3-source.zip",
   "baseline_sha256": "226856fca5f3e9eb7da58f1e190e8863dbba77036480d59a4149c9bf71ea5ef2",
@@ -14,42 +14,65 @@
     "COLLABORATION.md",
     "README.md",
     "addons/dreamseekers/build.gradle",
-    "addons/dreamseekers/src/main/resources/META-INF/mods.toml",
-    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/en_us.json",
-    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/zh_cn.json",
-    "build.gradle",
-    "docs/dreamseekers/FEATURES.zh-CN.md",
-    "docs/dreamseekers/REPAIR3.1.zh-CN.md",
-    "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
-    "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
-    "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java",
-    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedProgressionRestartGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedUnitResearchGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAbilityEffectsGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAssetGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingObservationTestSupport.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamFoundationGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamShellFunctionGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ExpansionResearchGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightAmplificationRestartGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightResonanceResearchGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ResourceAuditAdministrativeRemovalGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ResourceAuditWorldTreeGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ResourceAuditWorldTreeRestartGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ReviewedOrdinaryBuildingGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ScaffoldBuildingGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/SplitRegressionGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/SurvivalBeaconGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnitHudIconLeashGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnknownTowerWorkerRepairAuditGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeBranchGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeReceiptGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeRestartGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeUpgradeGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeWindRepairGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/worldtree/ReviewedMorphSupportGameTests.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/DreamseekersMod.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/building/BeetleSanctuary.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamAnchor.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamBuildingSpec.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamBuildingSupport.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamFootprintRange.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamHall.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamLaboratory.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamLaboratoryPlacement.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamResonanceAura.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamScaffoldBuilding.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamTemplateModel.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamWatchtower.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/building/ReverieGarden.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityEffects.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityService.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/DaisWardEffects.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/EcologyCodexScreen.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/TowerMarkClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/TowerObservation.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamEconomyClientHud.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipLayout.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipText.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/ecologyworkposts/EcologyClient.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/economy/DreamGardenPlacement.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/encounter/EncounterClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/function/DreamFunctionalPlacement.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/function/DreamWatchtowerPlacement.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractAbility.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/ContractClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/neutralcontract/NeutralContracts.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamHallPlacement.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamProductionPlacement.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamUnitProduction.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/resonance/LightResonanceResearch.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/resonance/ResonanceClient.java",
@@ -65,10 +88,33 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BeetleUnit.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/FireflyWorker.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/StoneSpiritWorker.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/DreamAnchorPlacement.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/DreamWorldTreeService.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeClient.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeModel.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeMorph.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreePackets.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeReceiptIntents.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeState.java",
+    "addons/dreamseekers/src/main/resources/META-INF/mods.toml",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/en_us.json",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/zh_cn.json",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/beetle_sanctuary_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/contract_ecology_rework_v1.nbt",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_base_v3.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_base_v5.nbt",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_shadow_v3.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_shadow_v5.nbt",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_wind_v4.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_wind_v5.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_depot_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_hall_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/resonance_dais_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/resonance_laboratory_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/reverie_garden_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_furnace_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_mine_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_watchtower_garrison_v3.nbt",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/aaroncos_left_hand_unit.png",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/aaroncos_right_hand_unit.png",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/crazy_terrorbeak_unit.png",
@@ -79,15 +125,37 @@
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/skill_mother_brood.png",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/skill_mother_nest.png",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/skill_weeping_echoes.png",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/beetle_sanctuary_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/contract_ecology_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_base_v5.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_shadow_v5.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_wind_v5.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_depot_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_hall_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/resonance_dais_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/resonance_laboratory_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/reverie_garden_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_furnace_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_mine_rework_v1.nbt",
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_watchtower_garrison_v3.nbt",
     "addons/dreamseekers/src/test/java/com/dreamseekers/building/DreamFootprintRangeTest.java",
+    "addons/dreamseekers/src/test/java/com/dreamseekers/building/DreamTemplateModelTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/ArtResourceIntegrityTest.java",
+    "addons/dreamseekers/src/test/java/com/dreamseekers/client/BuildingIntegrationMetadataTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/DreamTooltipLayoutTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/HardCodedSkillNumbersTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillTooltipLayoutTest.java",
     "addons/dreamseekers/structure_manifest.json",
+    "build.gradle",
+    "docs/dreamseekers/BUILDINGS-REVIEWED.zh-CN.md",
+    "docs/dreamseekers/FEATURES.zh-CN.md",
+    "docs/dreamseekers/REPAIR3.1.zh-CN.md",
     "gradle/gametest-plan.gradle",
+    "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
     "src/gametest/java/com/solegendary/reignofnether/hero/HeroExperienceOrbReloadGameTests.java",
     "src/gametest/resources/data/api65_followup_hero_xp/structures/ore_mine_test_arena.nbt",
+    "src/main/java/com/solegendary/reignofnether/ReignOfNether.java",
+    "src/main/java/com/solegendary/reignofnether/building/BuildingProductionClientboundPacket.java",
     "src/main/java/com/solegendary/reignofnether/building/buildings/monsters/Mausoleum.java",
     "src/main/java/com/solegendary/reignofnether/hero/HeroExperienceOrb.java",
     "src/main/java/com/solegendary/reignofnether/hud/HudClientEvents.java",
@@ -96,6 +164,7 @@
     "src/main/java/com/solegendary/reignofnether/survival/spawners/SpawnPointSearch.java",
     "src/main/java/com/solegendary/reignofnether/survival/spawners/WaveSpawner.java",
     "src/main/resources/assets/reignofnether/textures/item/scroll_of_recall.png",
+    "src/test/java/com/solegendary/reignofnether/client/Api65ClientRegressionTest.java",
     "src/test/java/com/solegendary/reignofnether/client/CoreResourceIntegrityTest.java",
     "src/test/java/com/solegendary/reignofnether/hero/HeroExperienceOrbWiringTest.java",
     "src/test/java/com/solegendary/reignofnether/survival/spawners/SpawnPointSearchTest.java"
@@ -116,8 +185,8 @@
       "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
     },
     "COLLABORATION.md": {
-      "bytes": 29145,
-      "sha256": "e9ccf1c3d189e4a68e2124f5b400d7f798b585e428552e43b58a283ff258d707"
+      "bytes": 29463,
+      "sha256": "99ad48eb750663e54ac1802496310f172f77bd5e3562a3d82fb91ee5dbde3204"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -128,12 +197,12 @@
       "sha256": "9152d90f20557128a640c659ad1b5f6ee16c43c155719bee92c1d885f97bb35d"
     },
     "README.md": {
-      "bytes": 6243,
-      "sha256": "3b3a2c471d541f0ea1d30edd55374d8363309d2db756ec581324fe12da6560a0"
+      "bytes": 6396,
+      "sha256": "4315c6cb3d08e768a4dcc5972f8ccb61a0bbbf0e5f7efe1070379941fa26a7d3"
     },
     "addons/dreamseekers/build.gradle": {
-      "bytes": 63744,
-      "sha256": "23bfe9e3ae0cd99bde71682f9444a8d9ed29994b4723ab891815dd07d80d2090"
+      "bytes": 64011,
+      "sha256": "2f1fb338b7d8e95f043f25ea3be08179670e106a9bbb960f1708d4a70878da6f"
     },
     "addons/dreamseekers/dependencies.lock.json": {
       "bytes": 2212,
@@ -249,7 +318,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedProgressionRestartGameTests.java": {
       "bytes": 23777,
-      "sha256": "e391e10f8229551c11f2185d5442d997c9d774a88487b592d20b869e0cb7efba"
+      "sha256": "dcf9297ebcb5a567eb18d7d71fb401d2c48c563a83397672a117ab1af701d322"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedRangeLightGameTests.java": {
       "bytes": 11282,
@@ -257,7 +326,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedUnitResearchGameTests.java": {
       "bytes": 7480,
-      "sha256": "c898853df1888de0b6415a78a7f9dee1c9ab6a3e5ba462ae73781326467316ff"
+      "sha256": "6a9cb7814c4a5d6f3df7071fb6d0b89ee08f4ae089151872111e0e4abf1fa6d5"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/Api57TowerObservationLifecycleGameTests.java": {
       "bytes": 7385,
@@ -444,8 +513,8 @@
       "sha256": "108cf9da8f8ae5227a7c2a3817323515721be31228b2382af1bcdd8fdd330d28"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAssetGameTests.java": {
-      "bytes": 31478,
-      "sha256": "eb7dfdf4f7fcc877e4f0d7ba8027d588d4357d112de976a3726b8ea87b8ebb93"
+      "bytes": 32352,
+      "sha256": "ca4acf86e855f67142cd97c4505b0de4f9d29c06da7cf4d63a903dd6b65a3001"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingCodexObservationGameTests.java": {
       "bytes": 12232,
@@ -465,7 +534,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingObservationTestSupport.java": {
       "bytes": 21628,
-      "sha256": "aa9210cb529d2878d3fcc6f0bf8c3e7316d5a269ccb692b68f5b8b5c8bc30631"
+      "sha256": "c58b0c15c3a38af92006dfcd8da96d264260ef171f1346d16cc174cec23a16f6"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingOwnerCommandFixture.java": {
       "bytes": 1234,
@@ -541,7 +610,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamFoundationGameTests.java": {
       "bytes": 11332,
-      "sha256": "1b57f7a15919cab93042e2b29b62cc1a8f94388db66bb6b212d309b92a68effc"
+      "sha256": "4050b0224c1aaff6f6c3c9f9d3103c335c69f199dd8c0a10cd42afd79797cced"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamPersistenceGameTests.java": {
       "bytes": 22536,
@@ -557,7 +626,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamShellFunctionGameTests.java": {
       "bytes": 37731,
-      "sha256": "32f04c44d6bd55cbb6c88c22bbc6c459b39ddda12500f194c3e07ef5d08dc306"
+      "sha256": "64aa34fc82f46d4ffe72e607a14bbab5733ec6d6445222bb6e58a71b88ad3012"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamSpecialistGameTests.java": {
       "bytes": 18590,
@@ -613,7 +682,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ExpansionResearchGameTests.java": {
       "bytes": 11207,
-      "sha256": "160faa06403a26169f94bca26c4a1bf5c90f0b23b67fd1da2879f8c633d507f2"
+      "sha256": "976a76df78cbb8b2123ff66e229b521c761cad7b933fd7bd080f36f2c934b645"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/FireflyEconomyGameTests.java": {
       "bytes": 10088,
@@ -805,7 +874,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightAmplificationRestartGameTests.java": {
       "bytes": 27741,
-      "sha256": "5ad99bdee7b318c19c00fa2f7445bc4158584aa40f35ee86ec18b98e1941c05a"
+      "sha256": "2b2c539f3e67de282fdb28c306f84a7d37ca92cb4587fb2c33e2aec5716ac7b0"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightExplicitAttackGameTests.java": {
       "bytes": 8195,
@@ -825,7 +894,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightResonanceResearchGameTests.java": {
       "bytes": 18466,
-      "sha256": "435fcc6716474a4e021cbc767e215d1e81d1f204c1c47ca73bf3eb3195300d0d"
+      "sha256": "9eeb5cbd775c7e79955ee708a3d0e51928a544f7a7580fbefeca4fbf5493dd1c"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightSkillAmplificationGameTests.java": {
       "bytes": 51506,
@@ -937,15 +1006,19 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ResourceAuditAdministrativeRemovalGameTests.java": {
       "bytes": 7784,
-      "sha256": "866757fa034b43adb3e4239a34063f0a4a54bf59ab38e00e2161f0967374cdef"
+      "sha256": "ec65c3e7f1d2a27de29eb252e353a142a07b97bc7cf761858d71238bd4214c74"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ResourceAuditWorldTreeGameTests.java": {
       "bytes": 9246,
-      "sha256": "79dad055c7c5050f1ae590c8b125e8e047cd3a9e1f085d85033c93c9e2e217fd"
+      "sha256": "818a9e988d1ea3b894e801233caae159e3b368a9d8181a33e8ee5624e2a63c83"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ResourceAuditWorldTreeRestartGameTests.java": {
       "bytes": 12745,
-      "sha256": "48ad37a025af1f37b436b0d7aa1251216d3558a22d4a48551b97e3d0b2874a0b"
+      "sha256": "4ef48a0d841de26b27b51103aea6dcc1abcca87f030a20a298f8fca504f056c8"
+    },
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ReviewedOrdinaryBuildingGameTests.java": {
+      "bytes": 10033,
+      "sha256": "2981668c50c777b0823e6759455c4fe4acb349f4641a348ff581f19a6d94179f"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SandboxClientFixGameTests.java": {
       "bytes": 8956,
@@ -1152,8 +1225,8 @@
       "sha256": "36f28ff320abc61e8edba04b12c4c5263006ff85834b3fb80c2a54e81171ee8e"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SplitRegressionGameTests.java": {
-      "bytes": 5582,
-      "sha256": "67592508795335f6b44881edd42cef8ec2ed16468442a6ebd384ba9d7fa23fc6"
+      "bytes": 5608,
+      "sha256": "e3154387ee6bf04a263106ab89891db75242d7199298d2a3e79c6e1715ba865f"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SporeCarrierGameTests.java": {
       "bytes": 23132,
@@ -1245,7 +1318,7 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SurvivalBeaconGameTests.java": {
       "bytes": 18463,
-      "sha256": "61aaca5bf0a369cf3f26bf921efd1fefbeff4c2b3e95752caac7886dfe193cdc"
+      "sha256": "823e68bf4b3530b2baaf9802412d1ae466bbcf14f2661392522460bcb229f0ec"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/TerrorbeakCommandAuthorityGameTests.java": {
       "bytes": 18474,
@@ -1312,8 +1385,8 @@
       "sha256": "971d8c3664bc1abee7f93c7d91a1b49af7eee8819160aaa1f36a5420f08be954"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnknownTowerWorkerRepairAuditGameTests.java": {
-      "bytes": 8547,
-      "sha256": "89db6d86b94252847c44eecdb8bd3468600478197ef686e0cbce405a50720873"
+      "bytes": 11191,
+      "sha256": "e3f128ab9b13c9fb6d135e895726bfdf396ae7c2b3c5750d15c5a828b4cb332d"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnknownWorldTreeRestoreAuditGameTests.java": {
       "bytes": 5966,
@@ -1408,8 +1481,8 @@
       "sha256": "2e84a8448e920cc089441d246fa612aa2e4deba81d5e50a10fb8ed302bef9681"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeBranchGameTests.java": {
-      "bytes": 13918,
-      "sha256": "47d43d2ca864398008dd44d31e260c393c5a6be6c66e64287999a59016b80bbf"
+      "bytes": 17440,
+      "sha256": "d2bc1866af24df4fc3d4020d78cfb9134c26a99dcadec8223fdf1f7d3eaf21bb"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeEmeraldIncomeGameTests.java": {
       "bytes": 21550,
@@ -1417,19 +1490,19 @@
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeReceiptGameTests.java": {
       "bytes": 6347,
-      "sha256": "c8cde06260eef5769c6e253600ffdc272e889a173fadc5a7de6e0ee1b7783d5c"
+      "sha256": "29082ab36e3d98985cb2ace38f27eb3b54c515b7fa3bb02bf340cc7ee3d070a7"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeRestartGameTests.java": {
       "bytes": 21644,
-      "sha256": "04ecfa49d67b09c1137ce0677ae0564e3adef6e66b7cb8ee7f27cf172e961e25"
+      "sha256": "e535feaecbd21b28432c255ffcd739fd1cd0521ff0bcc2cf65add14d02a1ada0"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeUpgradeGameTests.java": {
-      "bytes": 11802,
-      "sha256": "97d1b5877b13239e7c64fd2a79f08dc998aa6cc24f7a48cee4fcdf1a675a28be"
+      "bytes": 9100,
+      "sha256": "03b514493445b8fc343fa6fbaa56aa9e7eda0e19b5318ed312848e1277a98fb6"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeWindRepairGameTests.java": {
-      "bytes": 11940,
-      "sha256": "98e9bff12b70ffeaaeb1261af90560d5b7afb63cbeb6ddb167590735e115ed58"
+      "bytes": 9204,
+      "sha256": "da7d207497bd71e2dc28cb09a7b53f32ff6978a3e5ce99094cdc0f91eb54f8e7"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/gametest/SporeRandomProbe.java": {
       "bytes": 832,
@@ -1458,6 +1531,10 @@
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/visual/ShadowHudVisualFixture.java": {
       "bytes": 14613,
       "sha256": "4400290b99f1a86ad7985d8c82799cf7ff53bdf02d091bd21e4efbee2f50848c"
+    },
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/worldtree/ReviewedMorphSupportGameTests.java": {
+      "bytes": 2307,
+      "sha256": "edf9101cd98b4b6f5ba196a70905f42f75935f1f74dd804d3ea4dd1e057f6718"
     },
     "addons/dreamseekers/src/gametest/resources/data/api57_tower_observation_lifecycle/structures/dreamseekers_test_arena.nbt": {
       "bytes": 114,
@@ -2528,12 +2605,12 @@
       "sha256": "07964b9d228306ec3f1af6ed7449bde4678138bb4efa6a5c4d27909f3c2ae209"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/BeetleSanctuary.java": {
-      "bytes": 3635,
-      "sha256": "8577170d0141a672447b9d89b5d77576e0a7d38791cdf491d2a48e1fabd7cd8b"
+      "bytes": 4270,
+      "sha256": "1657a150d2e68c51ede2c09df1ef47d4104303d4ac0359e1a3aaf2a7d3af5283"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamAnchor.java": {
-      "bytes": 5851,
-      "sha256": "39a6a2733ed4dceb44d3d2b69766ff379d158140cd837af880579d7039667e75"
+      "bytes": 5856,
+      "sha256": "7e5098aa5404c4018ab7509b4a8391ccbec0811c8380aac680b33db3e7d6bd2c"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamBuildingMilestones.java": {
       "bytes": 3030,
@@ -2552,32 +2629,36 @@
       "sha256": "3abb965c634d58cf7fdbcfbb1aac798aab1fbad266b2e05941df2abb9f6b49aa"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamHall.java": {
-      "bytes": 4153,
-      "sha256": "f27f0901a1e5ba2912952220128a636aef51301ca6766224ddbf5b77f8d62612"
+      "bytes": 4753,
+      "sha256": "92a417daf75efff1d29dd7cd095bcbed1152d00ea6c8a8c8cb5c2ef3bc3fffba"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamLaboratory.java": {
-      "bytes": 2446,
-      "sha256": "0e17352fba3d023084257a1b22c8b9651ece95fdf2e52e0bc7b23e256a1f1354"
+      "bytes": 3021,
+      "sha256": "7dabd5c592744964eb08ccabe8f5baee9566e1450b304cace4ccaa4dcbf1a028"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamLaboratoryPlacement.java": {
-      "bytes": 2508,
-      "sha256": "7aae20e63483aed077c779e2f46f05bc60364a5c16fda4478e1880fa691bb70b"
+      "bytes": 3699,
+      "sha256": "32967b7e5870d36fe2b4ae735f28b691316edc847cd404deb496d46b96fb17aa"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamResonanceAura.java": {
       "bytes": 1605,
       "sha256": "54ad9884665632ff48c678813509d334d9b9c10873696b9e77e97245d4279d7e"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamScaffoldBuilding.java": {
-      "bytes": 3662,
-      "sha256": "5061dfb21361ca8853019d8d0774952f2e5751b18330133858fd35de2920eacd"
+      "bytes": 4441,
+      "sha256": "331b6f1d4f458ec71edbcca8d007f4575e6a2e349ee15a57efea9dc9d374471d"
+    },
+    "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamTemplateModel.java": {
+      "bytes": 12451,
+      "sha256": "d66b397cb7cb356c1818da2243e67aa3bea6f35a0f82ab42506a20f5876e7c52"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamWatchtower.java": {
-      "bytes": 6543,
-      "sha256": "2d7e5ef87e287b1b20c519949448c8ac2b0955a130153805be30af8f3bf1ef1c"
+      "bytes": 6582,
+      "sha256": "e91b677f49fe7c33a73e8895e48f4f1decc191a0edf83a3b921df85fc021293b"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/ReverieGarden.java": {
-      "bytes": 4359,
-      "sha256": "f9bdef9c6e8e088db658393136d3a12059cd0df7a6f74c9e3506176fe529b49f"
+      "bytes": 4599,
+      "sha256": "e58bcb162a7595c970de000bfc69db2917a1d650fbaa86178657431057b76215"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbility.java": {
       "bytes": 2411,
@@ -2596,8 +2677,8 @@
       "sha256": "8283f6bb818e698871718a7fb4cada4f949b7ccfa6a16596638f4e6929ce5015"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityService.java": {
-      "bytes": 6761,
-      "sha256": "01ee51da7b8fb319321bfb2ea1c7251099e8fa8b64ea4095d593ae661bfb995c"
+      "bytes": 6647,
+      "sha256": "20c943f222b6877790e817c8c4b9923b955a9394bcf6bd5a8852db3f9ede1d6f"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilitySource.java": {
       "bytes": 10641,
@@ -2624,16 +2705,16 @@
       "sha256": "d0adaa68e8b205432adb0a39a296a32d6e1f458c618ff6cc010fee8827fbc37d"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/TowerMarkClient.java": {
-      "bytes": 19906,
-      "sha256": "54c01b138583c9a48c9d861e8d788b568cd5197e063de9643b416eb117287bad"
+      "bytes": 19904,
+      "sha256": "6edadd684592f68866b2e3473a8eafb70ac8266c18ef0bae6a003a2af5e68026"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/TowerMarkPackets.java": {
       "bytes": 3569,
       "sha256": "d1a410a8b626bc58d612c763b640ff8571921b1e685f9ea90a3cbb5d186a2fd9"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/TowerObservation.java": {
-      "bytes": 9400,
-      "sha256": "c60a79688ceaebcda624d0e7b517a8a4751a2b08b3800cf1e255112ec30f1804"
+      "bytes": 9258,
+      "sha256": "a496a7253794a47743ac3d656f41caaf1cf1c71231abcd81a5460c4151279c3e"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamEconomyClientHud.java": {
       "bytes": 6024,
@@ -2728,8 +2809,8 @@
       "sha256": "b90a35f3ca9ca6aa3dc4f2367363d90c8948e6a9ef61016e1d0062b93e2686cc"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/economy/DreamGardenPlacement.java": {
-      "bytes": 5518,
-      "sha256": "cd918fbd4e28995fac8870470d65704e15e96f8d7c0d23f6d8963d903d3183de"
+      "bytes": 6972,
+      "sha256": "ec02130b29f4fa0ce28db6bc1e3c5b63ec6190134e754c6c3e6af9897a2f1a4a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/economy/DreamPassiveClock.java": {
       "bytes": 2177,
@@ -2804,16 +2885,16 @@
       "sha256": "925c96fa930bf4403fb3d3e90afeac46fab74fa4fcd7e2b89723bd2458079545"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/function/DreamFunctionalPlacement.java": {
-      "bytes": 3313,
-      "sha256": "2ba463f401125cdd206c07d1304696877cf2771e5a83a09e1e07eaf028e8d8b3"
+      "bytes": 4965,
+      "sha256": "e3c87c1ff860b4ccecf23c7bba57d9fbe694587a54b307920ee1e81c38a5c352"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/function/DreamFunctionalView.java": {
       "bytes": 536,
       "sha256": "069338227cfc1cb1dc8639e3fa917573ba87f6d8ee19fb09f437cdb54baab3f6"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/function/DreamWatchtowerPlacement.java": {
-      "bytes": 6736,
-      "sha256": "fbaed419fc51807a2daed3bb9ca8ee8d738256c7d602fa16aa9a4d687da83a49"
+      "bytes": 7700,
+      "sha256": "131a0cd9099eacc51fa7cdfc52215550deaa164310d4acf1b1e8fc133f8a82e4"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/jellyfish/JellyfishBalance.java": {
       "bytes": 592,
@@ -2848,16 +2929,16 @@
       "sha256": "f42bc920f68b5da9544ac9fd73020747262ce5c1555c26552bbe1e8bedb994b0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamHallPlacement.java": {
-      "bytes": 5564,
-      "sha256": "33e5d087756ca5823a204633e61b21f4b5dca47032cd70af1f60db309dbe63c0"
+      "bytes": 5738,
+      "sha256": "6e104d3f6a49e39cd53820a33c2ae169a3a80804a0aee116b1b5c9599e41d6ac"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamPagedProductionItemList.java": {
       "bytes": 889,
       "sha256": "c30e613bb0af09b642715b164c37520b7acbbc57df78203b7ffe94ac8bd02ef0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamProductionPlacement.java": {
-      "bytes": 17045,
-      "sha256": "22781d045668a7d460ae4641f50b42906929330e97ede5a8e835f601d964fe83"
+      "bytes": 18936,
+      "sha256": "bba3bc97c34777f6157bbd81cae803bbc6038739e6e055e5ec401a6c315b049d"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/production/DreamUnitProduction.java": {
       "bytes": 18158,
@@ -3948,12 +4029,12 @@
       "sha256": "a954d15eb80ad52f5548fa8c3266fd60de92af470e7c97dd8a02664893e93a24"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/DreamAnchorPlacement.java": {
-      "bytes": 7475,
-      "sha256": "5865ec4bb015651ddc1bab6fe14511eb23206bbbe7cd92d1270ac5b34894c427"
+      "bytes": 7485,
+      "sha256": "efa773e7f4ad05188b5ed0e561f038e7ce18b1a06898bf6d64b3b58ac4248a16"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/DreamWorldTreeService.java": {
-      "bytes": 12641,
-      "sha256": "7a806ad66c1e8f8533b5068ede85b4500c6aac5992a238678a4441d7162de718"
+      "bytes": 12690,
+      "sha256": "523292fb19b142acf4b8b81e771da919cf833b987baf7a0b7344f0a3954a5c1a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/MeltdreamCrownBlock.java": {
       "bytes": 1534,
@@ -3972,24 +4053,24 @@
       "sha256": "96e9e61fc5eac73b657457fe1669cd9f9f21e29a22b45d4762b59f1ecbeea1a6"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeModel.java": {
-      "bytes": 2786,
-      "sha256": "063ac3205d8a292678e934e0cb9bf1402a1b98eb988c7e729b0c36e84565fdc8"
+      "bytes": 3680,
+      "sha256": "f4658bf618c1a7d3b0d0fac24c7e46cc61f17bd41272d21c8dda10c488072326"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeMorph.java": {
-      "bytes": 7675,
-      "sha256": "92284165d707b6e3e0bfca1990803b59570e4eb0cf8dea7c84021989578b6f69"
+      "bytes": 8636,
+      "sha256": "e29116654188bab62340aca510c833b3ddbc243c2071778c300f6c8b2c2faeb0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreePackets.java": {
-      "bytes": 5927,
-      "sha256": "761fd38eb25824ce95e61d519c6e657ed4e2699adf8e7756c5ef004cfdc63176"
+      "bytes": 5937,
+      "sha256": "67e19f1786c3f26b4ccffeec79592320e94ccdff1c7b9d18dc943e42fa38f9f1"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeReceiptIntents.java": {
-      "bytes": 2937,
-      "sha256": "1c8d7d53b31e867a4ba5eb900526cf4e481e1a52da606836e5e4e9c5c1dfe0b3"
+      "bytes": 3024,
+      "sha256": "c169f7581423528b41e733c4231feaa4284337c920039dcf8e80c8d82f21b688"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/worldtree/WorldTreeState.java": {
-      "bytes": 5270,
-      "sha256": "ddd6c85c765241b21669174bd57b1e53119fc2887e964ff4794170aa0882cef7"
+      "bytes": 5133,
+      "sha256": "0fc180744b07573ae086173ccb83b30cc8fd88d29c7f468b1d6a38ad4212a920"
     },
     "addons/dreamseekers/src/main/resources/CREDITS-DREAMSEEKERS.txt": {
       "bytes": 1172,
@@ -4000,8 +4081,8 @@
       "sha256": "9152d90f20557128a640c659ad1b5f6ee16c43c155719bee92c1d885f97bb35d"
     },
     "addons/dreamseekers/src/main/resources/META-INF/mods.toml": {
-      "bytes": 1656,
-      "sha256": "e25bf38ceb0ce9f8a35713e346b282237c4782a7dcb2abdcb68045a5ae00be64"
+      "bytes": 1668,
+      "sha256": "9fe046bc4e1d627de42a6660443193a32fcb88f18e5785eb06d3733b9c35ed88"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/blockstates/decorative_garden_wheat.json": {
       "bytes": 735,
@@ -4031,9 +4112,17 @@
       "bytes": 2725,
       "sha256": "c7c1317392b9ad14e2069f7aba687f27bfefb66debe211a625415d3e0e4dc485"
     },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/beetle_sanctuary_rework_v1.nbt": {
+      "bytes": 2737,
+      "sha256": "52133db946d834ef38d8f4f0f89f908db1c763e1fc605337abe55d479493d7b3"
+    },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/contract_ecology.nbt": {
       "bytes": 4444,
       "sha256": "4a5920413c9d78ac4a68a493f3de00a7c0e7a3404b7d41047269468fc201020f"
+    },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/contract_ecology_rework_v1.nbt": {
+      "bytes": 4694,
+      "sha256": "2149e784399a3c7dc9ad390a49768cb13d6de203ae216f89a69bb3bf52e1c73f"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor.nbt": {
       "bytes": 3028,
@@ -4047,41 +4136,81 @@
       "bytes": 3388,
       "sha256": "72c1e9effabb388a70ab70df8f41a9e2d67ad328e9b3b59a044bf8ec440194dc"
     },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_base_v5.nbt": {
+      "bytes": 3498,
+      "sha256": "edda57c0a7ccd5b7773c0fe17ba080c7dea4fd7fa74e0c0e9a558a14c879a94a"
+    },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_shadow_v3.nbt": {
       "bytes": 5053,
       "sha256": "2c79095c658ad7f3504410fff5c1bcd1d64cb9da1b59ec92291bac07f7bb3555"
+    },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_shadow_v5.nbt": {
+      "bytes": 5158,
+      "sha256": "bf374acd8ce7bbbd08de4ab21ca0afca8d555e6083ca310d9f2109801b7b5f9d"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_wind_v4.nbt": {
       "bytes": 5369,
       "sha256": "f8ca712d67ebdd1ec164d76d5d0d14d5ae96143ef57f99a95d47c3380e1c44d3"
     },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_anchor_wind_v5.nbt": {
+      "bytes": 5396,
+      "sha256": "8715fa5849eb801d60ac0757e47e8adba7db2f73f68f8b6c7682e5d772b883f9"
+    },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_depot.nbt": {
       "bytes": 3038,
       "sha256": "aec2b0c85b40be92a999dfcf917da6949bb0d950aecc6b09c4f9a415553ed46c"
+    },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_depot_rework_v1.nbt": {
+      "bytes": 3287,
+      "sha256": "57e292cef88c2338c554ea6ab157057807bbe0c440c8d8a3f73c1ae5dbf21421"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_hall.nbt": {
       "bytes": 4300,
       "sha256": "5337eccbd17d70886a3fbf64daee005180547db381d07a2a3ea17c490f5770c3"
     },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/dream_hall_rework_v1.nbt": {
+      "bytes": 4569,
+      "sha256": "18c8877ed5dd0de67b450d28f1e80b73a5f2c3e7deb3e0425613c3a3cc03715b"
+    },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/resonance_dais.nbt": {
       "bytes": 1824,
       "sha256": "767ee35143cc6a5f743c39403a492cd267f64c6b8fd0b2e11582d48035c23dac"
+    },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/resonance_dais_rework_v1.nbt": {
+      "bytes": 1974,
+      "sha256": "a280aca805b982c475d3fb73e0dab30a8b821d76a3b5cc03b643df7404f0713b"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/resonance_laboratory.nbt": {
       "bytes": 3435,
       "sha256": "e79313d53f8e836d2f9f8472b4fa7ef4c42e86915058541c8a62c0ff42393271"
     },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/resonance_laboratory_rework_v1.nbt": {
+      "bytes": 3572,
+      "sha256": "458f8bfa1e92b1d08158f00fbf761d88d031fd76d38c9d656b9afecff32a9e2d"
+    },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/reverie_garden.nbt": {
       "bytes": 3301,
       "sha256": "78498615c7806fef08c765195d6da336b544a4ecc7548ed74bfaec7070db0dce"
+    },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/reverie_garden_rework_v1.nbt": {
+      "bytes": 3430,
+      "sha256": "5a7a3c9cec5fbb1ad186c8ad90c06ff07210a3188aed446db96210831948840e"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_furnace.nbt": {
       "bytes": 4194,
       "sha256": "c32384837d9a299fe9aa6d99a650bd57fa15a4960fdc1692c0453063ad2d4e13"
     },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_furnace_rework_v1.nbt": {
+      "bytes": 4370,
+      "sha256": "152eec2b7a73165be886d540e6fbe0540afea8caeea781b15d07654cbf347381"
+    },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_mine.nbt": {
       "bytes": 3307,
       "sha256": "871461c902b5c19b29930998174d349293b51089ee3cba04aa52e1093053d45a"
+    },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_mine_rework_v1.nbt": {
+      "bytes": 3501,
+      "sha256": "c22183312731db0ca69d8fb220fcf4507384a0c4ab55d6c362c9060a4c7aa342"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_watchtower.nbt": {
       "bytes": 2265,
@@ -4090,6 +4219,10 @@
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_watchtower_garrison_v2.nbt": {
       "bytes": 2256,
       "sha256": "17b194ad0d315a960ac1c4333459360354499e9cce5c67fc65e1c341c6cf6214"
+    },
+    "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/shadow_watchtower_garrison_v3.nbt": {
+      "bytes": 2304,
+      "sha256": "47127a08ed431a2c505f2e86a0f442e10ab4d8bba588e3ea0771628d5d2f9eaa"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/textures/icons/aaroncos_left_hand_unit.png": {
       "bytes": 6870,
@@ -4355,9 +4488,17 @@
       "bytes": 2725,
       "sha256": "c7c1317392b9ad14e2069f7aba687f27bfefb66debe211a625415d3e0e4dc485"
     },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/beetle_sanctuary_rework_v1.nbt": {
+      "bytes": 2737,
+      "sha256": "52133db946d834ef38d8f4f0f89f908db1c763e1fc605337abe55d479493d7b3"
+    },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/contract_ecology.nbt": {
       "bytes": 4444,
       "sha256": "4a5920413c9d78ac4a68a493f3de00a7c0e7a3404b7d41047269468fc201020f"
+    },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/contract_ecology_rework_v1.nbt": {
+      "bytes": 4694,
+      "sha256": "2149e784399a3c7dc9ad390a49768cb13d6de203ae216f89a69bb3bf52e1c73f"
     },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor.nbt": {
       "bytes": 3028,
@@ -4371,41 +4512,81 @@
       "bytes": 3388,
       "sha256": "72c1e9effabb388a70ab70df8f41a9e2d67ad328e9b3b59a044bf8ec440194dc"
     },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_base_v5.nbt": {
+      "bytes": 3498,
+      "sha256": "edda57c0a7ccd5b7773c0fe17ba080c7dea4fd7fa74e0c0e9a558a14c879a94a"
+    },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_shadow_v3.nbt": {
       "bytes": 5053,
       "sha256": "2c79095c658ad7f3504410fff5c1bcd1d64cb9da1b59ec92291bac07f7bb3555"
+    },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_shadow_v5.nbt": {
+      "bytes": 5158,
+      "sha256": "bf374acd8ce7bbbd08de4ab21ca0afca8d555e6083ca310d9f2109801b7b5f9d"
     },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_wind_v4.nbt": {
       "bytes": 5369,
       "sha256": "f8ca712d67ebdd1ec164d76d5d0d14d5ae96143ef57f99a95d47c3380e1c44d3"
     },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_anchor_wind_v5.nbt": {
+      "bytes": 5396,
+      "sha256": "8715fa5849eb801d60ac0757e47e8adba7db2f73f68f8b6c7682e5d772b883f9"
+    },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_depot.nbt": {
       "bytes": 3038,
       "sha256": "aec2b0c85b40be92a999dfcf917da6949bb0d950aecc6b09c4f9a415553ed46c"
+    },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_depot_rework_v1.nbt": {
+      "bytes": 3287,
+      "sha256": "57e292cef88c2338c554ea6ab157057807bbe0c440c8d8a3f73c1ae5dbf21421"
     },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_hall.nbt": {
       "bytes": 4300,
       "sha256": "5337eccbd17d70886a3fbf64daee005180547db381d07a2a3ea17c490f5770c3"
     },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/dream_hall_rework_v1.nbt": {
+      "bytes": 4569,
+      "sha256": "18c8877ed5dd0de67b450d28f1e80b73a5f2c3e7deb3e0425613c3a3cc03715b"
+    },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/resonance_dais.nbt": {
       "bytes": 1824,
       "sha256": "767ee35143cc6a5f743c39403a492cd267f64c6b8fd0b2e11582d48035c23dac"
+    },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/resonance_dais_rework_v1.nbt": {
+      "bytes": 1974,
+      "sha256": "a280aca805b982c475d3fb73e0dab30a8b821d76a3b5cc03b643df7404f0713b"
     },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/resonance_laboratory.nbt": {
       "bytes": 3435,
       "sha256": "e79313d53f8e836d2f9f8472b4fa7ef4c42e86915058541c8a62c0ff42393271"
     },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/resonance_laboratory_rework_v1.nbt": {
+      "bytes": 3572,
+      "sha256": "458f8bfa1e92b1d08158f00fbf761d88d031fd76d38c9d656b9afecff32a9e2d"
+    },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/reverie_garden.nbt": {
       "bytes": 3301,
       "sha256": "78498615c7806fef08c765195d6da336b544a4ecc7548ed74bfaec7070db0dce"
+    },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/reverie_garden_rework_v1.nbt": {
+      "bytes": 3430,
+      "sha256": "5a7a3c9cec5fbb1ad186c8ad90c06ff07210a3188aed446db96210831948840e"
     },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_furnace.nbt": {
       "bytes": 4194,
       "sha256": "c32384837d9a299fe9aa6d99a650bd57fa15a4960fdc1692c0453063ad2d4e13"
     },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_furnace_rework_v1.nbt": {
+      "bytes": 4370,
+      "sha256": "152eec2b7a73165be886d540e6fbe0540afea8caeea781b15d07654cbf347381"
+    },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_mine.nbt": {
       "bytes": 3307,
       "sha256": "871461c902b5c19b29930998174d349293b51089ee3cba04aa52e1093053d45a"
+    },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_mine_rework_v1.nbt": {
+      "bytes": 3501,
+      "sha256": "c22183312731db0ca69d8fb220fcf4507384a0c4ab55d6c362c9060a4c7aa342"
     },
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_watchtower.nbt": {
       "bytes": 2265,
@@ -4414,6 +4595,10 @@
     "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_watchtower_garrison_v2.nbt": {
       "bytes": 2256,
       "sha256": "17b194ad0d315a960ac1c4333459360354499e9cce5c67fc65e1c341c6cf6214"
+    },
+    "addons/dreamseekers/src/main/resources/data/dreamseekers/structures/shadow_watchtower_garrison_v3.nbt": {
+      "bytes": 2304,
+      "sha256": "47127a08ed431a2c505f2e86a0f442e10ab4d8bba588e3ea0771628d5d2f9eaa"
     },
     "addons/dreamseekers/src/main/resources/data/minecraft/tags/damage_type/bypasses_armor.json": {
       "bytes": 115,
@@ -4443,6 +4628,10 @@
       "bytes": 3567,
       "sha256": "af534d40fdd25d41cdd9bdd8a7bd04adfbf203e5b3924e589b8b4768ea70de6c"
     },
+    "addons/dreamseekers/src/test/java/com/dreamseekers/building/DreamTemplateModelTest.java": {
+      "bytes": 7443,
+      "sha256": "fd6773f624f5a9fe73f47522a6afa5600bc4b9e1cdbeadc63ea44d92c7e68702"
+    },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/ActiveClientClockWiringTest.java": {
       "bytes": 7792,
       "sha256": "f7c7104cef21804e9b4ea10df81d678789ee1d8ac0696914256f61b879bff8db"
@@ -4452,8 +4641,8 @@
       "sha256": "36426362f3a3bcdc9bb7afaf22803a81476e19bfcdb15b1c39301d55858ebb88"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/BuildingIntegrationMetadataTest.java": {
-      "bytes": 5726,
-      "sha256": "0f357399cb38bd92d01f91fa8a02b522a561d113df82a97517c69ccf25c6f521"
+      "bytes": 7558,
+      "sha256": "9c2cfe4b150860b66550eb3913234442e189106c6d2d991a31c323b2d0b99293"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/client/BuildingTooltipLayoutTest.java": {
       "bytes": 2892,
@@ -4564,8 +4753,8 @@
       "sha256": "51224e34c751da22987dfe70df4a6f7d5493733bfd6f4616ac5d11d73bf863fd"
     },
     "addons/dreamseekers/structure_manifest.json": {
-      "bytes": 37863,
-      "sha256": "6398c2842049d3ec3831b4c3b001756e3a9c7602feee5dfce48a2ae73939439b"
+      "bytes": 54672,
+      "sha256": "7f94512c558b77c3260f08eac18a6525dd40ef30aa4826fa6ee04cdbde8cf937"
     },
     "addons/dreamseekers/verify_paired_mods.py": {
       "bytes": 2489,
@@ -4578,6 +4767,10 @@
     "crowdin.yml": {
       "bytes": 169,
       "sha256": "06bb99eff2aacd9ea5d03419b8fd79f17837dd92bc923d2d00ce8bf2b63453e6"
+    },
+    "docs/dreamseekers/BUILDINGS-REVIEWED.zh-CN.md": {
+      "bytes": 1867,
+      "sha256": "4ee2bdeac59d2fa9943ade85bf8b3d3ac587728ecc5ed612117c93ad9819ab4d"
     },
     "docs/dreamseekers/FEATURES.zh-CN.md": {
       "bytes": 6183,

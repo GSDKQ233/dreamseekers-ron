@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.building;
+import net.minecraft.nbt.CompoundTag;
 
 import com.solegendary.reignofnether.building.BuildingBlock;
 import com.solegendary.reignofnether.building.BuildingPlaceButton;
@@ -27,6 +28,7 @@ public final class ReverieGarden extends AbstractFarm {
         buildTimeModifier = 0.8f;
         explodeChance = 0;
         startingBlockTypes.add(Blocks.STONE_BRICKS);
+        DreamTemplateModel.bootstrap();
         // Retain the existing foundation material contract. Dyedream dirt beds need no water.
         startingBlockTypes.add(BuiltInRegistries.BLOCK.get(
                 ResourceLocation.fromNamespaceAndPath("pasterdream", "dyedream_planks")));
@@ -54,8 +56,11 @@ public final class ReverieGarden extends AbstractFarm {
     @Override public void tick(net.minecraft.world.level.Level level, com.solegendary.reignofnether.building.BuildingPlacement placement) {
         com.dreamseekers.economy.DreamPassiveEconomy.tick(level, placement);
     }
+    @Override public boolean acceptsInitialStructureSnapshot(CompoundTag snapshot) {
+        return DreamTemplateModel.GARDEN.validSnapshot(snapshot);
+    }
     @Override public ArrayList<BuildingBlock> getRelativeBlockData(LevelAccessor level) {
-        return com.dreamseekers.economy.DreamGardenPlacement.decoratedTemplate();
+        return DreamTemplateModel.GARDEN.blocks(DreamTemplateModel.Revision.REVIEWED);
     }
     @Override public BuildingPlaceButton getBuildButton(Keybinding key) { return DreamBuildingSupport.button(this, key); }
     @Override public String getBuildAvailabilityError(String owner) { return DreamBuildingSupport.availability(this, owner); }

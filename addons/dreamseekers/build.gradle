@@ -1,7 +1,7 @@
 // Applied from the RoN checkout only with -Pdreamseekers.
 // All third-party content stays in user-provided, locally cached dependencies.
 // Nothing from those dependencies is copied or shaded into the addon JAR.
-ext.dreamseekersVersion = '0.65.0-repair3.1'
+ext.dreamseekersVersion = '0.65.0-repair3.1-buildings.1'
 
 def dependencyRepository = file(project.findProperty('dreamseekersDependencyRepo') ?: '.dreamseekers-deps/maven')
 def dependencyGroup = 'local.dreamseekers.dependencies'
@@ -699,15 +699,18 @@ tasks.register('verifyDreamseekersJar') {
             if (mixinConfig.refmap != 'dreamseekers.refmap.json') {
                 throw new GradleException('Addon mixin configuration does not reference its verified refmap')
             }
-            def structures = ['dream_anchor', 'reverie_garden', 'beetle_sanctuary', 'dream_depot',
-                    'shadow_mine', 'shadow_furnace', 'dream_hall', 'resonance_laboratory',
-                    'contract_ecology', 'resonance_dais', 'shadow_watchtower']
-            structures.each { name ->
+            def structureManifest = new groovy.json.JsonSlurper().parse(file('addons/dreamseekers/structure_manifest.json'))
+            def structures = structureManifest.structures + structureManifest.runtime_template_assets
+            structures.each { shape ->
+                def name = shape.id
                 def client = zip.getEntry('assets/dreamseekers/structures/' + name + '.nbt')
                 def server = zip.getEntry('data/dreamseekers/structures/' + name + '.nbt')
-                if (client == null || server == null || !java.util.Arrays.equals(
-                        zip.getInputStream(client).bytes, zip.getInputStream(server).bytes)) {
-                    throw new GradleException('Missing or divergent client/server structure: ' + name)
+                if (client == null || server == null)
+                    throw new GradleException('Missing client/server structure: ' + name)
+                byte[] shipped = zip.getInputStream(server).bytes
+                if (!java.util.Arrays.equals(zip.getInputStream(client).bytes, shipped)
+                        || java.security.MessageDigest.getInstance('SHA-256').digest(shipped).encodeHex().toString() != shape.sha256) {
+                    throw new GradleException('Divergent or unexpected client/server structure: ' + name)
                 }
             }
             if (!entries.contains('com/dreamseekers/function/DreamFunctionalPlacement.class'))

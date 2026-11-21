@@ -20,7 +20,9 @@ public final class WorldTreeReceiptIntents {
             refund?ResourceTransaction.ReceiptDisposition.REFUND:ResourceTransaction.ReceiptDisposition.FORFEIT).applied();
     }
     private static boolean intent(ResourcePaidReceipt receipt,boolean refund){
-        for(var target:new WorldTreeModel[]{WorldTreeModel.LEGACY_SHADOW,WorldTreeModel.SHADOW_V3,WorldTreeModel.WIND_V4}){
+        // Orphaned terminal receipts may outlive both their building and its visual revision.
+        for(var target:WorldTreeModel.values()){
+            if(target.branch==WorldTreeModel.Branch.BASE)continue;
             var c=DreamWorldTreeService.cost(target);
             if(receipt.purpose().equals(DreamWorldTreeService.purpose(target)+(refund?":refund":":forfeit"))&&receipt.food()==c.food()&&receipt.wood()==c.wood()&&receipt.ore()==c.ore()&&receipt.emerald()==c.emerald()&&receipt.extra().equals(c.extra()))return true;
         }return false;

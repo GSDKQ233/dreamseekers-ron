@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.IronBarsBlock;
+import net.minecraft.world.level.block.LanternBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -38,7 +39,22 @@ public final class WorldTreeMorph {
         return false;
     }
 
-    public static Plan plan(DreamAnchorPlacement p) {return plan(p,p.tree().target==null?WorldTreeModel.SHADOW_V3:p.tree().target);}
+    private static boolean hangingLamp(BuildingBlock block){
+        var state=block.getBlockState();return state.is(Blocks.LANTERN)&&state.getValue(LanternBlock.HANGING);
+    }
+    /** A damaged target keeps a prefix of this order. Never keep a v5 hanging lantern while
+     * removing the block above it: the native neighbour update would drop it, changing HP.
+     * Historic paid morphs retain their original hole selection, including the position tie-break. */
+    static Comparator<BuildingBlock> damageOrder(WorldTreeModel target){
+        if(target==WorldTreeModel.SHADOW_V5||target==WorldTreeModel.WIND_V5){
+            return Comparator.comparingInt((BuildingBlock b)->b.getBlockPos().getY()+(hangingLamp(b)?1:0))
+                .thenComparingInt(b->hangingLamp(b)?1:0)
+                .thenComparingLong(b->b.getBlockPos().asLong());
+        }
+        return Comparator.comparingInt((BuildingBlock b)->b.getBlockPos().getY()).thenComparingLong(b->b.getBlockPos().asLong());
+    }
+
+    public static Plan plan(DreamAnchorPlacement p) {return plan(p,p.tree().target==null?WorldTreeModel.CURRENT_SHADOW:p.tree().target);}
     public static Plan plan(DreamAnchorPlacement p,WorldTreeModel descriptor) {
         if(descriptor==null||descriptor.branch==WorldTreeModel.Branch.BASE)return fail("invalid_model");
         if(!(p.getLevel() instanceof ServerLevel l)||!l.getServer().isSameThread()||!p.isBuilt||p.getHealth()<=0||p.shouldBeDestroyed())return fail("invalid_host");
@@ -72,7 +88,7 @@ public final class WorldTreeMorph {
         if(solids.size()!=descriptor.count)return fail("invalid_model");
         var damage=WorldTreeHealth.project(solids.size(),p.minFraction(),Math.min(p.getHealth(),p.getMaxHealth()),p.getMaxHealth());
         // Retain low structural/entrance blocks first; upper missing blocks remain in the actual repair template.
-        solids.sort(Comparator.comparingInt((BuildingBlock b)->b.getBlockPos().getY()).thenComparingLong(b->b.getBlockPos().asLong()));
+        solids.sort(damageOrder(descriptor));
         for(int i=damage.present();i<solids.size();i++)after.put(solids.get(i).getBlockPos(),Blocks.AIR.defaultBlockState());
         return new Plan(null,target,before,after,damage.partial(),new ArrayList<>(p.getBlocks()),p.getHighestBlockCountReached(),p.partialBlocksDestroyed);
     }

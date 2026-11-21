@@ -40,8 +40,7 @@ public final class BuildingAbilityService {
                 &&com.dreamseekers.resonance.ResonanceResearch.unlocked(p.ownerName,false)
                 &&com.dreamseekers.resonance.ResonanceNetwork.network(level,p.ownerName).rank(p)>0?"ready":"requires_dais_network_tuning";
         if(ability==BuildingAbility.WATCHTOWER_MARK)
-            return p instanceof com.dreamseekers.function.DreamWatchtowerPlacement tower&&tower.modelRevision()==2
-                &&p.getBuilding() instanceof com.dreamseekers.building.DreamWatchtower definition&&definition.isGarrisonEnabled(p)
+            return p.getBuilding() instanceof com.dreamseekers.building.DreamWatchtower definition&&definition.isGarrisonEnabled(p)
                 ?"ready":"requires_own_garrison";
         return ability==BuildingAbility.ECOLOGY_CODEX?"ready":"unavailable";
     }

@@ -15,16 +15,29 @@ import java.util.*;
 public final class DreamWatchtowerPlacement extends DreamFunctionalPlacement {
     public static final DataType<CompoundTag> MODEL=DataType.createRegistered(
         ResourceLocation.fromNamespaceAndPath("dreamseekers","watchtower_model"),
-        (tag,server)->tag.copy(),CompoundTag::copy,CompoundTag::new);
+        (tag,server)->{
+            // An alternate v2 experiment reused the revision number, but not the geometry.
+            // Let the native save loader park its entire row, including pending construction.
+            if(!stockVariant(tag))throw new IllegalArgumentException("Unsupported watchtower variant");
+            return tag.copy();
+        },CompoundTag::copy,CompoundTag::new);
+    public static final int CURRENT_REVISION=3;
     private int revision;
     private UUID instance;
     private int savedHighest=2;
     private boolean supported=true;
     public static void bootstrap() {}
-    public static int count(int revision){return revision==1?236:revision==2?211:0;}
+    public static int count(int revision){return switch(revision){case 1->236;case 2->211;case 3->176;default->0;};}
+    /** Both open-deck models share the physical floor, entry, egress and observation anchors. */
+    public boolean hasGarrisonDeck(){return modelRevision()==2||modelRevision()==3;}
     public static ArrayList<BuildingBlock> template(int revision) {
-        if(revision!=1&&revision!=2)throw new IllegalArgumentException("Unknown watchtower model");
-        var blocks=DreamBuildingSupport.load(revision==1?"shadow_watchtower":"shadow_watchtower_garrison_v2");
+        String path=switch(revision){
+            case 1 -> "shadow_watchtower";
+            case 2 -> "shadow_watchtower_garrison_v2";
+            case 3 -> "shadow_watchtower_garrison_v3";
+            default -> throw new IllegalArgumentException("Unknown watchtower model");
+        };
+        var blocks=DreamBuildingSupport.load(path);
         if(blocks.stream().filter(b->!b.getBlockState().isAir()).count()!=count(revision)
                 ||blocks.stream().map(BuildingBlock::getBlockPos).distinct().count()!=blocks.size()
                 ||blocks.stream().anyMatch(b->{var pos=b.getBlockPos();return pos.getX()<0||pos.getX()>6||pos.getY()<0||pos.getY()>13||pos.getZ()<0||pos.getZ()>6;}))
@@ -36,8 +49,8 @@ public final class DreamWatchtowerPlacement extends DreamFunctionalPlacement {
         return tag.isEmpty()?1:validState(tag)?tag.getInt("modelRevision"):1;
     }
     public DreamWatchtowerPlacement(DreamWatchtower building,Level level,BlockPos origin,Rotation rotation,String owner) {
-        super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(template(2),level,origin,rotation));
-        revision=2;instance=UUID.randomUUID();writeModel();
+        super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(template(CURRENT_REVISION),level,origin,rotation));
+        revision=CURRENT_REVISION;instance=UUID.randomUUID();writeModel();
     }
     public DreamWatchtowerPlacement(DreamWatchtower building,Level level,BlockPos origin,Rotation rotation,String owner,DataStorage saved) {
         super(building,level,origin,rotation,owner,BuildingUtils.getAbsoluteBlockData(template(restoredRevision(saved)),level,origin,rotation));
@@ -49,10 +62,13 @@ public final class DreamWatchtowerPlacement extends DreamFunctionalPlacement {
         else {supported=false;revision=1;instance=null;}
         super.getDataStorage().setData(MODEL,tag.copy());
     }
+    private static boolean stockVariant(CompoundTag tag) {
+        return !tag.contains("restyled")||(tag.contains("restyled",net.minecraft.nbt.Tag.TAG_BYTE)&&tag.getByte("restyled")==0);
+    }
     private static boolean validState(CompoundTag tag) {
         int revision=tag.getInt("modelRevision"),highest=tag.getInt("highest");
-        return tag.contains("schema",3)&&tag.getInt("schema")==1&&tag.contains("modelRevision",3)
-            &&(revision==1||revision==2)&&tag.hasUUID("instance")&&tag.contains("highest",3)&&highest>=2&&highest<=count(revision);
+        return stockVariant(tag)&&tag.contains("schema",3)&&tag.getInt("schema")==1&&tag.contains("modelRevision",3)
+            &&(count(revision)>0)&&tag.hasUUID("instance")&&tag.contains("highest",3)&&highest>=2&&highest<=count(revision);
     }
     public int modelRevision(){return supported?revision:-1;}
     @Override public boolean shouldBeDestroyed() {
@@ -86,8 +102,8 @@ public final class DreamWatchtowerPlacement extends DreamFunctionalPlacement {
     }
     public static boolean validSnapshot(CompoundTag tag) {
         int revision=tag.getInt("modelRevision"),highest=tag.getInt("highest"),placed=tag.getInt("placed");
-        return "dream_watchtower".equals(tag.getString("kind"))&&tag.contains("modelRevision",3)
-            &&(revision==1||revision==2)&&tag.hasUUID("instance")&&tag.contains("highest",3)&&tag.contains("placed",3)
+        return stockVariant(tag)&&"dream_watchtower".equals(tag.getString("kind"))&&tag.contains("modelRevision",3)
+            &&(count(revision)>0)&&tag.hasUUID("instance")&&tag.contains("highest",3)&&tag.contains("placed",3)
             &&highest>=2&&highest<=count(revision)&&placed>=0&&placed<=count(revision)
             &&tag.contains("partial",6)&&Double.isFinite(tag.getDouble("partial"))&&tag.getDouble("partial")>=0&&tag.getDouble("partial")<1;
     }

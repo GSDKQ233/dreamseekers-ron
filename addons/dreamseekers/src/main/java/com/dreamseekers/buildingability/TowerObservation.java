@@ -3,7 +3,6 @@ package com.dreamseekers.buildingability;
 
 import com.dreamseekers.DreamseekersMod;
 import com.dreamseekers.building.DreamWatchtower;
-import com.dreamseekers.function.DreamWatchtowerPlacement;
 import com.dreamseekers.skill.CoordinatedMark;
 import com.dreamseekers.skill.SkillIdentity;
 import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
@@ -32,8 +31,8 @@ public final class TowerObservation {
     public static Vec3 eye(BuildingPlacement host){return Vec3.atCenterOf(new BlockPos(3,13,3).rotate(host.rotation).offset(host.originPos).above());}
     private static boolean garrison(BuildingAbilitySource source,LivingEntity entity){return BuildingAbilityEffects.permanentOwnUnit(source,entity)
             &&entity instanceof Unit unit&&GarrisonableBuildingAddon.getGarrison(unit)==source.host();}
-    public static boolean ready(BuildingAbilitySource source){return source.valid()&&source.host() instanceof DreamWatchtowerPlacement tower
-            &&tower.modelRevision()==2&&source.host().getBuilding() instanceof DreamWatchtower definition&&definition.isGarrisonEnabled(source.host())
+    public static boolean ready(BuildingAbilitySource source){return source.valid()
+            &&source.host().getBuilding() instanceof DreamWatchtower definition&&definition.isGarrisonEnabled(source.host())
             &&UnitServerEvents.getAllUnits().stream().anyMatch(entity->garrison(source,entity));}
     private static boolean eligible(ServerPlayer viewer,BuildingAbilitySource source,LivingEntity target){
         if(!(target instanceof Unit unit)||unit.getOwnerName().isBlank()||source.owner().equals(unit.getOwnerName())

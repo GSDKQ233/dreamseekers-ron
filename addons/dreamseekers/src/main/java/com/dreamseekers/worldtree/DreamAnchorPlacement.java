@@ -11,7 +11,7 @@ import java.util.*;
 /** The same placement survives its controlled morph; worker queue and pending rallies are not copied. */
 public final class DreamAnchorPlacement extends DreamProductionPlacement {
     private UUID clientInstance;
-    private WorldTreeModel clientModel=WorldTreeModel.BASE_V3;
+    private WorldTreeModel clientModel=WorldTreeModel.CURRENT_BASE;
     public DreamAnchorPlacement(Building b,Level l,BlockPos p,Rotation r,String owner,ArrayList<BuildingBlock> blocks,boolean capitol){super(b,l,p,r,owner,blocks,capitol);}
     public UUID clientInstance(){return clientInstance;}
     @Override public java.util.List<com.solegendary.reignofnether.hud.buttons.AbilityButton> getAbilityButtons(){
@@ -29,7 +29,7 @@ public final class DreamAnchorPlacement extends DreamProductionPlacement {
     public WorldTreeModel model(){return getLevel().isClientSide()?clientModel:tree().model;}
     public boolean ascended(){return (getLevel().isClientSide()||tree().supported)&&model().branch==WorldTreeModel.Branch.SHADOW;}
     public ArrayList<BuildingBlock> blocks(WorldTreeModel model){return BuildingUtils.getAbsoluteBlockData(model.blocks(),getLevel(),originPos,rotation);}
-    public ArrayList<BuildingBlock> upgradedBlocks(){return blocks(tree().target!=null?tree().target:model().branch!=WorldTreeModel.Branch.BASE?model():WorldTreeModel.SHADOW_V3);}
+    public ArrayList<BuildingBlock> upgradedBlocks(){return blocks(tree().target!=null?tree().target:model().branch!=WorldTreeModel.Branch.BASE?model():WorldTreeModel.CURRENT_SHADOW);}
     public void commitGeometry(ArrayList<BuildingBlock> blocks,int highest,double partial){restoreGeometry(blocks,highest,partial);}
     public boolean claims(BlockPos pos){return placedBlockPosSet.contains(pos);}
     public double minFraction(){return minBlocksPercent;}

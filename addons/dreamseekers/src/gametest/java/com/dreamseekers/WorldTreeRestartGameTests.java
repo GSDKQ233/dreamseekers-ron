@@ -72,7 +72,7 @@ public final class WorldTreeRestartGameTests {
    else p.tree().remaining=n==0?1200:1; // explicit timer acceleration; separate full2400tick test covers full duration
   }
   var wind=extraFixture(h,160,WorldTreeModel.BASE_V3);wind.destroyRandomBlocks(95.25);
-  h.assertTrue(DreamWorldTreeService.start(peers.get(1).actor,wind,wind.tree().instance,WorldTreeModel.WIND_V4).equals("started"),"same owner pays for Wind while owning Shadow upgrade");
+  h.assertTrue(DreamWorldTreeService.start(peers.get(1).actor,wind,wind.tree().instance,WorldTreeModel.WIND_V5).equals("started"),"same owner pays for Wind while owning Shadow upgrade");
   wind.tree().remaining=1; // Explicit completion acceleration; separate passed Wind suite covers real2400ticks.
   var legacyBase=extraFixture(h,200,WorldTreeModel.LEGACY_BASE);legacyBase.destroyRandomBlocks(22.5);
   MinecraftForge.EVENT_BUS.register(new StopWitness());
@@ -81,7 +81,7 @@ public final class WorldTreeRestartGameTests {
    h.assertTrue(prepared.get(1).ascended()&&prepared.get(2).ascended(),"two actual physical upgrades complete");
    h.assertTrue(account(PREFIX+1).emerald==38&&account(PREFIX+2).emerald==38,"one ordinary E cycle was earned before real disk persistence");
    h.assertTrue(prepared.get(1).getHealth()>1&&prepared.get(1).getHealth()<380&&prepared.get(2).getHealth()<=2,"half and lowHP survived genuine morph");
-   h.assertTrue(wind.model()==WorldTreeModel.WIND_V4&&wind.getHealth()>1&&wind.getHealth()<380&&wind.getBlocksPlaced()<377,"paid Wind completed with real repair holes before save");
+   h.assertTrue(wind.model()==WorldTreeModel.WIND_V5&&wind.getHealth()>1&&wind.getHealth()<380&&wind.getBlocksPlaced()<393,"paid Wind completed with real repair holes before save");
    h.assertTrue(com.dreamseekers.progression.DreamWindProgression.server(PREFIX+1).wind(),"original paid Wind entitlement earned before save");
    h.assertTrue(legacyBase.model()==WorldTreeModel.LEGACY_BASE&&legacyBase.getBlocksTotal()==324&&legacyBase.getHealth()<380,"unupgraded legacy base remains damaged");
    PlayerServerEvents.saveRTSPlayers();BuildingServerEvents.saveBuildings(h.getLevel());ResourcesServerEvents.saveResources(h.getLevel());
@@ -113,12 +113,12 @@ public final class WorldTreeRestartGameTests {
    h.assertTrue(p.getBlocksTotal()==saved.model.count&&p.getHealth()==t.getInt("hp")&&p.getHighestBlockCountReached()==t.getInt("highest")&&Double.compare(p.partialBlocksDestroyed,t.getDouble("partial"))==0&&Arrays.equals(missing(p),t.getLongArray("missing")),"Wind/legacy base restart does not heal, move holes, change full count or partial damage");
    h.assertTrue(account(owner).accountEpoch.equals(t.getUUID("accountEpoch"))&&t.getBoolean("windUnlocked")&&com.dreamseekers.progression.DreamWindProgression.server(owner).wind(),"same owner epoch keeps earned Wind unlock across JVM restart");
    h.assertTrue(p.getUpgradeLevel()==0&&!p.ascended(),"Wind and legacy base never become Shadow level1");
-   if(p.model()==WorldTreeModel.WIND_V4){h.assertTrue(p.maxCorner.getY()-p.minCorner.getY()+1==18&&p.tree().phase==WorldTreeState.Phase.COMPLETE&&p.tree().receipt==null,"completed Wind geometry18high no second receipt");assertRotatedBounds(h,p);}
+   if(p.model()==WorldTreeModel.WIND_V5){h.assertTrue(p.maxCorner.getY()-p.minCorner.getY()+1==18&&p.tree().phase==WorldTreeState.Phase.COMPLETE&&p.tree().receipt==null,"completed Wind geometry18high no second receipt");assertRotatedBounds(h,p);}
    else h.assertTrue(p.model()==WorldTreeModel.LEGACY_BASE&&p.maxCorner.getY()-p.minCorner.getY()+1==10&&p.tree().phase==WorldTreeState.Phase.IDLE,"legacy base remains original10high idle model");
   }
-  h.assertTrue(BuildingServerEvents.getBuildings().stream().anyMatch(b->b instanceof DreamAnchorPlacement p&&p.ownerName.equals(PREFIX+1)&&p.model()==WorldTreeModel.SHADOW_V3),"same owner Shadow and Wind coexist after ordinary reload");
+  h.assertTrue(BuildingServerEvents.getBuildings().stream().anyMatch(b->b instanceof DreamAnchorPlacement p&&p.ownerName.equals(PREFIX+1)&&p.model()==WorldTreeModel.SHADOW_V5),"same owner Shadow and Wind coexist after ordinary reload");
   var refund=account(PREFIX+3);UUID refundId=expected.getUUID("refundReceipt");
-  h.assertTrue(refund!=null&&accountTag(refund).equals(expected.getCompound("refundAccount"))&&refund.paidReceipts.get(refundId).purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V3)+":refund"),"ordinary account loader restores exact orphan refund intent and originalamounts despite no surviving placement");
+  h.assertTrue(refund!=null&&accountTag(refund).equals(expected.getCompound("refundAccount"))&&refund.paidReceipts.get(refundId).purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V5)+":refund"),"ordinary account loader restores exact orphan refund intent and originalamounts despite no surviving placement");
   refund.food=9400; // room returns; ordinary server retry must perform the original refund once
   var trees=new ArrayList<DreamAnchorPlacement>();var workers=new ArrayList<Mob>();var woodBefore=new HashMap<String,Integer>();var woodHarvestBefore=new HashMap<String,Integer>();var repairCost=new HashMap<String,Integer>();var commandCounts=new HashMap<String,Integer>();
   for(var raw:expected.getList("trees",Tag.TAG_COMPOUND)){
@@ -130,7 +130,7 @@ public final class WorldTreeRestartGameTests {
    if(!old.ascended){h.assertTrue(!s.ascended&&s.receipt.equals(old.receipt)&&s.payerEpoch.equals(old.payerEpoch)&&r.paidReceipts.containsKey(s.receipt),"unfinished task and original paid receipt restored without projectionrefund");
     h.assertTrue(accountTag(r).equals(t.getCompound("account")),"pending upgrade balance/epoch/revision exactly retained");h.assertTrue(old.remaining-s.remaining==elapsed,"remaining advances only actual server ticks, no offline catchup");
    }else{
-    h.assertTrue(s.ascended&&p.getBlocksTotal()==452&&p.maxCorner.getY()-p.minCorner.getY()+1==17,"upgradedvariant bounds load without rebuilding");assertRotatedBounds(h,p);
+    h.assertTrue(s.ascended&&p.getBlocksTotal()==351&&p.maxCorner.getY()-p.minCorner.getY()+1==17,"upgradedvariant bounds load without rebuilding");assertRotatedBounds(h,p);
     long cycles=(old.incomeElapsed+elapsed)/100;h.assertTrue(r.food-t.getCompound("account").getInt("food")==cycles*5&&r.wood-t.getCompound("account").getInt("wood")==cycles*5&&r.ore-t.getCompound("account").getInt("ore")==cycles*5&&r.emerald-t.getCompound("account").getInt("emerald")==cycles,"saved FWOE production credit follows normal tick count, with no restart bonus");
     int oldShadow=t.getCompound("account").getCompound(ResourceAccountCodec.KEY).getCompound("extra").getInt(DreamPassiveEconomy.SHADOW.toString());
     h.assertTrue(r.extra.getOrDefault(DreamPassiveEconomy.SHADOW,0)==Math.min(DreamPassiveEconomy.SHADOW_CAP,oldShadow+cycles),"saved shadow income retains its original independently capped rate");
@@ -155,7 +155,7 @@ public final class WorldTreeRestartGameTests {
   h.startSequence().thenWaitUntil(()->{
    h.assertTrue(!refund.paidReceipts.containsKey(refundId)&&refund.food==10000&&refund.wood==10000&&refund.ore==10000&&refund.emerald==37&&refund.extra.get(DreamPassiveEconomy.SHADOW)==1000,"ordinary retry restores orphan refund once after newJVM capacityreturns");
    h.assertTrue(trees.get(0).ascended(),"restored pending upgrade completes by ordinary remaining ticks");assertRotatedBounds(h,trees.get(0));
-   for(int n=1;n<3;n++){var p=trees.get(n);h.assertTrue(p.getHealth()==380&&p.getBlocksPlaced()==452&&p.partialBlocksDestroyed==0,"normal native worker repairs reloaded physical holes to fullHP");}
+   for(int n=1;n<3;n++){var p=trees.get(n);h.assertTrue(p.getHealth()==380&&p.getBlocksPlaced()==351&&p.partialBlocksDestroyed==0,"normal native worker repairs reloaded physical holes to fullHP");}
   }).thenExecute(()->{
    for(int n=1;n<3;n++){var p=trees.get(n);int actualIncome=PlayerServerEvents.getRTSPlayer(p.ownerName).scores.scoreList.getOrDefault(RTSPlayerScoresEnum.WOOD_HARVESTED,0)-woodHarvestBefore.get(p.ownerName);
     int cost=repairCost.get(p.ownerName);h.assertTrue(actualIncome>=0&&cost>0,"actual credited income and positive native repair expense");

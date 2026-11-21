@@ -84,9 +84,9 @@ public final class AdvancedProgressionRestartGameTests {
         lab=(DreamLaboratoryPlacement)install(level,DreamseekersMod.RESONANCE_LABORATORY,LAB);ecology=install(level,DreamseekersMod.CONTRACT_ECOLOGY,ECOLOGY);
         // Existing prerequisite grants are explicit fixtures, not claimed as newly purchased evidence.
         ResearchServerEvents.addResearch(OWNER,ResonanceResearch.ID);ResearchServerEvents.addResearch(OWNER,LightResonanceResearch.FIRST_ID);
-        h.assertTrue(DreamWorldTreeService.start(peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V4).equals("started"),"actual paid wind upgrade start");
+        h.assertTrue(DreamWorldTreeService.start(peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V5).equals("started"),"actual paid wind upgrade start");
         root.tree().remaining=1; // explicit geometry-fixture acceleration only
-        var sequence=h.startSequence().thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V4&&root.tree().phase==WorldTreeState.Phase.COMPLETE&&lab.available(),"actual completed wind geometry"));
+        var sequence=h.startSequence().thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE&&lab.available(),"actual completed wind geometry"));
         for(var item:completedItems()){
             sequence.thenExecute(()->{pay(h,item);lab.productionQueue.get(0).ticksLeft=1;}) // explicit paid-work acceleration
                 .thenWaitUntil(()->h.assertTrue(item.hasCompleted(OWNER)&&lab.productionQueue.isEmpty(),"actual paid commit "+item.id()));
@@ -143,7 +143,7 @@ public final class AdvancedProgressionRestartGameTests {
         final CompoundTag[] repaidAccount={null};final UUID[] newReceipt={null};final long[] repaidAt={0};
         h.startSequence().thenWaitUntil(()->{for(var key:KEYS){var body=level.getEntity(saved.getUUID(key));h.assertTrue(body instanceof Mob&&body instanceof SkillUnit,"saved original UUID restored "+key);ready(h,(Mob)body);}})
         .thenExecute(()->{
-            h.assertTrue(root.tree().instance.equals(saved.getUUID("rootInstance"))&&root.model()==WorldTreeModel.WIND_V4&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"same physical upgraded tree");
+            h.assertTrue(root.tree().instance.equals(saved.getUUID("rootInstance"))&&root.model()==WorldTreeModel.WIND_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"same physical upgraded tree");
             h.assertTrue(ResearchPlacementIdentity.serverIdentity(lab).equals(saved.getUUID("labInstance")),"same actual laboratory identity");
             h.assertTrue(accountTag().equals(saved.getCompound("projectedAccount")),"ordinary loader restores exact saved-copy refund including shadow energy once");
             for(var item:completedItems())h.assertTrue(item.hasCompleted(OWNER),"actual saved completed research "+item.id());

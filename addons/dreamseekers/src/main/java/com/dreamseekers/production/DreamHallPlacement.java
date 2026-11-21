@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.production;
+import com.dreamseekers.building.DreamTemplateModel;
 
 import com.dreamseekers.building.DreamHall;
 import com.dreamseekers.building.DreamBuildingSpec;
 import com.dreamseekers.function.*;
-import com.solegendary.reignofnether.building.BuildingUtils;
 import com.solegendary.reignofnether.building.data.DataStorage;
 import com.solegendary.reignofnether.building.production.*;
 import com.solegendary.reignofnether.building.buildings.placements.ProductionPlacement;
@@ -23,8 +23,11 @@ public final class DreamHallPlacement extends DreamProductionPlacement implement
     private String observedUnitOwner;
     private DreamFunctionState.Snapshot lastSupportedUnitState;
     public DreamHallPlacement(DreamHall definition,Level level,BlockPos pos,Rotation rotation,String owner) {
-        super(definition,level,pos,rotation,owner,
-                BuildingUtils.getAbsoluteBlockData(definition.getRelativeBlockData(level),level,pos,rotation),false);
+        this(definition, level, pos, rotation, owner, DreamTemplateModel.HALL.fresh(level));
+    }
+    public DreamHallPlacement(DreamHall definition, Level level, BlockPos pos, Rotation rotation, String owner,
+                              DreamTemplateModel.State template) {
+        super(definition, level, pos, rotation, owner, template, false);
         lifecycle=new DreamFunctionLifecycle(this,definition.spec(),()->super.getDataStorage());
         observedUnitOwner=owner;
     }

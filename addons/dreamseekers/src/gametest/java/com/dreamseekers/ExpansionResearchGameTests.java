@@ -48,8 +48,8 @@ public final class ExpansionResearchGameTests {
     public static void fourRealPaymentsDuplicateDenialAndExactCancellation(GameTestHelper h){
         var f=fixture(h,"Quotes",1);var p=lab(f);var root=(DreamAnchorPlacement)f.root;
         h.startSequence().thenWaitUntil(()->h.assertTrue(p.available(),"actual lab ready")).thenExecute(()->{
-            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V4).equals("started"),"real paid upgrade");root.tree().remaining=1;
-        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V4&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"physical upgraded tree"))
+            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V5).equals("started"),"real paid upgrade");root.tree().remaining=1;
+        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"physical upgraded tree"))
         .thenExecute(()->{
             h.assertTrue(start(f,p,ExpansionResearch.AARONCOS_VORTEX).equals("forbidden"),"vortex also needs harmony");
             ResearchServerEvents.addResearch(f.owner,AdvancedUnitResearch.HAND_HARMONY_ID);
@@ -72,8 +72,8 @@ public final class ExpansionResearchGameTests {
     public static void naturalPaidAirSuperiorityCompletionCannotRepurchase(GameTestHelper h){
         var f=fixture(h,"Complete",2);var p=lab(f);var root=(DreamAnchorPlacement)f.root;final long[] started={0};
         h.startSequence().thenWaitUntil(()->h.assertTrue(p.available(),"actual lab ready")).thenExecute(()->{
-            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V4).equals("started"),"real paid upgrade");root.tree().remaining=1;
-        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V4&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"physical upgrade complete"))
+            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V5).equals("started"),"real paid upgrade");root.tree().remaining=1;
+        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"physical upgrade complete"))
         .thenExecute(()->{h.assertTrue(com.solegendary.reignofnether.building.production.ProductionWorkRates.percent(p,ExpansionResearch.AIR_SUPERIORITY)==125,"actual upgraded wind research speed");h.assertTrue(start(f,p,ExpansionResearch.AIR_SUPERIORITY).equals("started"),"real paid research");started[0]=f.level.getGameTime();})
         .thenExecuteAfter(700,()->h.assertTrue(!ExpansionResearch.unlocked(f.owner,ExpansionResearch.AIR_SUPERIORITY_ID,false),"no early unlock"))
         .thenWaitUntil(()->h.assertTrue(ExpansionResearch.unlocked(f.owner,ExpansionResearch.AIR_SUPERIORITY_ID,false),"natural queue completion publishes authority"))
@@ -85,8 +85,8 @@ public final class ExpansionResearchGameTests {
         var f=fixture(h,"HandPairing",3);var p=lab(f);var root=(DreamAnchorPlacement)f.root;long[] started={0};
         h.startSequence().thenWaitUntil(()->h.assertTrue(p.available(),"actual lab ready"))
         .thenExecute(()->{int[] before=balances(f);h.assertTrue(start(f,p,ExpansionResearch.HAND_PAIRING).equals("forbidden")&&Arrays.equals(before,balances(f)),"base tree denies hand pairing without debit");
-            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V4).equals("started"),"real paid wind prerequisite");root.tree().remaining=1;
-        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V4&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"physical upgraded tree complete"))
+            h.assertTrue(DreamWorldTreeService.start(f.peer.actor,root,root.tree().instance,WorldTreeModel.WIND_V5).equals("started"),"real paid wind prerequisite");root.tree().remaining=1;
+        }).thenWaitUntil(()->h.assertTrue(root.model()==WorldTreeModel.WIND_V5&&root.tree().phase==WorldTreeState.Phase.COMPLETE,"physical upgraded tree complete"))
         .thenExecute(()->{int[] before=balances(f);h.assertTrue(start(f,p,ExpansionResearch.HAND_PAIRING).equals("forbidden")&&Arrays.equals(before,balances(f))&&p.productionQueue.isEmpty(),"upgraded tree alone cannot bypass harmony prerequisite");
             ResearchServerEvents.addResearch(f.owner,AdvancedUnitResearch.HAND_HARMONY_ID); // Existing-tech fixture only.
             h.assertTrue(start(f,p,ExpansionResearch.HAND_PAIRING).equals("started"),"actual paid250F200O75S start");int[] after=balances(f);

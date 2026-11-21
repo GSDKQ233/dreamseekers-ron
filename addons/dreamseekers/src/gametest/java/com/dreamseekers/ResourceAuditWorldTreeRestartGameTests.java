@@ -123,14 +123,14 @@ public final class ResourceAuditWorldTreeRestartGameTests {
             var t=rows.getCompound(i);String owner=t.getString("owner");var r=ExtendedResourcesSync.account(owner);
             h.assertTrue(PlayerServerEvents.getRTSPlayer(owner)!=null&&r!=null&&r.accountEpoch.equals(t.getUUID("epoch")),"native RTS/account loader restored original owner and epoch");
             var p=(DreamAnchorPlacement)BuildingServerEvents.getBuildings().stream().filter(b->b.originPos.asLong()==t.getLong("origin")&&b.ownerName.equals(owner)).findFirst().orElseThrow();
-            h.assertTrue(p.tree().instance.equals(t.getUUID("instance"))&&p.tree().model==WorldTreeModel.BASE_V3,"native building loader restored original base identity");
+            h.assertTrue(p.tree().instance.equals(t.getUUID("instance"))&&p.tree().model==WorldTreeModel.BASE_V5,"native building loader restored original base identity");
             restored.add(p);accounts.add(r);UUID receipt=t.getUUID("receipt");
             System.out.println("RESOURCE_AUDIT_TREE_ABA_VERIFY owner="+owner+" phase="+p.tree().phase+" remaining="+p.tree().remaining+" food="+r.food+" receipt="+r.paidReceipts.get(receipt));
             if(i==0){
                 h.assertTrue(p.tree().phase==WorldTreeState.Phase.IDLE&&!r.paidReceipts.containsKey(receipt)&&r.food==10000&&r.wood==10000&&r.ore==10000&&r.extra.get(DreamPassiveEconomy.SHADOW)==1000,"normal restart must not resume captured original upgrade; full original refund exactly once");
             }else{
                 var paid=r.paidReceipts.get(receipt);
-                h.assertTrue(p.tree().phase==WorldTreeState.Phase.REFUND_PENDING&&paid!=null&&paid.payerEpoch().equals(r.accountEpoch)&&paid.purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V3)+":refund"),"overflow retains original-epoch earned refund intent instead of resumed upgrade");
+                h.assertTrue(p.tree().phase==WorldTreeState.Phase.REFUND_PENDING&&paid!=null&&paid.payerEpoch().equals(r.accountEpoch)&&paid.purpose().equals(DreamWorldTreeService.purpose(WorldTreeModel.SHADOW_V5)+":refund"),"overflow retains original-epoch earned refund intent instead of resumed upgrade");
                 h.assertTrue(r.food==Integer.MAX_VALUE&&r.wood==9200&&r.ore==9400&&r.extra.get(DreamPassiveEconomy.SHADOW)==850,"no partial overflow refund");
                 h.assertTrue(ResourceTransaction.exchange(h.getLevel().getServer(),r,r.accountEpoch,r.revision,new ResourceTransaction.Cost(600,0,0),ResourceTransaction.Cost.ZERO).applied(),"actual debit frees exact original refund room");
             }
