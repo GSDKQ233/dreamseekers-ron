@@ -26,6 +26,7 @@
 | 构建占位值与旧附属测试开关清理 | 通过 | 提交 `e676559`。核心与配对构建、JUnit 复跑通过，见下方“构建清理记录”。不改玩法，未重跑 19 次选定 Forge 回归。 |
 | 界面与 HUD 核查（Devin 界面会话） | 已修复，待审 | 修复 11 处显示/操作缺陷：多处提示框不换行超出屏幕、建造提示“人口 0”、技能秒数多余小数、冷却角标无单位、建造菜单缺快捷键、多选建筑显示语言键等。JUnit 380 通过、1 个既有跳过、零失败。已在开发客户端（1920×1080）实机核对换行、快捷键、人口行、秒数和多选名称。 |
 | 兵种实现核查（Devin） | 修复待审，未合并 | 基于 `30133d7` 逐项核对 23 个兵种的注册、属性、阵营、生产、技能、存档与渲染器，无空壳兵种。修复：甲虫与蜗牛补 `getHudIcon()`；甲虫、蜗牛、萤火虫、旧小石精禁止拴绳；前置实体校验补 12 个 ID；新增 `UnitHudIconLeashGameTests`。配对构建、JAR 校验、JUnit（368 通过、1 跳过）通过；开发客户端已验图标与拴绳；全量 GameTest 的 8 个失败在 `main` 上同样失败；甲虫、蜗牛、旧小石精的碰撞箱与模型不贴合，但尺寸由 `BuildingAssetGameTests`（通道契约）和 `StoneThrowerNativeGameTests` 固定，未改，待作者决定。 |
+| 开放 PR 整合分支（Devin 整合会话） | 已整合，待审，未合并 | 把 #1、#3、#4、#5、#6、#10、#7、#8、#9、#12 合到一条分支，不含 #11（建筑重设计，已搁置）。配对构建与 JAR 校验通过；JUnit 400 项，399 通过、1 个既有音频测试跳过、零失败；全量 Forge 回归 567 项中 8 项失败，与 `main`（565 项中同样 8 项）逐名一致，没有新增失败。见下方“开放 PR 整合记录”。 |
 
 ## 离线双端预演（不是正式验收）
 
@@ -166,3 +167,13 @@
 两处夹具按新规则更新：`DreamShellFunctionGameTests` 的光环边界用例改为按占地间距断言，并新增远离原点一侧的贴边与 13 格排除；`BuildingAbilityEffectsGameTests` 的礼堂对照单位从原点外 14 格移到占地外 13 格。
 
 未覆盖：没有在真实客户端里实机摆放验证；未跑默认全量 `dreamseekers` 命名空间；`verifyDreamseekersCoreJar`（需 Python 3.11）与正式配对 JAR 未在本次重做。
+
+## 开放 PR 整合记录
+
+- 工作项：把当前未合并的开放 PR 合到一条分支，供一次性审阅。负责角色：整合（Devin 会话）。分支 `devin/1795218057-integrate-open-prs`，基于 `main` 的 `bde6b83`。没有合入 `main`，各来源 PR 保持开放、未改动。
+- 包含（按合并顺序）：#1 构建清理、#3 界面与 HUD、#4 图标／施法动画／结构清单、#5 后续玩法、#6 建筑范围、#10 契约与共鸣范围（叠在 #6 上）、#7 协作板离线预演记录、#8 兵种修复、#9 建筑血量与建造时间、#12 核心图标与提示键。不包含：#11 建筑重设计（所有者已搁置）。
+- 冲突处理：只有本板和 `DISTRIBUTION-MANIFEST.json` 出现文本冲突。本板保留各 PR 的全部记录；清单在全部合并后按最终文件重新计算。`DreamseekersMod.java`、`UnitSkillAbility.java`、`gradle/gametest-plan.gradle` 被多个 PR 修改但自动合并无冲突，已逐个 PR 核对新增行都在；`DreamBuildingSpec.java` 在所含 PR 中只有 #9 修改。其余 74 个文件各只被一个 PR 修改，内容与该 PR 分支一致。
+- 测试入口：`bash ./gradlew -Pdreamseekers -PdreamseekersPython=python3.11 build dreamseekersJar verifyDreamseekersJar verifyDreamseekersCoreJar`；`bash ./gradlew -Pdreamseekers -PdreamseekersRosterCompleteTest runGameTestServer`（`main` 和本分支各跑一次）；`-PresourceTechSuite=api65_followup_hero_xp` 与 `-PresourceTechSuite=wind_protocol`。
+- 实际结果：配对构建通过，两个 JAR 的版本与内容检查通过。JUnit 400 项，399 通过、1 个既有音频测试跳过、零失败。全量 Forge 回归（命名空间 `reignofnether,dreamseekers`）：本分支 567 项、8 项失败；`main` 565 项、8 项失败；两边失败名单完全相同，多出的 2 项是 #8 和 #9 新增的测试，均通过。`api65_followup_hero_xp` 3/3 通过，`wind_protocol` 1/1 通过。
+- 两边都失败的 8 项（既有问题，本分支未处理）：`originalpayerrefundsbeforetickandmutablecostscannotchangereceipts`、`savedrefundsnapshotusesoriginalpayerandimmutablepayment`、`alleightregisteredfactionfactoriespaidrotationsandcancel`、`eightactualworkerscompletethensurvivecodecandtakedamage`、`gardenworkerharvestsreplantsanddeliversfood`、`queuedfogconstructionusescollisionflightandstopclearsit`、`thresholdautomaticallyreturnsthenresumesfarmwithoutduplicatecredit`、`realreadiedmatchstart`。
+- 未覆盖：没有进游戏实测，各 PR 的界面、图标、动画和建筑数值叠加后的实际显示未看；专服、双客户端联机、19 次选定 Forge 回归的独立进程入口没有重跑；除上面两个套件外，其余 `-PresourceTechSuite` 套件和保留的旧附属开关没有逐个运行；全量回归每边只跑了一次，且两次同时在一台机器上运行。
