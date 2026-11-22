@@ -1136,8 +1136,8 @@
       "sha256": "e89c368d40fd27f0b484c5e35152a23c0a1b71aac5fc7a3b5ef5bb6a8331c14c"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/PassiveFoxEdgeGameTests.java": {
-      "bytes": 9008,
-      "sha256": "145a7ee86c5933b91f56b9681e761d39816697eceb29e1f81e23bb47670ba1cb"
+      "bytes": 11055,
+      "sha256": "197d9b6d27f19a8872da473d3ee2e8c256d91cfa13f3fb3cfdf1647505df6f98"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/PassiveGardenGameTests.java": {
       "bytes": 21024,

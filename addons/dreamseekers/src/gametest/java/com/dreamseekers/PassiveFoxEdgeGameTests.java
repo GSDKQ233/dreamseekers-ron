@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers;
 
+import com.dreamseekers.skill.CoordinatedMark;
 import com.dreamseekers.skill.SkillNetwork;
 import com.dreamseekers.skill.SkillResult;
 import com.dreamseekers.spore.JungleSporeCarrier;
 import com.dreamseekers.spore.SporeEffects;
 import com.dreamseekers.spore.SporeLease;
+import com.dreamseekers.unit.BoneWingUnit;
 import com.solegendary.reignofnether.registrars.MobEffectRegistrar;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,46 +40,70 @@ public final class PassiveFoxEdgeGameTests {
         var f=new AutocastGameTests.F(h,"FoxEdgesA");
         var fox=f.spawn(GOLDEN_FOX_UNIT.get(),f.own,5,10);
         var patient=f.spawn(BONE_WING_UNIT.get(),f.ally,16,10);
-        var threat=f.spawn(BONE_WING_UNIT.get(),f.foe,19,10);
-        f.stationary(fox);f.stationary(patient);f.stationary(threat);
-        long[] cleanseAt={-1};
-        boolean[] targetlessAtRemoval={false};
-        double[] rangesAtRemoval={Double.NaN,Double.NaN,Double.NaN};
+        f.stationary(fox);f.stationary(patient);
+        var stun=new MobEffectInstance(MobEffectRegistrar.STUN.get(),420);
+        var state=fox.rts().skills();
+        double castRadiusSq=(double)SporeLease.CAST_RANGE*SporeLease.CAST_RANGE;
+        double auraRadiusSq=SporeLease.RADIUS*SporeLease.RADIUS;
+        BoneWingUnit[] threat={null};
+        long[] orderAt={-1}, revision={-1};
+        float[] healthBefore={Float.NaN};
+        record CleanseSample(long tick,boolean incomingFocus,boolean noAttackOrHit,
+                             double casterToSporeSq,double sporeToPatientSq,double casterToPatientSq) {}
+        List<CleanseSample> removals=new ArrayList<>();
         Consumer<MobEffectEvent.Remove> clock=e->{
-            if(e.getEntity()==patient&&e.getEffect()==MobEffectRegistrar.STUN.get()) {
-                cleanseAt[0]=f.level.getGameTime();
-                var live=SporeLease.activeFor(fox);
-                if(live!=null) {
-                    rangesAtRemoval[0]=fox.distanceToSqr(live);
-                    rangesAtRemoval[1]=live.distanceToSqr(patient);
-                    rangesAtRemoval[2]=fox.distanceToSqr(patient);
-                    targetlessAtRemoval[0]=patient.getTargetGoal().getTarget()==null&&patient.getLastHurtByMob()==null;
-                }
-            }
+            if(e.getEntity()!=patient||e.getEffect()!=stun.getEffect()||patient.getEffect(stun.getEffect())!=stun)return;
+            var carrier=SporeLease.activeFor(fox);
+            var enemy=threat[0];
+            if(carrier==null)return;
+            removals.add(new CleanseSample(f.level.getGameTime(),
+                    enemy!=null&&enemy.isAlive()&&!enemy.isNoAi()&&enemy.getTarget()==patient
+                            &&CoordinatedMark.visible(f.peer.actor,enemy)&&enemy.hasLineOfSight(patient),
+                    patient.getTarget()==null&&patient.getLastHurtByMob()==null&&patient.getHealth()==healthBefore[0],
+                    fox.distanceToSqr(carrier),carrier.distanceToSqr(patient),fox.distanceToSqr(patient)));
         };
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL,clock);
         f.cleanups.add(()->MinecraftForge.EVENT_BUS.unregister(clock));
         f.ready().thenExecute(()->{
-            h.assertTrue(patient.addEffect(new MobEffectInstance(MobEffectRegistrar.STUN.get(),420)),"finite native control installed");
+            h.assertTrue(patient.addEffect(stun)&&patient.getEffect(stun.getEffect())==stun,"finite native control installed");
+            revision[0]=state.revision();
             fox.setNoAi(false);
         }).thenIdle(23).thenExecute(()->{
-            h.assertTrue(patient.getTargetGoal().getTarget()==null&&patient.getLastHurtByMob()==null
-                    &&patient.hasEffect(MobEffectRegistrar.STUN.get())&&fox.distanceToSqr(patient)>100
-                    &&fox.rts().skills().cooldownTicks(FOX_DREAM_SEED)==0,
-                    "debuff by itself is not an engagement; the immobilized patient's feet are outside the ten-block cast");
-            f.focus(threat,patient);
-            h.assertTrue(patient.getTargetGoal().getTarget()==null,"patient did not receive an attack order");
+            h.assertTrue(patient.getTarget()==null&&patient.getLastHurtByMob()==null
+                    &&patient.getEffect(stun.getEffect())==stun&&fox.distanceToSqr(patient)>castRadiusSq
+                    &&SporeLease.activeFor(fox)==null&&state.cooldownTicks(FOX_DREAM_SEED)==0&&state.revision()==revision[0],
+                    "idle original STUN alone does not spend; d2="+fox.distanceToSqr(patient)
+                            +" stun="+patient.getEffect(stun.getEffect())+" target="+patient.getTarget()
+                            +" attacker="+patient.getLastHurtByMob()+" cooldown="+state.cooldownTicks(FOX_DREAM_SEED));
+            // No hostile body existed during the idle sample. Seven blocks leaves real windup/flight
+            // time before the first bolt can land, while remaining inside native ranged reach.
+            threat[0]=f.spawn(BONE_WING_UNIT.get(),f.foe,16,17);
+            f.stationary(threat[0]);
+        }).thenWaitUntil(()->{
+            var enemy=threat[0];
+            h.assertTrue(enemy.tickCount>3&&enemy.isAddedToWorld()&&f.level.getEntity(enemy.getUUID())==enemy
+                    &&CoordinatedMark.visible(f.peer.actor,enemy)&&fox.hasLineOfSight(enemy)&&enemy.hasLineOfSight(patient)
+                    &&enemy.distanceTo(patient)<enemy.getAttackRange(),"published hostile is visible and in real ranged reach");
+        }).thenExecute(()->{
+            h.assertTrue(patient.getEffect(stun.getEffect())==stun&&patient.getTarget()==null&&patient.getLastHurtByMob()==null
+                    &&SporeLease.activeFor(fox)==null&&state.revision()==revision[0],"no trigger before the actual ATTACK order");
+            healthBefore[0]=patient.getHealth();
+            orderAt[0]=f.level.getGameTime();
+            f.focus(threat[0],patient);
+            threat[0].setNoAi(false);
         }).thenWaitUntil(()->h.assertTrue(SporeLease.activeFor(fox)!=null,"actual adversary targeting the incapacitated ally triggered a paid rescue"))
           .thenExecute(()->{
-              var spore=SporeLease.activeFor(fox);
-              h.assertTrue(!patient.hasEffect(MobEffectRegistrar.STUN.get())&&cleanseAt[0]>=0
-                      &&SporeEffects.cleanseProtectionTicks(patient)==SporeLease.CLEANSE_PROTECTION_TICKS-(f.level.getGameTime()-cleanseAt[0])
-                      &&rangesAtRemoval[0]<=100&&rangesAtRemoval[1]<=9&&rangesAtRemoval[2]>100&&targetlessAtRemoval[0],
-                      "no victim attack/receipt required; lawful intermediate ground, real cleanse: stun="+patient.hasEffect(MobEffectRegistrar.STUN.get())
-                      +" protection="+SporeEffects.cleanseProtectionTicks(patient)+" now="+f.level.getGameTime()+" remove="+cleanseAt[0]
-                      +" d2AtRemove="+java.util.Arrays.toString(rangesAtRemoval)+" targetlessAtRemove="+targetlessAtRemoval[0]
-                      +" postD2="+fox.distanceToSqr(spore)+"/"+spore.distanceToSqr(patient)+"/"+fox.distanceToSqr(patient)
-                      +" postTarget="+patient.getTargetGoal().getTarget()+" postAttacker="+patient.getLastHurtByMob());
+              h.assertTrue(removals.size()==1,"the live carrier attempted native removal of exactly the original STUN: "+removals);
+              var sample=removals.get(0);
+              long elapsed=f.level.getGameTime()-sample.tick();
+              h.assertTrue(sample.tick()>=orderAt[0]&&sample.incomingFocus()&&sample.noAttackOrHit()
+                      &&sample.casterToSporeSq()<=castRadiusSq&&sample.sporeToPatientSq()<=auraRadiusSq
+                      &&sample.casterToPatientSq()>castRadiusSq&&!patient.hasEffect(stun.getEffect())
+                      &&SporeEffects.cleanseProtectionTicks(patient)==SporeLease.CLEANSE_PROTECTION_TICKS-elapsed
+                      &&state.cooldownTicks(FOX_DREAM_SEED)==FOX_DREAM_SEED.cooldownTicks()-elapsed&&state.revision()==revision[0]+1,
+                      "incoming focus alone cleanses via reachable intermediate ground; sample="+sample+" elapsed="+elapsed
+                              +" stun="+patient.hasEffect(stun.getEffect())+" protection="+SporeEffects.cleanseProtectionTicks(patient)
+                              +" cooldown="+state.cooldownTicks(FOX_DREAM_SEED)+" revision="+state.revision());
               f.done();
           });
     }
