@@ -97,6 +97,34 @@ class DreamTemplateModelTest {
         assertEquals(java.util.List.of(ORIGINAL), swaps);
     }
 
+    @Test void localResourceFormBindsOnReconnectAndNeverLeaksToAnotherPhysicalSite() {
+        for (var model : java.util.List.of(DreamTemplateModel.GARDEN,DreamTemplateModel.MINE,DreamTemplateModel.FURNACE)) {
+            var ordinary=snapshot(model,REVIEWED,UUID.randomUUID());
+            var complete=ordinary.copy(); complete.putBoolean("productionMethods",true);
+            var other=snapshot(model,REVIEWED,UUID.randomUUID());
+            var bound=new DreamTemplateModel.State(model,REVIEWED,null,2);
+            var sibling=new DreamTemplateModel.State(model,REVIEWED,null,2);
+            var reconnect=new DreamTemplateModel.State(model,REVIEWED,null,2);
+            var swaps=new ArrayList<DreamTemplateModel.Revision>();
+            assertTrue(bound.acceptAndBind(ordinary,true,swaps::add));
+            assertTrue(sibling.acceptAndBind(other,true,swaps::add));
+            assertFalse(bound.hasProductionMethods()); assertFalse(sibling.hasProductionMethods());
+            assertFalse(sibling.acceptAndBind(complete,false,swaps::add),"foreign UUID can never change appearance");
+            assertTrue(bound.acceptAndBind(complete,false,swaps::add));
+            assertTrue(bound.acceptAndBind(ordinary,false,swaps::add),"late pre-research full snapshot can still update other fields");
+            assertTrue(bound.hasProductionMethods()); assertFalse(sibling.hasProductionMethods());
+            assertTrue(reconnect.acceptAndBind(complete,true,swaps::add));
+            assertTrue(reconnect.hasProductionMethods(),"fresh client's PLACE suffices without witnessing completion");
+            assertTrue(swaps.isEmpty(),"the tier does not rebuild the template or collision shape");
+            var bad=complete.copy(); bad.putByte("productionMethods",(byte)2);
+            assertFalse(model.validSnapshot(bad)); bad.putString("productionMethods","true");
+            assertFalse(model.validSnapshot(bad));
+        }
+        var depot=snapshot(DreamTemplateModel.DEPOT,REVIEWED,UUID.randomUUID());
+        depot.putBoolean("productionMethods",true);
+        assertFalse(DreamTemplateModel.DEPOT.validSnapshot(depot),"a deposit-only structure never accepts a production tier");
+    }
+
     @Test void unknownOrPresentMalformedSavesNeverMasqueradeAsUntaggedOldSaves() {
         var saved = new CompoundTag();
         saved.putInt("schema", 2); saved.putInt("revision", 3); saved.putUUID("instance", UUID.randomUUID());

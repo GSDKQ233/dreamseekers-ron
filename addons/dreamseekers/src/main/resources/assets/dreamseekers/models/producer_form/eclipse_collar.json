@@ -1,0 +1,10 @@
+{
+  "loader": "forge:obj",
+  "model": "dreamseekers:models/producer_form/eclipse_collar.obj",
+  "automatic_culling": false,
+  "flip_v": false,
+  "emissive_ambient": false,
+  "textures": {
+    "particle": "dreamseekers:block/producer_form_inlay"
+  }
+}

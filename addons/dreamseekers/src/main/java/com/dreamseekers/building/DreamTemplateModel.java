@@ -78,6 +78,13 @@ public enum DreamTemplateModel {
         return result;
     }
 
+    // Optional additive v2 field. Missing in all historical saves/snapshots = no completed local technology.
+    private static final String PRODUCTION_METHODS = "productionMethods";
+    private boolean resourceProducer() { return this == GARDEN || this == MINE || this == FURNACE; }
+    private static boolean validTechTag(CompoundTag tag) {
+        return !tag.contains(PRODUCTION_METHODS) || (tag.contains(PRODUCTION_METHODS, Tag.TAG_BYTE)
+                && (tag.getByte(PRODUCTION_METHODS) == 0 || tag.getByte(PRODUCTION_METHODS) == 1));
+    }
     private static final int SCHEMA = 2;
     private static final String KIND = "dream_ordinary_building";
     private static final class Storage {
@@ -99,7 +106,7 @@ public enum DreamTemplateModel {
      * Core parks a row that throws here, preserving its original bytes/fields without instantiating
      * a building or touching the world. In particular a present empty/unknown tag is not legacy. */
     static CompoundTag decodeSavedTag(CompoundTag tag) {
-        if (!tag.contains("schema", Tag.TAG_INT) || tag.getInt("schema") != SCHEMA
+        if (!validTechTag(tag) || !tag.contains("schema", Tag.TAG_INT) || tag.getInt("schema") != SCHEMA
                 || !tag.contains("revision", Tag.TAG_INT) || Revision.fromId(tag.getInt("revision")) == null
                 || !tag.hasUUID("instance") || !tag.contains("constructionPeak", Tag.TAG_COMPOUND))
             throw new IllegalArgumentException("Unsupported Dreamseekers ordinary building model");
@@ -124,13 +131,15 @@ public enum DreamTemplateModel {
         var revision = Revision.fromId(tag.getInt("revision"));
         var peaks = tag.getCompound("constructionPeak");
         var state = new State(this, revision, tag.getUUID("instance"), peaks.contains(original) ? peaks.getInt(original) : 2);
+        state.productionMethods = resourceProducer() && tag.getBoolean(PRODUCTION_METHODS);
         state.serverTag = tag.copy(); // Preserve additive payload fields, including for a stand-alone factory result.
         return state;
     }
 
     /** Also validates initial PLACE before it is allowed to replace a same-origin client object. */
     public boolean validSnapshot(CompoundTag tag) {
-        if (!KIND.equals(tag.getString("kind")) || !tag.contains("schema", Tag.TAG_INT) || tag.getInt("schema") != SCHEMA
+        if (!validTechTag(tag) || (!resourceProducer() && tag.contains(PRODUCTION_METHODS))
+                || !KIND.equals(tag.getString("kind")) || !tag.contains("schema", Tag.TAG_INT) || tag.getInt("schema") != SCHEMA
                 || !tag.contains("revision", Tag.TAG_INT) || !tag.hasUUID("instance")
                 || !tag.contains("highest", Tag.TAG_INT) || !tag.contains("placed", Tag.TAG_INT)
                 || !tag.contains("partial", Tag.TAG_DOUBLE)) return false;
@@ -155,11 +164,21 @@ public enum DreamTemplateModel {
         private final int savedHighest;
         private CompoundTag serverTag;
         private DataStorage boundStorage;
+        private boolean productionMethods;
         State(DreamTemplateModel model, Revision revision, UUID instance, int savedHighest) {
             this.model = model; this.revision = revision; this.instance = instance; this.savedHighest = savedHighest;
             if (instance != null) serverTag = saveTag(revision, instance);
         }
         public Revision revision() { return revision; }
+        public UUID instance() { return instance; }
+        public boolean hasProductionMethods() { return productionMethods; }
+        /** Called only after the local server ledger actually consumed this placement's receipt. */
+        public void commitProductionMethods(com.dreamseekers.economy.ResourceBuildingResearch.PaidCompletion proof) {
+            if (proof==null || !proof.authorizes(this) || !model.resourceProducer() || serverTag == null)
+                throw new IllegalStateException("No paid completion for this resource building");
+            productionMethods = true;
+            serverTag.putBoolean(PRODUCTION_METHODS, true);
+        }
         public ArrayList<BuildingBlock> absolute(Level level, BlockPos origin, Rotation rotation) {
             return BuildingUtils.getAbsoluteBlockData(model.blocks(revision), level, origin, rotation);
         }
@@ -182,6 +201,7 @@ public enum DreamTemplateModel {
         public CompoundTag snapshot(BuildingPlacement p) {
             if (p.getLevel().isClientSide() || instance == null) return new CompoundTag();
             var tag = new CompoundTag();
+            if (productionMethods) tag.putBoolean(PRODUCTION_METHODS, true);
             tag.putString("kind", KIND); tag.putInt("schema", SCHEMA);
             tag.putString("template", model.resource(revision)); tag.putInt("revision", revision.id);
             tag.putUUID("instance", instance); tag.putInt("highest", restoredHighest(p));
@@ -198,6 +218,8 @@ public enum DreamTemplateModel {
             if (next != revision) switchGeometry.accept(next);
             revision = next; // Commit only after the geometry was replaced successfully.
             instance = tag.getUUID("instance");
+            // The researched form is permanent for this UUID. An older pre-research snapshot is not a downgrade.
+            productionMethods |= tag.getBoolean(PRODUCTION_METHODS);
             return true;
         }
         public void apply(BuildingPlacement p, CompoundTag tag, boolean initial,

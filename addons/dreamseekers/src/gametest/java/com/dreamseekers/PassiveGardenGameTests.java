@@ -148,12 +148,13 @@ public final class PassiveGardenGameTests {
     finishLitPreparation();lightingReady=true;return;
    }
    ticks++;
-   if(ticks==100){check(account.food-foodStart==8,"four gardens each produce two food in100ticks");check(account.ore-oreStart==2,"mine produces two ore in100ticks");check(account.extra.getOrDefault(DreamPassiveEconomy.SHADOW,0)-shadowStart==1,"furnace produces one shadow in100ticks");}
-   if(ticks==100){
-    check(score(account.ownerName,RTSPlayerScoresEnum.FOOD_HARVESTED)==8&&score(account.ownerName,RTSPlayerScoresEnum.ORES_HARVESTED)==2,"actual F/O credited updates original harvest categories");
-    check(score(account.ownerName,RTSPlayerScoresEnum.TOTAL_RESOURCES_HARVESTED)==10,"S not misreported in originalFWO total");
+   if(ticks==100)check(account.food==foodStart&&account.ore==oreStart&&account.extra.getOrDefault(DreamPassiveEconomy.SHADOW,0)==shadowStart,"no partial 10-second income batch");
+   if(ticks==205){
+    check(account.food-foodStart==40,"each of four unresearched gardens paid its first ten food");check(account.ore-oreStart==10,"mine paid its first ten ore");check(account.extra.getOrDefault(DreamPassiveEconomy.SHADOW,0)-shadowStart==4,"furnace paid its first four shadow");
+    check(score(account.ownerName,RTSPlayerScoresEnum.FOOD_HARVESTED)==40&&score(account.ownerName,RTSPlayerScoresEnum.ORES_HARVESTED)==10,"actual F/O credited updates original harvest categories");
+    check(score(account.ownerName,RTSPlayerScoresEnum.TOTAL_RESOURCES_HARVESTED)==50,"S not misreported in original FWO total");
    }
-   if(ticks==102){
+   if(ticks==208){
     ownerPeer.drain();otherPeer.drain();
     var result=ResourceTransaction.creditIncome(level.getServer(),account,account.accountEpoch,account.revision,new ResourceTransaction.Cost(1,0,0));
     int after=account.food;long revision=account.revision;
@@ -163,10 +164,10 @@ public final class PassiveGardenGameTests {
     check(!PassiveIncomePeer.hasFwo(other,account)&&!PassiveIncomePeer.hasExtra(other,account),"other connected peer receives no publication for owner's balance");
     check(account.food==after&&account.revision==revision,"publication never mutates ledger a second time");
    }
-   if(ticks==101)account.extra.put(DreamPassiveEconomy.SHADOW,1000); // fixture boundary, not a purchase
-   if(ticks==201){check(account.extra.get(DreamPassiveEconomy.SHADOW)==1000,"full shadow capacity pauses without overflow");account.extra.put(DreamPassiveEconomy.SHADOW,999);}
-   if(ticks==301)check(account.extra.get(DreamPassiveEconomy.SHADOW)==1000,"room resumes exactly one100tick production cycle");
-   if(stage==0&&ticks>301){DreamGardenPlacement garden=gardens.get(0);boolean repaired=true;for(BlockPos p:cropPositions)repaired&=level.getBlockState(p).equals(DreamPassiveEconomy.DECORATIVE_WHEAT.get().defaultBlockState());
+   if(ticks==207)account.extra.put(DreamPassiveEconomy.SHADOW,1000); // fixture boundary, not a purchase
+   if(ticks==427){check(account.extra.get(DreamPassiveEconomy.SHADOW)==1000,"full shadow capacity pauses without overflow");account.extra.put(DreamPassiveEconomy.SHADOW,999);}
+   if(ticks==635)check(account.extra.get(DreamPassiveEconomy.SHADOW)==1000,"available room receives exactly one shadow without exceeding the cap");
+   if(stage==0&&ticks>635){DreamGardenPlacement garden=gardens.get(0);boolean repaired=true;for(BlockPos p:cropPositions)repaired&=level.getBlockState(p).equals(DreamPassiveEconomy.DECORATIVE_WHEAT.get().defaultBlockState());
     boolean replanted=false;for(var block:farm.getBlocks())if(block.getBlockState().is(Blocks.FARMLAND)){var state=level.getBlockState(block.getBlockPos().above());if(state.is(Blocks.WHEAT)&&state.getValue(BlockStateProperties.AGE_7)==0)replanted=true;}
     if(repaired&&replanted){check(garden.getHealth()==garden.getMaxHealth()&&garden.getMaxHealth()==130,"real worker repaired every mismatched state to full130HP");check(account.wood<10000,"actual repair paid ordinary wood");check(vanilla.wood<10000,"original native farmer still pays/replants");check(Resources.getTotalResourcesFromItems(((Unit)farmer).getItems()).food>0,"original farmer actually harvested food");
      check(((WorkerUnit)repairer).getGatherResourceGoal().getTargetFarm()==null,"completed repair did not auto-switch garden into farming");
@@ -181,8 +182,8 @@ public final class PassiveGardenGameTests {
     }
     capturedFood=captured.food;capturedOre=captured.ore;stage=2;entered=ticks;
    }
-   else if(stage==2&&ticks-entered>=80){
-    check(captured.food-capturedFood==2&&captured.ore-capturedOre==2,"captured garden/mine produce exact F/O for a legal non-Dream owner with fresh clocks");
+   else if(stage==2&&ticks-entered>=205){
+    check(captured.food-capturedFood==10&&captured.ore-capturedOre==10,"captured garden/mine produce exact F/O for a legal non-Dream owner with fresh clocks");
     check(captured.extra.get(DreamPassiveEconomy.SHADOW)==17,"captured furnace is paused, retaining pre-existing S");
     check(DreamPassiveEconomy.factionPauseReason(furnace)!=null,"paused furnace has an explicit reason");
     check(DreamPassiveEconomy.factionPauseReason(furnace).equals(DreamPassiveEconomy.factionPauseReason(
@@ -193,8 +194,8 @@ public final class PassiveGardenGameTests {
     check(PassiveIncomePeer.hasExtra(otherPeer.drain(),captured)&&!PassiveIncomePeer.hasExtra(ownerPeer.drain(),captured),"non-Dream owner still gets own positiveS snapshot without sharing it");
     PlayerServerEvents.getRTSPlayer(captured.ownerName).faction=DreamseekersMod.DREAMSEEKERS;
     stage=3;entered=ticks;
-   }else if(stage==3&&ticks-entered>=100){
-    check(captured.extra.get(DreamPassiveEconomy.SHADOW)==18,"furnace resumes after100actual Dream-owner ticks without paused catch-up");
+   }else if(stage==3&&ticks-entered>=205){
+    check(captured.extra.get(DreamPassiveEconomy.SHADOW)==21,"furnace resumes once for four shadow in 205 active Dream-owner ticks without paused catch-up");
     check(DreamPassiveEconomy.factionPauseReason(furnace.getBuilding(),PlayerServerEvents.getRTSPlayer(furnace.ownerName))==null,
         "live owner faction change removes the shared status reason without caching");
     System.out.println("PASSIVE_GARDEN_C_PASS assertions="+assertions+" ticks="+ticks);h.succeed();stage=4;

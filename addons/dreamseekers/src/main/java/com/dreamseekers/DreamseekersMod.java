@@ -323,6 +323,7 @@ public final class DreamseekersMod {
             com.dreamseekers.unitprogression.AdvancedUnitResearch.register(RESONANCE_LABORATORY);
             com.dreamseekers.unitprogression.ExpansionResearch.register(RESONANCE_LABORATORY);
             com.dreamseekers.progression.DreamWindPackets.register();
+            com.dreamseekers.economy.ResourceResearchPackets.register();
             com.dreamseekers.ecologyworkposts.EcologyPackets.register();
             com.dreamseekers.resonance.ResonancePackets.register();
             com.dreamseekers.buildingability.BuildingAbilityPackets.register();
@@ -339,8 +340,10 @@ public final class DreamseekersMod {
                     Keybindings.abilitySlot8, Keybindings.abilitySlot9, Keybindings.abilitySlot10, Keybindings.hotkey2);
             for (int i = 0; i < FUNCTIONAL_BUILDINGS.size(); i++)
                 Factions.registerBuildings(DREAMSEEKERS, FUNCTIONAL_BUILDINGS.get(i), buildKeys.get(i));
-            if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient())
+            if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) {
                 com.dreamseekers.client.DreamSurvivalBeaconButton.register();
+                com.dreamseekers.economy.ResourceResearchClient.register();
+            }
         });
     }
 

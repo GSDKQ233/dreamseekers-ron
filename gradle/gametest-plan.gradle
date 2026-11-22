@@ -161,6 +161,7 @@ def suites = [
     research_restart: ['reignofnether_research_restart', false, 'resource.research.restart.phase'],
     workposts: ['reignofnether_mine_workposts', false],
     passive: ['dreamseekers_passive_c', true],
+    resource_production: ['dreamseekers_resource_production', true],
     dream_research: ['dreamseekers_research_economy', true],
     tree: ['dreamseekers_tree_e', true],
     tree_emerald: ['dreamseekers_tree_emerald', true],
@@ -226,7 +227,7 @@ def resolve = { Closure prop ->
             if (suite == 'api65_repair3_survival_result') phases += 'verify_terminal'
             if (!(phase in phases)) throw new GradleException("${suite} requires -PresourceTechPhase=" + phases.join('|'))
         } else if (phase != null) throw new GradleException("${suite} does not take resourceTechPhase")
-        def expected = api65Counts[suite] ?: [api60_results_data: 4, api63_native_production: 8, elevation_routes: 9, passive_triggers: 7, passive_edges: 8, autocast: 17][suite]
+        def expected = api65Counts[suite] ?: [api60_results_data: 4, api63_native_production: 8, elevation_routes: 9, passive_triggers: 7, passive_edges: 8, autocast: 17, passive: 3, resource_production: 4][suite]
         if (suite == 'api60_results_restart') expected = phase == 'prepare' ? 1 : 4
         return [suite: suite, module: module, namespace: spec[0], directory: "run-resource-tech-${suite}-${module}-${suffix}",
                 phaseKey: spec.size() == 3 ? spec[2] : null, phase: phase, expected: expected]

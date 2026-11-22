@@ -1,6 +1,6 @@
 {
-  "schema": 1,
-  "scope": "automatic building economy only",
+  "schema": 2,
+  "scope": "automatic building income and local Production Methods research",
   "shadowResource": "dreamseekers:shadow_energy",
   "shadowIncomeCap": 1000,
   "garden": {
@@ -20,29 +20,35 @@
       6,
       7
     ],
-    "foodPerEffectiveTickInterval": 40,
     "manualHarvest": false,
-    "woodReplant": false
+    "woodReplant": false,
+    "legacyActiveTicksPerUnit": 40,
+    "baseUnitsPerFullBatch": 10,
+    "researchedUnitsPerFullBatch": 25
   },
   "mine": {
     "registry": "dreamseekers:shadow_mine",
-    "orePerEffectiveTickInterval": 40,
     "placementCap": 2,
     "cost": {
       "food": 0,
       "wood": 300,
       "ore": 150
-    }
+    },
+    "legacyActiveTicksPerUnit": 40,
+    "baseUnitsPerFullBatch": 10,
+    "researchedUnitsPerFullBatch": 25
   },
   "furnace": {
     "registry": "dreamseekers:shadow_furnace",
-    "shadowPerEffectiveTickInterval": 100,
     "placementCap": 2,
     "cost": {
       "food": 0,
       "wood": 150,
       "ore": 100
-    }
+    },
+    "legacyActiveTicksPerUnit": 100,
+    "baseUnitsPerFullBatch": 4,
+    "researchedUnitsPerFullBatch": 10
   },
   "existingCostsHealthPopulationUnchanged": false,
   "noOfflineCatchup": true,
@@ -55,5 +61,23 @@
   "healthPopulationUnchanged": true,
   "dependencies": [
     "core stage-B2 EconomyBalanceSync authoritative owner-only FWO+extra snapshot"
-  ]
+  ],
+  "productionMethods": {
+    "scope": "one physical garden, mine, or furnace",
+    "cost": {
+      "wood": 120,
+      "ore": 80
+    },
+    "activeResearchTicks": 600,
+    "tiers": 1,
+    "retainsBaseIncomeDuringResearch": true,
+    "completedPersists": true,
+    "pendingOnRestart": "refund actual receipt to original account epoch",
+    "payoutBatchActiveTicks": 200,
+    "baseRateVsLegacy": "2/1",
+    "researchedRateVsLegacy": "5/1",
+    "clockMigration": "Schema 1: preserve elapsed old ticks as twice that many integer work units, with a fresh 200-active-tick settlement window. Schema 2 also persists the current window. No offline accrual.",
+    "rounding": "Carry the work remainder between successful batches. Drop unreceivable excess at cap. Credit, score and balance sync use actual credited integers.",
+    "researchedRateVsNewBase": "5/2"
+  }
 }

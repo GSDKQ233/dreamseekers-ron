@@ -81,6 +81,7 @@ public final class DreamGardenPlacement extends FarmPlacement {
     // Ordinary revisions are fixed at construction; never look up an arbitrary CHANGE_STRUCTURE path.
     @Override public void changeStructure(String name) {
     }
+    public DreamTemplateModel.State resourceResearchModel() { return template; }
     @Override public CompoundTag structureSnapshot() {
         return template.snapshot(this);
     }
@@ -104,6 +105,7 @@ public final class DreamGardenPlacement extends FarmPlacement {
     }
     @Override public void tick(Level level){if(migrationReady())super.tick(level);}
     @Override public void onRemoved(RemovalReason reason){
+        ResourceBuildingResearch.detach(this);
         com.dreamseekers.buildingability.BuildingAbilitySource.detach(this);
         super.onRemoved(reason);
     }

@@ -42,6 +42,7 @@ public class DreamFunctionalPlacement extends BuildingPlacement implements Dream
     @Override public void changeStructure(String name) {
         if (template == null) super.changeStructure(name);
     }
+    public DreamTemplateModel.State resourceResearchModel() { return template; }
     @Override public CompoundTag structureSnapshot() {
         return template == null ? super.structureSnapshot() : template.snapshot(this);
     }
@@ -79,5 +80,8 @@ public class DreamFunctionalPlacement extends BuildingPlacement implements Dream
     @Override public void destroy(ServerLevel level) {
         if (lifecycle.beginDestroy(level)) super.destroy(level);
     }
-    @Override public void onRemoved(RemovalReason reason) { lifecycle.detach(); }
+    @Override public void onRemoved(RemovalReason reason) {
+        com.dreamseekers.economy.ResourceBuildingResearch.detach(this);
+        lifecycle.detach();
+    }
 }
