@@ -710,6 +710,9 @@ public class UnitClientEvents {
     public static void onMouseClick(ScreenEvent.MouseButtonPressed.Post evt) {
         if (!OrthoviewClientEvents.isEnabled()) return;
         if (MC.level == null) return;
+        // A deferred MOVE belongs only to the current world press, not to a
+        // minimap release that might run before this class's release listener.
+        if (evt.getButton() == GLFW.GLFW_MOUSE_BUTTON_2) rightClickMoveDeferred = false;
 
         // prevent clicking behind HUDs
         if (HudClientEvents.isMouseOverAnyButtonOrHud()) {
@@ -924,7 +927,7 @@ public class UnitClientEvents {
         if (Keybindings.altMod.isDown())
             return;
 
-        if (!CursorClientEvents.isRightDragActive())
+        if (!CursorClientEvents.isRightDragActive() || FormationDragMove.isDragging(FormationDragMove.Source.MINIMAP))
             return;
 
         // don't allow formation drag if an attack command was issued on right-click press
@@ -949,10 +952,10 @@ public class UnitClientEvents {
             return;
 
         if (!FormationDragMove.isDragging()) {
-            FormationDragMove.startDrag(CursorClientEvents.getRightClickStartBp());
+            FormationDragMove.startDrag(CursorClientEvents.getRightClickStartBp(), FormationDragMove.Source.WORLD);
         }
 
-        FormationDragMove.updateDrag(currentBp, actionableUnits.size(), MC.level);
+        FormationDragMove.updateDrag(currentBp, actionableUnits.size(), MC.level, FormationDragMove.Source.WORLD);
     }
 
     @SubscribeEvent
@@ -961,13 +964,12 @@ public class UnitClientEvents {
             return;
 
         if (evt.getButton() == GLFW.GLFW_MOUSE_BUTTON_2) {
-		if (MinimapClientEvents.minimapRightClickDown)
-			return;
-            if (Keybindings.altMod.isDown() && FormationDragMove.isDragging()) {
+            if (MinimapClientEvents.minimapRightClickDown || FormationDragMove.isDragging(FormationDragMove.Source.MINIMAP))
+                return;
+            boolean wasFormationDrag = FormationDragMove.isDragging(FormationDragMove.Source.WORLD);
+            if (wasFormationDrag && Keybindings.altMod.isDown()) {
                 FormationDragMove.cancelDrag();
-            }
-            boolean wasFormationDrag = FormationDragMove.isDragging();
-            if (wasFormationDrag) {
+            } else if (wasFormationDrag) {
                 ArrayList<LivingEntity> selUnits = getSelectedUnits();
                 ArrayList<LivingEntity> actionableUnits = new ArrayList<>();
                 for (LivingEntity unit : selUnits) {
@@ -991,7 +993,8 @@ public class UnitClientEvents {
     private static void resolveFormationMove(ArrayList<LivingEntity> units, boolean queueOrders) {
         if (MC.player == null || MC.level == null) return;
 
-        List<com.mojang.datafixers.util.Pair<LivingEntity, BlockPos>> pairs = FormationDragMove.endDrag(units);
+        List<com.mojang.datafixers.util.Pair<LivingEntity, BlockPos>> pairs =
+                FormationDragMove.endDrag(units, FormationDragMove.Source.WORLD);
         String playerName = MC.player.getName().getString();
 
         for (var pair : pairs) {

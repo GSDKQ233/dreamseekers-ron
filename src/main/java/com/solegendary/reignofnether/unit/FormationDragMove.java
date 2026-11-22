@@ -1,44 +1,73 @@
 package com.solegendary.reignofnether.unit;
 
-import net.minecraft.world.level.block.LeavesBlock;
-import net.minecraft.world.level.block.state.BlockState;
 import com.mojang.datafixers.util.Pair;
+import com.solegendary.reignofnether.unit.pathfinding.WalkabilityBuilder;
 import com.solegendary.reignofnether.util.MiscUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 public class FormationDragMove {
 
+    public enum Source { WORLD, MINIMAP }
+
+    // Nearest first, lower on a tie. In addition to this local step bound,
+    // the two clicked surfaces bound the actual layer range.
+    private static final int[] WORLD_STEP_OFFSETS = {0, -1, 1, -2};
     private static BlockPos dragStartBp = null;
     private static BlockPos dragEndBp = null;
-    private static List<BlockPos> formationTargets = new ArrayList<>();
-    private static boolean dragging = false;
+    @Nullable private static Source source;
+    private static DragPlan plan = DragPlan.EMPTY;
 
     public static boolean isDragging() {
-        return dragging;
+        return source != null;
     }
 
+    public static boolean isDragging(Source origin) {
+        return source != null && source == origin;
+    }
+
+    /** Legacy callers without a 3D hit keep the original top-surface policy. */
     public static void startDrag(BlockPos bp) {
+        if (isDragging(Source.MINIMAP)) cancelDrag();
+        startDrag(bp, Source.MINIMAP);
+    }
+
+    public static void startDrag(BlockPos bp, Source origin) {
+        // In particular, crossing between the main view and minimap must not
+        // change the origin (and selected layer) of an in-progress gesture.
+        if (isDragging()) return;
         dragStartBp = bp;
         dragEndBp = bp;
-        dragging = true;
-        formationTargets.clear();
+        source = origin;
+        plan = DragPlan.EMPTY;
     }
 
     public static void updateDrag(BlockPos currentBp, int unitCount, Level level) {
-        if (!dragging) return;
+        updateDrag(currentBp, unitCount, level, Source.MINIMAP);
+    }
+
+    public static void updateDrag(BlockPos currentBp, int unitCount, Level level, Source origin) {
+        if (!isDragging(origin)) return;
         dragEndBp = currentBp;
-        calculateTargets(unitCount, level);
+        plan = planDrag(dragStartBp, dragEndBp, unitCount, origin,
+                pos -> isWorldSupport(level, pos), pos -> getHeightAdjustedPos(level, pos));
     }
 
     public static List<BlockPos> getFormationTargets() {
-        return formationTargets;
+        return plan.preview();
     }
 
     public static Vec3 getLineStart() {
@@ -52,40 +81,77 @@ public class FormationDragMove {
     }
 
     public static List<Pair<LivingEntity, BlockPos>> endDrag(List<LivingEntity> units) {
-        List<Pair<LivingEntity, BlockPos>> result = assignUnitsToPositions(units);
-        dragStartBp = null;
-        dragEndBp = null;
-        formationTargets.clear();
-        dragging = false;
+        return endDrag(units, Source.MINIMAP);
+    }
+
+    public static List<Pair<LivingEntity, BlockPos>> endDrag(List<LivingEntity> units, Source origin) {
+        if (!isDragging(origin)) return List.of();
+        List<Pair<LivingEntity, BlockPos>> result = plan.assign(units, LivingEntity::getOnPos);
+        cancelDrag();
         return result;
     }
 
     public static void cancelDrag() {
         dragStartBp = null;
         dragEndBp = null;
-        formationTargets.clear();
-        dragging = false;
+        plan = DragPlan.EMPTY;
+        source = null;
     }
 
-    private static void calculateTargets(int unitCount, Level level) {
-        formationTargets.clear();
-        if (dragStartBp == null || dragEndBp == null || unitCount <= 0) return;
+    static DragPlan planDrag(BlockPos dragStart, BlockPos dragEnd, int unitCount, Source origin,
+                             Predicate<BlockPos> worldSupport, UnaryOperator<BlockPos> minimapSurface) {
+        if (unitCount <= 0) return DragPlan.EMPTY;
 
         if (unitCount == 1) {
-            formationTargets.add(getHeightAdjustedPos(level, dragEndBp));
-            return;
+            BlockPos target = origin == Source.WORLD ? (worldSupport.test(dragEnd) ? dragEnd : null)
+                    : minimapSurface.apply(dragEnd);
+            return new DragPlan(List.of(new Slot(dragEnd, target)));
         }
 
-        Vec3 start = Vec3.atCenterOf(dragStartBp);
-        Vec3 end = Vec3.atCenterOf(dragEndBp);
+        Vec3 start = Vec3.atCenterOf(dragStart);
+        Vec3 end = Vec3.atCenterOf(dragEnd);
+        int fromY = dragStart.getY(), toY = dragEnd.getY();
+        int minY = Math.min(fromY, toY), maxY = Math.max(fromY, toY);
+        List<Slot> slots = new ArrayList<>(unitCount);
 
         for (int i = 0; i < unitCount; i++) {
             double t = (i + 0.5) / unitCount;
             double x = start.x + (end.x - start.x) * t;
             double z = start.z + (end.z - start.z) * t;
-            BlockPos bp = new BlockPos((int) Math.floor(x), dragStartBp.getY(), (int) Math.floor(z));
-            formationTargets.add(getHeightAdjustedPos(level, bp));
+            // Exact rounded interpolation so half-block ties use the same
+            // height regardless of drag direction, including below zero.
+            long denominator = 2L * unitCount, numerator = 2L * i + 1;
+            int y = origin == Source.WORLD
+                    ? (int) Math.floorDiv((denominator - numerator) * fromY + numerator * toY + unitCount, denominator)
+                    : fromY;
+            BlockPos projected = new BlockPos((int) Math.floor(x), y, (int) Math.floor(z));
+            BlockPos target = origin == Source.WORLD ? resolveWorldSupport(projected, minY, maxY, worldSupport)
+                    : minimapSurface.apply(projected);
+            slots.add(new Slot(projected, target));
         }
+        return new DragPlan(slots);
+    }
+
+    @Nullable
+    private static BlockPos resolveWorldSupport(BlockPos projected, int minY, int maxY, Predicate<BlockPos> worldSupport) {
+        for (int step : WORLD_STEP_OFFSETS) {
+            int y = projected.getY() + step;
+            if (y < minY || y > maxY) continue;
+            BlockPos candidate = step == 0 ? projected : projected.offset(0, step, 0);
+            if (worldSupport.test(candidate)) return candidate;
+        }
+        return null;
+    }
+
+    static boolean isWorldSupport(Level level, BlockPos support) {
+        // Classify feet, not the support itself. Both feet/head are in the
+        // same loaded column; never use the world's heightmap for a world drag.
+        if (level.isOutsideBuildHeight(support) || level.isOutsideBuildHeight(support.above(2))
+                || !level.getWorldBorder().isWithinBounds(support) || !level.hasChunkAt(support))
+            return false;
+        if (!MiscUtil.isSolidBlocking(level, support) && level.getFluidState(support).isEmpty()) return false;
+        return WalkabilityBuilder.classify(level, support.getX(), support.getY() + 1, support.getZ())
+                != WalkabilityBuilder.KIND_BLOCKED;
     }
 
 	private static BlockPos getHeightAdjustedPos(Level level, BlockPos bp) {
@@ -102,27 +168,37 @@ public class FormationDragMove {
 		return new BlockPos(bp.getX(), groundY, bp.getZ());
 	}
 
-    private static List<Pair<LivingEntity, BlockPos>> assignUnitsToPositions(List<LivingEntity> units) {
-        List<Pair<LivingEntity, BlockPos>> result = new ArrayList<>();
-        if (units.isEmpty() || formationTargets.isEmpty()) return result;
+    record Slot(BlockPos projected, @Nullable BlockPos target) {}
 
-        List<LivingEntity> unassigned = new ArrayList<>(units);
+    /** Immutable preview and assignment use the same resolved positions. */
+    record DragPlan(List<Slot> slots, List<BlockPos> preview) {
+        private static final DragPlan EMPTY = new DragPlan(List.of());
 
-        for (BlockPos target : formationTargets) {
-            LivingEntity closest = null;
-            double closestDist = Double.MAX_VALUE;
-            for (LivingEntity unit : unassigned) {
-                double dist = unit.getOnPos().distSqr(target);
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    closest = unit;
+        private DragPlan(List<Slot> slots) {
+            this(List.copyOf(slots), slots.stream().map(Slot::target).filter(Objects::nonNull).toList());
+        }
+
+        <T> List<Pair<T, BlockPos>> assign(List<T> units, Function<T, BlockPos> position) {
+            List<Pair<T, BlockPos>> result = new ArrayList<>();
+            List<T> unassigned = new ArrayList<>(units);
+            for (Slot slot : slots) {
+                // A missing support still occupies its original slot. It does not
+                // transfer the next unit's order or issue an order to its own unit.
+                BlockPos reference = slot.target() != null ? slot.target() : slot.projected();
+                T closest = null;
+                double closestDist = Double.MAX_VALUE;
+                for (T unit : unassigned) {
+                    double dist = position.apply(unit).distSqr(reference);
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closest = unit;
+                    }
                 }
-            }
-            if (closest != null) {
-                result.add(new Pair<>(closest, target));
+                if (closest == null) break;
+                if (slot.target() != null) result.add(Pair.of(closest, slot.target()));
                 unassigned.remove(closest);
             }
+            return result;
         }
-        return result;
     }
 }

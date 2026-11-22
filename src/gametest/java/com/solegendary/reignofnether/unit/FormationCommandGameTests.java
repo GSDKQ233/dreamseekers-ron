@@ -10,8 +10,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.gametest.GameTestHolder;
@@ -19,6 +21,9 @@ import net.minecraftforge.gametest.PrefixGameTestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.solegendary.reignofnether.unit.FormationDragMove.Source.MINIMAP;
+import static com.solegendary.reignofnether.unit.FormationDragMove.Source.WORLD;
 
 /** Own-unit gameplay commands through the real action/formation dispatcher.
  * Deterministic END-tick stepping, not client/network or physical-route acceptance. */
@@ -272,6 +277,100 @@ public final class FormationCommandGameTests {
             h.assertTrue(f.units.get(24).getMoveGoal().getMoveTarget() != null, "other queued members are not lost");
         }
         System.out.println("FORMATION_COMMAND_IMMEDIATE_ORDER_PASS");
+        h.succeed();
+    }
+
+    @GameTest(templateNamespace="api58_formation_commands", template="ore_mine_test_arena", batch="formation_commands", timeoutTicks=100)
+    public static void worldDragUsesClickedLayerAndPreservesNativeMoveQueue(GameTestHelper h) {
+        try (Fixture f = new Fixture(h)) {
+            var level = h.getLevel();
+            BlockPos start = h.absolutePos(new BlockPos(6, 2, 16)), end = start.east(6);
+            // Identical X/Z line on two real floors. The middle low slot has
+            // blocked headroom, but its independently valid deck must not win.
+            for (int x = 0; x <= 6; x++) {
+                BlockPos floor = start.east(x);
+                // Two demonstrably sky-exposed layers in the fixture, independent of the
+                // generated world's higher blocks or other terrain above six cells.
+                for (int y = floor.getY() + 1; y < level.getMaxBuildHeight(); y++) {
+                    BlockPos cell = new BlockPos(floor.getX(), y, floor.getZ());
+                    if (!level.getBlockState(cell).isAir()) level.setBlock(cell, Blocks.AIR.defaultBlockState(), 2);
+                }
+                level.setBlock(floor, Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+                level.setBlock(floor.above(4), Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+            }
+            BlockPos left = start.east(), blocked = start.east(3), right = start.east(5);
+            level.setBlock(blocked.above(2), Blocks.SMOOTH_STONE.defaultBlockState(), 2);
+            h.assertTrue(FormationDragMove.isWorldSupport(level, left)
+                            && !FormationDragMove.isWorldSupport(level, blocked)
+                            && FormationDragMove.isWorldSupport(level, blocked.above(4)),
+                    "real lower feet/head clearance rejects only the obstructed slot, not the deck");
+            BlockPos far = new BlockPos(20_000_000, start.getY(), 0);
+            h.assertTrue(!level.hasChunkAt(far) && !FormationDragMove.isWorldSupport(level, far) && !level.hasChunkAt(far),
+                    "unloaded columns are not accepted or loaded by sampling");
+            BlockPos water = blocked.south();
+            level.setBlock(water, Blocks.WATER.defaultBlockState(), 2);
+            level.setBlock(water.above(), Blocks.AIR.defaultBlockState(), 2);
+            level.setBlock(water.above(2), Blocks.AIR.defaultBlockState(), 2);
+            h.assertTrue(FormationDragMove.isWorldSupport(level, water), "native fluid surface remains selectable");
+
+            List<LivingEntity> selected = new ArrayList<>();
+            for (int i = 0; i < 3; i++) {
+                VillagerUnit unit = f.units.get(i);
+                // Farther than the native "stationary near current target"
+                // idle shortcut, so the Shift test really waits for a leg.
+                BlockPos nearSlot = start.east(1 + 2 * i).north(3);
+                unit.moveTo(nearSlot.getX() + .5, nearSlot.getY() + 1.0, nearSlot.getZ() + .5);
+                selected.add(unit);
+            }
+            VillagerUnit unchanged = f.units.get(1);
+            f.command(unchanged, UnitAction.MOVE, f.first, -1);
+            FormationDragMove.startDrag(start, WORLD);
+            FormationDragMove.updateDrag(end, selected.size(), level, WORLD);
+            h.assertTrue(FormationDragMove.getFormationTargets().equals(List.of(left, right)), "preview stays below the deck");
+            h.assertTrue(FormationDragMove.endDrag(selected, MINIMAP).isEmpty() && FormationDragMove.isDragging(WORLD),
+                    "minimap cannot send or clear a world drag");
+            var floorOrders = FormationDragMove.endDrag(selected, WORLD);
+            h.assertTrue(floorOrders.equals(List.of(Pair.of(selected.get(0), left), Pair.of(selected.get(2), right))),
+                    "blocked slot consumes its own assignment, not the other unit's order");
+            for (var pair : floorOrders) UnitServerEvents.addActionItem(OWNER, UnitAction.MOVE, -1,
+                    new int[]{pair.getFirst().getId()}, pair.getSecond(), BlockPos.ZERO, false);
+            f.commandsTick();
+            h.assertTrue(left.equals(f.units.get(0).getMoveGoal().getMoveTarget())
+                            && right.equals(f.units.get(2).getMoveGoal().getMoveTarget())
+                            && f.first.equals(unchanged.getMoveGoal().getMoveTarget()),
+                    "ordinary native dispatcher applies preview coordinates without replacing the omitted unit's old MOVE");
+
+            List<BlockPos> deck = List.of(left.above(4), blocked.above(4), right.above(4));
+            FormationDragMove.startDrag(start.above(4), WORLD);
+            FormationDragMove.updateDrag(end.above(4), selected.size(), level, WORLD);
+            h.assertTrue(FormationDragMove.getFormationTargets().equals(deck), "clicking the upper layer selects its deck");
+            var deckOrders = FormationDragMove.endDrag(selected, WORLD);
+            h.assertTrue(deckOrders.stream().map(Pair::getSecond).toList().equals(deck), "release uses the displayed deck");
+            for (var pair : deckOrders) UnitServerEvents.addActionItem(OWNER, UnitAction.MOVE, -1,
+                    new int[]{pair.getFirst().getId()}, pair.getSecond(), BlockPos.ZERO, true);
+            f.commandsTick();
+            h.assertTrue(left.equals(f.units.get(0).getMoveGoal().getMoveTarget())
+                            && UnitServerEvents.getUnitActionSlowQueue().stream().anyMatch(action ->
+                            action.getUnitIds()[0] == f.units.get(0).getId()
+                                    && left.above(4).equals(action.getPreselectedBlockPos())),
+                    "Shift retains the active lower MOVE and queues precisely the upper preview");
+            Unit.fullResetBehaviours(f.units.get(0));
+            f.advanceWorkerIdleClock(f.units.get(0));
+            f.commandsTick();
+            h.assertTrue(left.above(4).equals(f.units.get(0).getMoveGoal().getMoveTarget()),
+                    "native Shift dispatcher runs that exact deck target once the prior order clears");
+
+            FormationDragMove.startDrag(start, MINIMAP);
+            FormationDragMove.updateDrag(end, selected.size(), level, MINIMAP);
+            var columnTops = deck.stream().map(cell -> new BlockPos(cell.getX(),
+                    level.getHeight(Heightmap.Types.MOTION_BLOCKING, cell.getX(), cell.getZ()) - 1, cell.getZ())).toList();
+            h.assertTrue(columnTops.equals(deck), "isolated fixture deck is highest MOTION_BLOCKING: tops=" + columnTops + ", deck=" + deck);
+            h.assertTrue(FormationDragMove.getFormationTargets().equals(columnTops),
+                    "legacy minimap uses the real top heightmap: actual=" + FormationDragMove.getFormationTargets() + ", tops=" + columnTops);
+        } finally {
+            FormationDragMove.cancelDrag();
+        }
+        System.out.println("FORMATION_DRAG_CLICKED_LAYER_AND_NATIVE_QUEUE_PASS");
         h.succeed();
     }
 }

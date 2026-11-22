@@ -105,7 +105,6 @@ public class MinimapClientEvents {
 
     // rate-limit teleporting from dragging the minimap to prevent being kicked from packet spamming
     private static long lastDragTeleportTimestamp = System.currentTimeMillis();
-    private static BlockPos minimapDragStartBp = null;
 	public static boolean minimapRightClickDown = false;
 
     private static DynamicTexture mapTexture = new DynamicTexture(worldRadius * 2, worldRadius * 2, true);
@@ -202,7 +201,6 @@ public class MinimapClientEvents {
 
     public static void clearVirtualUnits() {
         MinimapSessionLifecycle.clearSession(virtualUnits, neutralFogUnits, mapMarkers);
-        minimapDragStartBp = null;
         minimapRightClickDown = false;
         FormationDragMove.cancelDrag();
     }
@@ -1262,18 +1260,16 @@ public class MinimapClientEvents {
             }
         }
         else if (evt.getMouseButton() == GLFW.GLFW_MOUSE_BUTTON_2) {
-			if (!minimapRightClickDown || Keybindings.altMod.isDown() || UnitClientEvents.getSelectedUnits().isEmpty()) return;
+            if (!minimapRightClickDown || Keybindings.altMod.isDown() || UnitClientEvents.getSelectedUnits().isEmpty()
+                    || FormationDragMove.isDragging(FormationDragMove.Source.WORLD)) return;
             BlockPos currentPos = getWorldPosOnMinimap((float) evt.getMouseX(), (float) evt.getMouseY(), false);
             if (currentPos == null) return;
 
-            if (minimapDragStartBp == null) {
-                minimapDragStartBp = currentPos;
-                FormationDragMove.startDrag(currentPos);
+            if (!FormationDragMove.isDragging()) {
+                FormationDragMove.startDrag(currentPos, FormationDragMove.Source.MINIMAP);
             }
-
-            if (FormationDragMove.isDragging()) {
-                FormationDragMove.updateDrag(currentPos, UnitClientEvents.getSelectedUnits().size(), MC.level);
-            }
+            FormationDragMove.updateDrag(currentPos, UnitClientEvents.getSelectedUnits().size(), MC.level,
+                    FormationDragMove.Source.MINIMAP);
         }
     }
 
@@ -1328,9 +1324,13 @@ public class MinimapClientEvents {
             return;
         }
 
-        if (evt.getButton() == GLFW.GLFW_MOUSE_BUTTON_2) {
-            if (FormationDragMove.isDragging()) {
-                var pairs = FormationDragMove.endDrag(UnitClientEvents.getSelectedUnits());
+        if (evt.getButton() == GLFW.GLFW_MOUSE_BUTTON_2 && minimapRightClickDown) {
+            // A world gesture released over the minimap still belongs to the
+            // world path; never consume it or issue a fallback map click.
+            minimapRightClickDown = false;
+            if (FormationDragMove.isDragging(FormationDragMove.Source.WORLD)) return;
+            if (FormationDragMove.isDragging(FormationDragMove.Source.MINIMAP)) {
+                var pairs = FormationDragMove.endDrag(UnitClientEvents.getSelectedUnits(), FormationDragMove.Source.MINIMAP);
                 for (var pair : pairs) {
                     LivingEntity le = pair.getFirst();
                     BlockPos targetBp = pair.getSecond();
@@ -1356,7 +1356,6 @@ public class MinimapClientEvents {
 					));
                 }
 			}
-                minimapDragStartBp = null;
             } else {
                 BlockPos moveTo = getWorldPosOnMinimap((float) evt.getMouseX(), (float) evt.getMouseY(), false);
                 if (moveTo == null) return;
@@ -1370,7 +1369,6 @@ public class MinimapClientEvents {
                     UnitClientEvents.sendUnitCommandManual(UnitAction.MOVE, -1, idArray, moveTo);
                 }
             }
-		    minimapRightClickDown = false;
         }
     }
 
