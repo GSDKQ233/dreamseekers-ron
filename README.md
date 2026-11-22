@@ -13,7 +13,7 @@
 | 组件 | 版本 |
 | --- | --- |
 | Reign of Nether 核心 | `1.5.0b-ore-mines.2-dreamseekers-api.65-repair3.1` |
-| 寻梦者附属 | `0.65.0-repair3.1-autocast.1-alpha` |
+| 寻梦者附属 | `0.65.0-repair3.1-pathfinding.1-alpha` |
 | 运行环境 | Minecraft 1.20.1 · Forge 47.4.0 · Java 17 |
 
 `repair3.1` 基于资料库的 `API65-repair3-source.zip`，隔离生产队列包的客户端处理，并移除波斯语固定键数的测试门槛。核心与附属必须精确配对，客户端与服务端也必须同时更新；不要与 `repair3`、`repair2` 或其他版本交叉混装。

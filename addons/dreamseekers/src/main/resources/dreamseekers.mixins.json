@@ -13,6 +13,8 @@
     "WindFangsDamageMixin",
     "WindDashHurtEntryMixin",
     "OrdinaryMeleeHitMixin",
+    "DreamMeleeApproachMixin",
+    "GroundMoveSurfaceMixin",
     "OrdinaryBeeDebtHitMixin",
     "OrdinaryIronGolemDebtHitMixin",
     "OrdinaryWindupHitMixin",

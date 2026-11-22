@@ -17,6 +17,9 @@ public final class LowAltitudeMoveGoal extends FlyingMoveToTargetGoal {
 
     public LowAltitudeMoveGoal(Mob mob) { super(mob, 0); }
 
+    /** The actual RTS click, not one of the nearby air cells probed by endpoint selection. */
+    @Nullable BlockPos orderedTarget() { return orderedTarget; }
+
     @Override public void setMoveTarget(@Nullable BlockPos clicked) {
         if (clicked != null) MiscUtil.addUnitCheckpoint((Unit) mob, clicked, true);
         boolean changed = !Objects.equals(clicked, orderedTarget);

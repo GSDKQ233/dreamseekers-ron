@@ -1,6 +1,6 @@
 {
-  "release": "API65-repair3.1-autocast.1-alpha",
-  "status": "work-in-progress gameplay and tactical autocast Alpha source; no binary release",
+  "release": "API65-repair3.1-pathfinding.1-alpha",
+  "status": "work-in-progress pathfinding Alpha source; no public binary release",
   "runtime_change": true,
   "baseline_archive": "API65-repair3-source.zip",
   "baseline_sha256": "226856fca5f3e9eb7da58f1e190e8863dbba77036480d59a4149c9bf71ea5ef2",
@@ -8,11 +8,13 @@
   "reviewed_new_members": [
     "COLLABORATION.md",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AutocastGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ElevationRouteGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ReviewedOrdinaryBuildingGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnitHudIconLeashGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeCombinedGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/worldtree/ReviewedMorphSupportGameTests.java",
     "addons/dreamseekers/src/gametest/resources/data/dreamseekers_autocast/structures/unit_isolation_arena.nbt",
+    "addons/dreamseekers/src/gametest/resources/data/dreamseekers_elevation_routes/structures/elevation_arena.nbt",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamFootprintRange.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/building/DreamTemplateModel.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/client/DreamTooltipLayout.java",
@@ -20,6 +22,8 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/economy/CapitalResearchRanks.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillAutocastPolicy.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillCastAnimation.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/DreamMeleeApproachMixin.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/GroundMoveSurfaceMixin.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/SnailExplicitHoldMixin.java",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/beetle_sanctuary_rework_v1.nbt",
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/structures/contract_ecology_rework_v1.nbt",
@@ -95,6 +99,7 @@
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamFoundationGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamResearchQueueGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamShellFunctionGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ElevationRouteGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ExpansionResearchGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/FireflyRushSkillGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/FireflyWorkerGameTests.java",
@@ -125,6 +130,7 @@
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WorldTreeWindRepairGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/worldtree/ReviewedMorphSupportGameTests.java",
     "addons/dreamseekers/src/gametest/resources/data/dreamseekers_autocast/structures/unit_isolation_arena.nbt",
+    "addons/dreamseekers/src/gametest/resources/data/dreamseekers_elevation_routes/structures/elevation_arena.nbt",
     "addons/dreamseekers/src/main/java/com/dreamseekers/DreamseekersMod.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/aaroncos/AaroncosBalance.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/beetlemother/BeetleMotherBalance.java",
@@ -209,6 +215,10 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BeetleUnit.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/FireflyWorker.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/StoneSpiritWorker.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/flight/LowAltitudeFlyingNavigation.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/flight/LowAltitudeMoveGoal.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/DreamMeleeApproachMixin.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/GroundMoveSurfaceMixin.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/SnailExplicitHoldMixin.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unitprogression/AdvancedUnitResearch.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unitprogression/ExpansionResearch.java",
@@ -316,8 +326,8 @@
       "sha256": "aa8e97ff7a23dbb3cb74a9ef59c54205cffe5d8a3d20217287d7d8623d5e6b80"
     },
     "CHANGELOG.zh-CN.md": {
-      "bytes": 4502,
-      "sha256": "22e258994df61ae6b22781170bd7dd620279a174ba26f2ddc2963d7591fd4219"
+      "bytes": 4810,
+      "sha256": "b72bf1aedb3fcfeb0aa9c49c381f5ce94eec80eea6a2157e16d30bf89c5f0fc4"
     },
     "COLLABORATION.md": {
       "bytes": 35367,
@@ -332,12 +342,12 @@
       "sha256": "9152d90f20557128a640c659ad1b5f6ee16c43c155719bee92c1d885f97bb35d"
     },
     "README.md": {
-      "bytes": 6449,
-      "sha256": "14be92a66fe9839ea6bff54dcae998e1293782c7add8298028becb7422c7105f"
+      "bytes": 6452,
+      "sha256": "371ec0488bac976317c0f8196c927a1ee85a15789c57c0c3edcbcc3653480ccf"
     },
     "addons/dreamseekers/build.gradle": {
-      "bytes": 64016,
-      "sha256": "69ca67fb621a663672bac012aacb0d333e32dd59781211eecce769a94379ff32"
+      "bytes": 64019,
+      "sha256": "a9b0729dd78c44a440c745d165020c88e681a4362e6d8a4c897462bd3291624c"
     },
     "addons/dreamseekers/dependencies.lock.json": {
       "bytes": 2212,
@@ -798,6 +808,10 @@
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/EcologyWorkPostRestartGameTests.java": {
       "bytes": 8999,
       "sha256": "66e4ccab003da086f41ded15be909d5f12ae73800367654346b7cb862d1afd84"
+    },
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/ElevationRouteGameTests.java": {
+      "bytes": 19274,
+      "sha256": "8d3fcf57ff8b6a684a2a6373e8995c06d78417ca6364f5abe07d7f362c9cf083"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/EncounterEditorGameTests.java": {
       "bytes": 24856,
@@ -2034,6 +2048,10 @@
     "addons/dreamseekers/src/gametest/resources/data/dreamseekers_economic_skill_kills/structures/unit_isolation_arena.nbt": {
       "bytes": 113,
       "sha256": "812014fb876fd9cfc3ad29eb9d62763d0e302c7cb04747e5b161cddb20c808f1"
+    },
+    "addons/dreamseekers/src/gametest/resources/data/dreamseekers_elevation_routes/structures/elevation_arena.nbt": {
+      "bytes": 114,
+      "sha256": "32dd28a8b1ffce0a67bd98f50717f1188a5eefc007d3ace20a384db7cdf8e3c6"
     },
     "addons/dreamseekers/src/gametest/resources/data/dreamseekers_encounter_editor/structures/editor_arena.nbt": {
       "bytes": 115,
@@ -3732,12 +3750,12 @@
       "sha256": "d8dd19e7fd60e81d9b2263b141f703f5170856c3b7d113aeadc571b86c743e7e"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/flight/LowAltitudeFlyingNavigation.java": {
-      "bytes": 3983,
-      "sha256": "6a4c5497f239259b179e892c8c1c0f44b658ac18370bbce4b25607b3db785c18"
+      "bytes": 6143,
+      "sha256": "ad1d7121edd5858f38057f51b09011a5bbf834dee36336fe6c164ea064c3e2d8"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/flight/LowAltitudeMoveGoal.java": {
-      "bytes": 2913,
-      "sha256": "0cc64baca84f4962cb9d62713e1d5239efbeab4b2265d841291142f0f60967b9"
+      "bytes": 3074,
+      "sha256": "4933caac5ff9ca2da2b31981802c881bdc7ddd420baf946503bf0ef7d28283e2"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/AaroncosArenaCleanupMixin.java": {
       "bytes": 982,
@@ -3867,6 +3885,10 @@
       "bytes": 1214,
       "sha256": "def27d2211a9f38514a1ffcdc2b7ba8204fb825ecaf7723f84a08147741709ac"
     },
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/DreamMeleeApproachMixin.java": {
+      "bytes": 1882,
+      "sha256": "977c28f1317606819119f2f8b1aad45f25d94d3d1c3cc0bbff8e8870ce243f58"
+    },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/DreamUnitRenderDistanceMixin.java": {
       "bytes": 1152,
       "sha256": "88fd729702a35eea0410b147717bfd066311d4f1325887ce4cf32549f412d892"
@@ -3890,6 +3912,10 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/GoldenFoxExchangeProcedureMixin.java": {
       "bytes": 1863,
       "sha256": "582cbab48943f0230f6916446a419712daa8bc85fe237d328d06800ff35955ed"
+    },
+    "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/GroundMoveSurfaceMixin.java": {
+      "bytes": 2959,
+      "sha256": "475066eaf0a9517037b41a497d2194a4e19d7064f22e83211c5abcf7735d939e"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/mixin/JellyfishImpulseMixin.java": {
       "bytes": 1026,
@@ -4240,8 +4266,8 @@
       "sha256": "9152d90f20557128a640c659ad1b5f6ee16c43c155719bee92c1d885f97bb35d"
     },
     "addons/dreamseekers/src/main/resources/META-INF/mods.toml": {
-      "bytes": 1673,
-      "sha256": "faab0def25b5e6ca63793d6732b40220b9db948dc4df581f62853872b464bb92"
+      "bytes": 1676,
+      "sha256": "d6d0cf92107b361f572c53a90ade5beadcfa7ef93f72e8f54896dc14b37d290e"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/blockstates/decorative_garden_wheat.json": {
       "bytes": 735,
@@ -4784,8 +4810,8 @@
       "sha256": "049216d86b6f5570b1aace6e190ab0c4e6f7f449065a54a48a197ac44f8d4495"
     },
     "addons/dreamseekers/src/main/resources/dreamseekers.mixins.json": {
-      "bytes": 3962,
-      "sha256": "d9323135fdbeda3e20ebfde71e433ac159b1909b3c3e7872e8f2f86e1b026cb6"
+      "bytes": 4023,
+      "sha256": "14c0060a245c96a7ac7c693bab1d97b821c430fd04f34ac3603367bd101e8488"
     },
     "addons/dreamseekers/src/main/resources/pack.mcmeta": {
       "bytes": 108,
@@ -4984,8 +5010,8 @@
       "sha256": "afe45b8c5ecaf916c287fd90db7d91f6dfac7d38f0a2623c9aac101b6346c2cc"
     },
     "gradle/gametest-plan.gradle": {
-      "bytes": 18569,
-      "sha256": "fed2344313f16386701b6dbe983c2307a6fa3ea937f47bbfc9f4ccc6b628d3dc"
+      "bytes": 18653,
+      "sha256": "35051236814ce8dfe541388949d345c96076df1b0174834ad7be4e35b2bef72c"
     },
     "gradle/repository-test-inputs.gradle": {
       "bytes": 1893,
