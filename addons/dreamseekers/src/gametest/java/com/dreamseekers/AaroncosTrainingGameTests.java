@@ -28,7 +28,7 @@ import net.minecraftforge.gametest.*;
 import java.util.*;
 
 /** Candidate tests: physical upgraded-tree fixtures are not proof of the tree-upgrade purchase flow.
- * Only naturalNinetySecondTraining uses the full training work clock; spawn-failure probes shorten it. */
+ * Only naturalFullDurationTraining uses the full training work clock; spawn-failure probes shorten it. */
 @GameTestHolder("dreamseekers_hands_training") @PrefixGameTestTemplate(false)
 public final class AaroncosTrainingGameTests {
     private static final String BATCH="hands_training";
@@ -61,11 +61,28 @@ public final class AaroncosTrainingGameTests {
             ResourcesServerEvents.resourcesList.removeIf(a->a.ownerName.equals(owner));PlayerServerEvents.rtsPlayers.removeIf(a->a.name.equals(owner));
             for(long c:forced)h.getLevel().setChunkForced(ChunkPos.getX(c),ChunkPos.getZ(c),false);}
     }
+    @GameTest(templateNamespace="dreamseekers_hands_training",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=30)
+    public static void baseTrainWorkIsScopedToBothMilitaryBuildings(GameTestHelper h){
+        // Each row follows the actual registration / queue menu order, not translated labels or HUD estimates.
+        assertBaseTrainSeconds(h,DreamseekersMod.BEETLE_SANCTUARY.productions.get(),
+                List.of(16,24,16,20,15,16),"six Sanctuary recipes");
+        assertBaseTrainSeconds(h,DreamseekersMod.DREAM_HALL.productions.get(),
+                List.of(24,32,20,36,20,24,28,24,24,28,36,36,72,72),"fourteen Hall recipes");
+        h.assertTrue(DreamseekersMod.WORKER_PRODUCTION.defaultCost.ticks==300
+                &&DreamseekersMod.LEGACY_WORKER_PRODUCTION.defaultCost.ticks==300,
+                "capital worker and non-trainable legacy worker retain their original 15s work");
+        h.succeed();
+    }
+    private static void assertBaseTrainSeconds(GameTestHelper h,List<ProductionItem> items,List<Integer> seconds,String label){
+        h.assertTrue(items.size()==seconds.size(),label+" count");
+        for(int i=0;i<items.size();i++)h.assertTrue(items.get(i).defaultCost.ticks==seconds.get(i)*20,
+                label+" "+items.get(i).getItemName()+" should require "+seconds.get(i)+" seconds");
+    }
     @GameTest(templateNamespace="dreamseekers_hands_training",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=100)
     public static void exactMixedPaymentAndImmutableRefundAfterWind(GameTestHelper h){
         var f=new F(h,"Receipt",26000);f.tree(WorldTreeModel.WIND_V4,0);f.lab();var hall=f.hall();var item=DreamseekersMod.AARONCOS_LEFT_HAND_PRODUCTION;
         f.at(10,()->{
-            h.assertTrue(item.defaultCost.food==400&&item.defaultCost.wood==250&&item.defaultCost.ore==350&&item.defaultCost.ticks==1800&&item.defaultCost.population==8,"explicit full standard cost/time/population");
+            h.assertTrue(item.defaultCost.food==400&&item.defaultCost.wood==250&&item.defaultCost.ore==350&&item.defaultCost.ticks==1440&&item.defaultCost.population==8,"explicit full standard cost/time/population");
             h.assertTrue(item.extraCost(false,f.owner).get(DreamPassiveEconomy.SHADOW)==100,"fixed100S quote");
             f.r.extra.put(DreamPassiveEconomy.SHADOW,99);long rev=f.r.revision;
             h.assertTrue(!hall.startProductionItem(item)&&f.r.revision==rev&&f.r.food==10000&&hall.productionQueue.isEmpty(),"S insufficient cannot partially charge FWO");
@@ -96,12 +113,12 @@ public final class AaroncosTrainingGameTests {
         f.at(30,()->{h.assertTrue(hall.productionQueue.get(0).ticksLeft==remaining[0],"missingphysicaltree pausespaidqueue");f.tree(WorldTreeModel.SHADOW_V3,0);});
         f.at(50,()->{h.assertTrue(AaroncosTraining.hasUpgradedAnchor(hall)&&hall.productionQueue.get(0).ticksLeft<remaining[0],"shadowbranch also resumes samepaidqueue");h.assertTrue(hall.cancelProductionItem(item,true),"cancel paused/resumed original receipt");h.succeed();});
     }
-    @GameTest(templateNamespace="dreamseekers_hands_training",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=1880)
-    public static void naturalNinetySecondTrainingAndActualPopulation(GameTestHelper h){
+    @GameTest(templateNamespace="dreamseekers_hands_training",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=1520)
+    public static void naturalFullDurationTrainingAndActualPopulation(GameTestHelper h){
         var f=new F(h,"Natural",26600);f.tree(WorldTreeModel.SHADOW_V3,0);f.lab();var hall=f.hall();var item=DreamseekersMod.AARONCOS_LEFT_HAND_PRODUCTION;
-        f.at(20,()->{h.assertTrue(ProductionWorkRates.percent(hall,item)==100,"noWind/dais trainingrate boost");h.assertTrue(hall.startProductionItem(item),"natural90second fullprice start");h.assertTrue(hall.productionQueue.get(0).ticksLeft==1800,"actual full1800work");});
-        f.at(1810,()->h.assertTrue(f.handCount()==0&&hall.productionQueue.size()==1,"not completed before1800actualticks"));
-        f.at(1850,()->{h.assertTrue(f.handCount()==1&&hall.productionQueue.isEmpty()&&f.r.paidReceipts.isEmpty(),"actual hand spawned once andreceipt consumed");h.assertTrue(UnitServerEvents.getCurrentPopulation(f.owner)==8,"queue reservation replaced by actual8population");h.assertTrue(!hall.cancelProductionItem(item,true),"completed unit cannot refund");h.succeed();});
+        f.at(20,()->{h.assertTrue(ProductionWorkRates.percent(hall,item)==100,"noWind/dais trainingrate boost");h.assertTrue(hall.startProductionItem(item),"natural72second fullprice start");h.assertTrue(hall.productionQueue.get(0).ticksLeft==1440,"actual full1440work");});
+        f.at(1450,()->h.assertTrue(f.handCount()==0&&hall.productionQueue.size()==1,"not completed before1440actualticks"));
+        f.at(1490,()->{h.assertTrue(f.handCount()==1&&hall.productionQueue.isEmpty()&&f.r.paidReceipts.isEmpty(),"actual hand spawned once andreceipt consumed");h.assertTrue(UnitServerEvents.getCurrentPopulation(f.owner)==8,"queue reservation replaced by actual8population");h.assertTrue(!hall.cancelProductionItem(item,true),"completed unit cannot refund");h.succeed();});
     }
     /** Vanilla spawn emits Join before produceUnit sets owner; match the one fixture's live production window instead. */
     private static boolean matchesTrainingBirth(EntityJoinLevelEvent e,DreamHallPlacement hall,ProductionItem item){

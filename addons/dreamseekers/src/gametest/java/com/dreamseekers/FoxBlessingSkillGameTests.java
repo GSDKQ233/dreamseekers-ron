@@ -79,8 +79,14 @@ public final class FoxBlessingSkillGameTests {
             var original=new SkillNetwork.Cast(request(source));FriendlyByteBuf wire=new FriendlyByteBuf(Unpooled.buffer());SkillNetwork.Cast decoded;
             try{original.encode(wire);decoded=SkillNetwork.Cast.decode(wire);h.assertTrue(decoded.equals(original)&&wire.readableBytes()==0&&decoded.request().sourceId()==decoded.request().targetId()&&decoded.request().sourceUuid().equals(decoded.request().targetUuid()),"one-button request roundtrips self ID/UUID, no client amount or owner");}finally{wire.release();}
             require(h,decoded.execute(player(h,"CodecForeign")),SkillResult.NOT_OWNER,"network execute checks actual sender");require(h,decoded.execute(player(h,"Codec")),SkillResult.SUCCESS,"decoded packet applies real blessing");denied(h,decoded.execute(player(h,"Codec")),"decoded packet replay");
-            var sync=new SkillNetwork.Sync(UnitSkill.FOX_BLESSING,source.getId(),source.getUUID(),source.rts().skills().revision(),480,false);FriendlyByteBuf state=new FriendlyByteBuf(Unpooled.buffer());try{sync.encode(state);h.assertTrue(sync.equals(SkillNetwork.Sync.decode(state))&&state.readableBytes()==0,"owner state codec preserves skill/revision/cooldown without target list");}finally{state.release();}
-            require(h,SkillService.setAutocast(player(h,"Codec"),UnitSkill.FOX_BLESSING,source.getId(),source.getUUID(),source.rts().skills().revision(),true),SkillResult.DISABLED,"fox has no automatic mode");pass("ONE_BUTTON_CODEC_EXECUTE_NO_AUTO");
+            var skillState=source.rts().skills();
+            h.assertTrue(skillState.autocastEnabled(UnitSkill.FOX_BLESSING),"new Fox Blessing preference is actually enabled");
+            var sync=new SkillNetwork.Sync(UnitSkill.FOX_BLESSING,source.getId(),source.getUUID(),skillState.revision(),480,skillState.autocastEnabled(UnitSkill.FOX_BLESSING));FriendlyByteBuf state=new FriendlyByteBuf(Unpooled.buffer());try{sync.encode(state);h.assertTrue(sync.equals(SkillNetwork.Sync.decode(state))&&state.readableBytes()==0,"owner state codec preserves skill/revision/cooldown without target list");}finally{state.release();}
+            var off=new SkillNetwork.Toggle(UnitSkill.FOX_BLESSING,source.getId(),source.getUUID(),skillState.revision(),false);
+            require(h,off.execute(player(h,"CodecForeign")),SkillResult.NOT_OWNER,"foreign sender cannot disable a fox");
+            require(h,off.execute(player(h,"Codec")),SkillResult.SUCCESS,"owner may switch off future automatic blessings");
+            h.assertTrue(!skillState.autocastEnabled(UnitSkill.FOX_BLESSING)&&skillState.cooldownTicks(UnitSkill.FOX_BLESSING)==480&&blessed(target),"preference change neither cancels nor refunds the completed manual cast");
+            pass("ONE_BUTTON_CODEC_EXECUTE_OWNER_TOGGLE");
         }).thenSucceed();
     }
 
@@ -125,7 +131,7 @@ public final class FoxBlessingSkillGameTests {
     public static void emptyCombatNeighborhoodAndNormalAiNeverSpendOrAutomaticallyCast(GameTestHelper h) {
         floor(h);var source=fox(h,"NoAuto",4,5);var other=fox(h,"NoAuto",7,5);var distant=slime(h,"NoAuto",20,5);
         ready(h,source,other,distant).thenExecute(()->{require(h,cast(h,source),SkillResult.NO_TARGET,"noncombat-only neighborhood cannot burn cooldown");h.assertTrue(source.rts().skills().cooldownTicks(UnitSkill.FOX_BLESSING)==0,"empty cast preserves cooldown");moveFixture(h,distant,7,8);source.setNoAi(false);})
-          .thenIdle(45).thenExecute(()->{h.assertTrue(source.rts().skills().cooldownTicks(UnitSkill.FOX_BLESSING)==0&&!blessed(distant)&&!source.rts().skills().autocastEnabled(UnitSkill.FOX_BLESSING),"normal AI and a valid nearby combat unit do not autocast");require(h,cast(h,source),SkillResult.SUCCESS,"one manual self action still works");ledger(h,"NoAuto");pass("NO_TARGET_NO_CD_NO_AUTO");}).thenSucceed();
+          .thenIdle(45).thenExecute(()->{h.assertTrue(source.rts().skills().cooldownTicks(UnitSkill.FOX_BLESSING)==0&&!blessed(distant)&&source.rts().skills().autocastEnabled(UnitSkill.FOX_BLESSING),"enabled normal AI must not cast on a nearby idle combat unit");require(h,cast(h,source),SkillResult.SUCCESS,"one manual self action still works");ledger(h,"NoAuto");pass("NO_TARGET_NO_CD_NO_IDLE_AUTO");}).thenSucceed();
     }
 
     @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=990)

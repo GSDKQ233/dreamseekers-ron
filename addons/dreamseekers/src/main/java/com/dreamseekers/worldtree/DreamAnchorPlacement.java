@@ -27,7 +27,10 @@ public final class DreamAnchorPlacement extends DreamProductionPlacement {
         restoreGeometry(blocks(state.model),highest,partialBlocksDestroyed);state.geometryHighest=highest;
     }
     public WorldTreeModel model(){return getLevel().isClientSide()?clientModel:tree().model;}
-    public boolean ascended(){return (getLevel().isClientSide()||tree().supported)&&model().branch==WorldTreeModel.Branch.SHADOW;}
+    public boolean hasStandingUpgrade(){
+        return getLevel().isClientSide()?clientInstance!=null&&model().branch!=WorldTreeModel.Branch.BASE:tree().hasStandingUpgrade();
+    }
+    public boolean ascended(){return hasStandingUpgrade()&&model().hasShadow();}
     public ArrayList<BuildingBlock> blocks(WorldTreeModel model){return BuildingUtils.getAbsoluteBlockData(model.blocks(),getLevel(),originPos,rotation);}
     public ArrayList<BuildingBlock> upgradedBlocks(){return blocks(tree().target!=null?tree().target:model().branch!=WorldTreeModel.Branch.BASE?model():WorldTreeModel.CURRENT_SHADOW);}
     public void commitGeometry(ArrayList<BuildingBlock> blocks,int highest,double partial){restoreGeometry(blocks,highest,partial);}
@@ -87,7 +90,7 @@ public final class DreamAnchorPlacement extends DreamProductionPlacement {
         var receipt=account.paidReceipts.get(state.receipt);
         if(receipt==null)return true;
         if(state.target==null||!state.payerEpoch.equals(receipt.payerEpoch()))return refusePermanentAdministrativeRemoval("invalid_original_receipt_binding");
-        var purpose=DreamWorldTreeService.purpose(state.target);
+        var purpose=DreamWorldTreeService.purpose(state.model,state.target);
         if(receipt.purpose().equals(purpose+":refund")||receipt.purpose().equals(purpose+":forfeit"))return true;
         return refusePermanentAdministrativeRemoval("original_receipt_disposition_still_pending");
     }

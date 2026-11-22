@@ -138,7 +138,8 @@
           "dream_anchor_base_v3",
           "dream_anchor_shadow_v3",
           "dream_anchor_wind_v4"
-        ]
+        ],
+        "combined_upgrade": "dream_anchor_confluence_v6"
       }
     },
     {
@@ -2308,6 +2309,48 @@
       },
       "sha256": "458f8bfa1e92b1d08158f00fbf761d88d031fd76d38c9d656b9afecff32a9e2d",
       "review_revision": 5
+    },
+    {
+      "id": "dream_anchor_confluence_v6",
+      "base_building": "dream_anchor",
+      "size_xyz": [
+        11,
+        18,
+        9
+      ],
+      "non_air_blocks": 495,
+      "palette_counts": {
+        "dreamseekers:meltdream_crown_crystal": 1,
+        "minecraft:amethyst_block": 27,
+        "minecraft:chain": 6,
+        "minecraft:crying_obsidian": 3,
+        "minecraft:lantern": 6,
+        "minecraft:light_blue_stained_glass": 6,
+        "minecraft:polished_blackstone_bricks": 4,
+        "minecraft:purple_stained_glass": 6,
+        "pasterdream:bricks_dyedreamquartz_block": 33,
+        "pasterdream:chiseled_dyedreamquartz_block": 14,
+        "pasterdream:dyedream_bud_wall": 2,
+        "pasterdream:dyedream_lartern": 2,
+        "pasterdream:dyedream_log": 98,
+        "pasterdream:dyedream_planks": 7,
+        "pasterdream:dyedream_worldtree_leaves": 29,
+        "pasterdream:dyedreamquartz_block": 42,
+        "pasterdream:dyedreamquartz_block_slab": 28,
+        "pasterdream:dyedreamquartz_block_stairs": 4,
+        "pasterdream:polished_calcite": 10,
+        "pasterdream:windmoor_leaves_0": 50,
+        "pasterdream:windmoor_leaves_1": 51,
+        "pasterdream:windmoor_planks": 45,
+        "pasterdream:windrunner_crystal_block": 21
+      },
+      "sha256": "edd5eadc0434855a48e8db2e64c1c92ca1c4ace94d95c501a8807892d0635645",
+      "geometry_revision": 6,
+      "branch": "COMBINED",
+      "derived_from": [
+        "dream_anchor_shadow_v5",
+        "dream_anchor_wind_v5"
+      ]
     }
   ]
 }

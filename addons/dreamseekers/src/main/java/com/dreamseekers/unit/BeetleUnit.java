@@ -22,7 +22,7 @@ import net.pasterdream.entity.BlackBeetleEntity;
 
 /** Genuine BlackBeetle with RTS orders replacing taming, owner-following, and breeding AI. */
 public class BeetleUnit extends BlackBeetleEntity implements DreamRtsUnit {
-    public static final ResourceCost COST = ResourceCost.Unit(75, 20, 0, 20, 2);
+    public static final ResourceCost COST = ResourceCost.Unit(75, 20, 0, 16, 2);
     private static final EntityDataAccessor<String> OWNER = SynchedEntityData.defineId(BeetleUnit.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> SCENARIO = SynchedEntityData.defineId(BeetleUnit.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> DEATH_COMMAND = SynchedEntityData.defineId(BeetleUnit.class, EntityDataSerializers.STRING);
@@ -92,5 +92,5 @@ public class BeetleUnit extends BlackBeetleEntity implements DreamRtsUnit {
         setOrderedToSit(false);
         readRtsData(tag);
     }
-    public static AttributeSupplier.Builder createAttributes() { return DreamRtsUnit.attributes(55, 5, 0.29, 2, 0.8, 10); }
+    public static AttributeSupplier.Builder createAttributes() { return DreamRtsUnit.attributes(55, 5, 0.37, 2, 0.8, 10); }
 }

@@ -118,7 +118,7 @@ public final class TerrorbeakUpgradeService {
         // Defensive monotonic carryover even though present eligibility denies free bodies.
         if(source.getPersistentData().contains(RtsKillValueClaims.FREE_ORIGIN_KEY))replacement.getPersistentData().put(RtsKillValueClaims.FREE_ORIGIN_KEY,source.getPersistentData().get(RtsKillValueClaims.FREE_ORIGIN_KEY).copy());
         CompoundTag skills=new CompoundTag();source.rts().skills().save(skills);replacement.rts().skills().load(skills);
-        DreamAscendancyAttributes.reconcile(replacement,DreamAscendancyAttributes.enabledFor(replacement));
+        DreamAscendancyAttributes.reconcile(replacement,DreamAscendancyAttributes.rankFor(replacement));
         replacement.setHealth(DreamResearchMath.healthAfter(hp,max,replacement.getMaxHealth()));
         if(!(replacement.getAttackGoal() instanceof TeamSafeMeleeAttackGoal newAttack)||!safe(source,replacement))return Result.UNSAFE_POSITION;
         newAttack.inheritTransformationCooldown(attackRemaining);

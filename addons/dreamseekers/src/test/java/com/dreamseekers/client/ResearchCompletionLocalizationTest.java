@@ -47,6 +47,13 @@ class ResearchCompletionLocalizationTest {
             var lang = language("dreamseekers", locale);
             for (int i = 0; i < ids.size(); i++)
                 assertEquals(lang.get(titles.get(i)).getAsString(), translated(lang, ids.get(i)));
+            for (var line : DreamEconomyResearch.Line.values()) {
+                String first = translated(lang, line.id(1));
+                for (int rank = 2; rank <= com.dreamseekers.economy.CapitalResearchRanks.MAX_RANK; rank++) {
+                    String label = translated(lang, line.id(rank));
+                    assertTrue(label.startsWith(first) && label.contains(Integer.toString(rank)), label);
+                }
+            }
         }
         // Pin this test to the real client's completion-key derivation, not the button's display key.
         String client = Files.readString(Path.of("src/main/java/com/solegendary/reignofnether/research/ResearchClient.java"));

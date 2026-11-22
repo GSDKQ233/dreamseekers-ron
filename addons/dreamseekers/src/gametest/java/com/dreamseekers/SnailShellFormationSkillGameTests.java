@@ -103,17 +103,43 @@ public final class SnailShellFormationSkillGameTests {
     @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=1200)
     public static void actualGroundMoveStopsAtCastAndNewAuthenticatedMoveEndsOnlyFormation(GameTestHelper h) {
         floor(h);var source=snail(h,"Move",4,1,10);
+        // Physically separate lanes; never move the subject or weaken its existing 20-tick boundary.
+        var idlePushed=snail(h,"Move",4,1,18);var movingHit=snail(h,"Move",4,1,25);
+        Vec3[] shoveStart=new Vec3[2],lateShoveStart={null};
+        for(var control:List.of(idlePushed,movingHit))control.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
         Vec3[] start={null},station={null};long[] castAt={0},revision={0};
-        ready(h,source).thenExecute(()->source.setNoAi(false))
-          .thenWaitUntil(()->h.assertTrue(source.onGround()&&h.getLevel().noCollision(source),"real ground navigation physically settled; no setOnGround fixture"))
-          .thenExecute(()->{start[0]=source.position();order(h,source,UnitAction.MOVE,-1,h.absolutePos(new BlockPos(26,0,10)));})
+        ready(h,source,idlePushed,movingHit).thenExecute(()->{
+              for(var unit:List.of(source,idlePushed,movingHit))unit.setNoAi(false);
+          })
+          .thenWaitUntil(()->h.assertTrue(source.onGround()&&idlePushed.onGround()&&movingHit.onGround()&&h.getLevel().noCollision(source),"real ground navigation physically settled; no setOnGround fixture"))
+          .thenExecute(()->{start[0]=source.position();order(h,source,UnitAction.MOVE,-1,h.absolutePos(new BlockPos(26,0,10)));
+              order(h,movingHit,UnitAction.MOVE,-1,h.absolutePos(new BlockPos(26,0,25)));})
           .thenWaitUntil(()->h.assertTrue(horizontal(source.position(),start[0])>.75&&!UnitServerEvents.hasPendingImmediateAction(source.getId()),"real authenticated old MOVE actually made progress before cast"))
           .thenExecute(()->{
+              Vec3 oldMotion=source.getDeltaMovement();
+              h.assertTrue(oldMotion.horizontalDistance()>.01&&source.onGround()&&!source.getNavigation().isDone(),"normal unhurt ground MOVE has real pre-deployment steering momentum");
               require(h,cast(h,source),SkillResult.SUCCESS,"real moving snail self-cast");
+              Vec3 deployed=source.getDeltaMovement();
+              h.assertTrue(deployed.horizontalDistanceSqr()<1.0e-12&&Double.doubleToRawLongBits(oldMotion.y)==Double.doubleToRawLongBits(deployed.y),"only the proved ground MOVE's planar coast is removed on successful manual deployment; old="+oldMotion+" new="+deployed);
               station[0]=source.position();castAt[0]=h.getLevel().getGameTime();
               h.assertTrue(source.getHoldPosition()&&!source.isIdle()&&!source.rts().hold,"active position lock is derived, not persistent hold mutation");
+              h.assertTrue(idlePushed.getMoveGoal().getMoveTarget()==null&&idlePushed.getNavigation().isDone(),"idle impulse control is not under native MOVE");
+              h.assertTrue(movingHit.getMoveGoal().getMoveTarget()!=null&&!movingHit.getNavigation().isDone()&&movingHit.getDeltaMovement().horizontalDistance()>.01,"mixed impulse control has an actual executing path and voluntary movement");
+              float hp=movingHit.getHealth();h.assertTrue(movingHit.hurt(movingHit.damageSources().generic(),1)&&movingHit.getHealth()<hp&&movingHit.hurtTime>0,"mixed-motion control is legitimately hurt on its active MOVE tick");
+              int index=0;
+              for(var control:List.of(idlePushed,movingHit)){
+                  shoveStart[index++]=control.position();control.knockback(.65,0,1);Vec3 impulse=control.getDeltaMovement();
+                  h.assertTrue(impulse.z<-.45&&impulse.y>.12,"real native transverse knockback and its upward component exist before casting");
+                  require(h,cast(h,control),SkillResult.SUCCESS,"successful real manual deployment during external impulse");
+                  h.assertTrue(control.getDeltaMovement().distanceToSqr(impulse)<1.0e-12,"manual deployment preserves the already received 3D impulse, including on a hurt active mover");
+              }
           }).thenIdle(20).thenExecute(()->{
-              h.assertTrue(SnailShellFormation.active(source)&&horizontal(source.position(),station[0])<.08,"twenty natural physics and unit ticks stay stationary despite prior long MOVE");
+              double drift=horizontal(source.position(),station[0]);
+              h.assertTrue(SnailShellFormation.active(source)&&drift<.08,"twenty natural physics and unit ticks stay stationary despite prior long MOVE; measured="+drift);
+              h.assertTrue(h.getLevel().getGameTime()==castAt[0]+20,"strict original check runs at exactly twenty natural ticks");
+              h.assertTrue(idlePushed.getZ()<shoveStart[0].z-.2&&movingHit.getZ()<shoveStart[1].z-.2&&SnailShellFormation.active(idlePushed)&&SnailShellFormation.active(movingHit),"both pre-cast external impulses cause real unimpeded travel without ending either formation");
+              lateShoveStart[0]=idlePushed.position();idlePushed.knockback(.6,0,-1);
+              h.assertTrue(idlePushed.getDeltaMovement().z>.40,"new independent post-deployment native impulse enters the live manual stance");
               h.assertTrue(source.getNavigation().isDone(),"old active navigation was stopped, not just visually hidden");
               revision[0]=source.rts().commandRevision;
               order(h,source,UnitAction.MOVE,-1,h.absolutePos(new BlockPos(26,0,10)));
@@ -121,6 +147,7 @@ public final class SnailShellFormationSkillGameTests {
           .thenWaitUntil(()->h.assertTrue(horizontal(source.position(),station[0])>.75,"new command resumes actual native path travel"))
           .thenExecute(()->{
               h.assertTrue(!source.getHoldPosition()&&!source.rts().hold,"new MOVE removes only temporary stance");
+              h.assertTrue(idlePushed.getZ()>lateShoveStart[0].z+.15&&SnailShellFormation.active(idlePushed),"active manual formation also preserves subsequent external travel, without a per-tick velocity clamp");
               h.assertTrue(cd(source)==Math.max(0,480-(h.getLevel().getGameTime()-castAt[0])),"new MOVE never refunds or restarts paid cooldown");
               require(h,cast(h,source),SkillResult.COOLDOWN,"movement cancellation does not enable free recast");
               ledger(h,"Move");pass("REAL_GROUND_STOP_NEW_MOVE_CD_CONTINUES");
@@ -227,7 +254,7 @@ public final class SnailShellFormationSkillGameTests {
               for(var source:sources) {
                   var packets=positiveSync(owner,source);h.assertTrue(packets.size()==1,"one initial encoded Sync before first heartbeat, source="+source.mob().getUUID()+" packets="+packets);
                   var observation=packets.get(0);var packet=observation.packet();
-                  h.assertTrue(packet.skill()==SkillService.skillFor(source)&&packet.sourceId()==source.mob().getId()&&packet.sourceUuid().equals(source.mob().getUUID())&&packet.revision()==source.rts().skills().revision()&&packet.cooldownTicks()==0&&!packet.autocastEnabled(),"actual encoded initial payload has exact supported skill, original ID/UUID, revision and zero cooldown");
+                  h.assertTrue(packet.skill()==SkillService.skillFor(source)&&packet.sourceId()==source.mob().getId()&&packet.sourceUuid().equals(source.mob().getUUID())&&packet.revision()==source.rts().skills().revision()&&packet.cooldownTicks()==0&&packet.autocastEnabled()==(source==snail||source==beetle),"actual encoded initial payload has exact skill, original ID/UUID, revision, zero cooldown, and correct default (Snail/Beetle on, worker manual)");
                   int count=syncWire(owner).syncs.size();long revision=source.rts().skills().revision();
                   source.rts().skills().tick();source.rts().skills().tick();
                   h.assertTrue(syncWire(owner).syncs.size()==count&&source.rts().skills().revision()==revision&&source.rts().skills().cooldownTicks(SkillService.skillFor(source))==0&&effectTicks(source)==0,"same-game-tick repeated state ticks cannot duplicate initial sync, mutate revision or create effect");

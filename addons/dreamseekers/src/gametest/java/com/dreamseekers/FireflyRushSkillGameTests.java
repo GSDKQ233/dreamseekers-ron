@@ -37,6 +37,127 @@ public final class FireflyRushSkillGameTests {
     private static final List<Entity> ENTITIES=new ArrayList<>();private static final Set<String> ACCOUNTS=new LinkedHashSet<>();private static final Map<String,FakePlayer> PLAYERS=new HashMap<>();
     @AfterBatch(batch=BATCH) public static void cleanup(ServerLevel level){for(Entity e:List.copyOf(ENTITIES))if(!e.isRemoved()){if(e instanceof ServerPlayer p)p.serverLevel().removePlayerImmediately(p,Entity.RemovalReason.DISCARDED);else e.discard();}BuildingServerEvents.getBuildings().removeIf(b->ACCOUNTS.contains(b.ownerName));PlayerServerEvents.players.removeIf(p->ACCOUNTS.contains(p.getGameProfile().getName()));PlayerServerEvents.rtsPlayers.removeIf(p->ACCOUNTS.contains(p.name));ResourcesServerEvents.resourcesList.removeIf(r->ACCOUNTS.contains(r.ownerName));for(var c:FORCED)level.setChunkForced(c.x,c.z,false);FORCED.clear();ENTITIES.clear();ACCOUNTS.clear();PLAYERS.clear();}
 
+    @GameTest(template = "work_isolation_arena", batch = BATCH, timeoutTicks = 120)
+    public static void tunedFlightBeatsOldBaselineAndOrdinaryStrikeHitsForTwo(GameTestHelper helper) {
+        assertRosterDefaults(helper);
+        arena(helper,46,10,24);
+        String owner="Balance";
+        var old=worker(helper,owner,4,1,6);
+        var tuned=worker(helper,owner,4,1,16);
+        old.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(.25);
+        old.getAttribute(Attributes.FLYING_SPEED).setBaseValue(.25);
+        Vec3[] start=new Vec3[2];
+        Vec3[] stopped={null};
+        BlockPos oldEnd=pos(helper,39,0,6), tunedEnd=pos(helper,39,0,16);
+        ready(helper,old,tuned).thenExecute(()->{
+            old.setNoAi(false); tuned.setNoAi(false);
+            // Remove the independent random EntityJoin impulses for the matched travel comparison only.
+            old.setDeltaMovement(Vec3.ZERO); tuned.setDeltaMovement(Vec3.ZERO);
+            old.setYRot(-90);tuned.setYRot(-90);
+            order(helper,old,UnitAction.MOVE,oldEnd); order(helper,tuned,UnitAction.MOVE,tunedEnd);
+        }).thenWaitUntil(()->{movedOrder(helper,old);movedOrder(helper,tuned);}).thenExecute(()->{
+            start[0]=old.position(); start[1]=tuned.position();
+        }).thenIdle(24).thenExecute(()->{
+            double oldDistance=old.getX()-start[0].x, tunedDistance=tuned.getX()-start[1].x;
+            helper.assertTrue(!old.getNavigation().isDone()&&!tuned.getNavigation().isDone()
+                    &&helper.getLevel().noCollision(old)&&helper.getLevel().noCollision(tuned)
+                    &&oldDistance>.5&&tunedDistance>oldDistance*1.6,
+                    "matched 24 ticks of unbuffed authenticated MOVE: old="+oldDistance+", tuned="+tunedDistance);
+            System.out.println("FIREFLY_BASELINE_TRAVEL oldDistance="+oldDistance+" tunedDistance="+tunedDistance);
+            order(helper,old,UnitAction.STOP,BlockPos.ZERO); order(helper,tuned,UnitAction.STOP,BlockPos.ZERO);
+        }).thenWaitUntil(()->helper.assertTrue(!UnitServerEvents.hasPendingImmediateAction(tuned.getId())
+                &&tuned.getNavigation().isDone()&&tuned.getMoveGoal().getMoveTarget()==null,"actual STOP clears fast navigation"))
+          .thenExecute(()->stopped[0]=tuned.position()).thenIdle(3).thenExecute(()->{
+            helper.assertTrue(tuned.position().distanceToSqr(stopped[0])<.01,"fast worker remains stationary after STOP");
+            helper.assertTrue(tuned.getUnitAttackDamage()==2&&tuned.getAttackCooldown()==40&&!tuned.canAttackBuildings(),
+                    "worker strike is two at unchanged 40-tick cadence; it still has no building attack");
+            var target=EntityType.COW.create(helper.getLevel());
+            helper.assertTrue(target!=null,"ordinary unarmoured living target exists");
+            target.setNoAi(true); target.moveTo(tuned.getX()+.7,tuned.getY(),tuned.getZ(),0,0);
+            ENTITIES.add(target);
+            helper.assertTrue(helper.getLevel().addFreshEntity(target),"target entered server world");
+            float before=target.getHealth();
+            helper.assertTrue(tuned.doHurtTarget(target)&&before-target.getHealth()==2,
+                    "ordinary worker strike passes native damage hooks and actually removes two health");
+            System.out.println("FIREFLY_BASELINE_TUNING_PASS actualDamage="+(before-target.getHealth()));
+        }).thenSucceed();
+    }
+
+    private static void assertRosterDefaults(GameTestHelper h) {
+        // Independent, explicit oracles for all 23 registered RTS entity types, including the retired worker.
+        expectSpeed(h,DreamseekersMod.FIREFLY_WORKER.get(),0.50,true);
+        expectSpeed(h,DreamseekersMod.PINK_CHICKEN_SCOUT.get(),0.58,true);
+        expectSpeed(h,DreamseekersMod.GOLDEN_FOX_UNIT.get(),0.42,false);
+        expectSpeed(h,DreamseekersMod.PINK_SLIME_UNIT.get(),0.36,false);
+        expectSpeed(h,DreamseekersMod.JELLYFISH_UNIT.get(),0.40,true);
+        expectSpeed(h,DreamseekersMod.BONE_WING_UNIT.get(),0.42,true);
+        expectSpeed(h,DreamseekersMod.SHADOW_GHOST_UNIT.get(),0.45,true);
+        expectSpeed(h,DreamseekersMod.SHADOW_SQUEAL_GHOST_UNIT.get(),0.39,true);
+        expectSpeed(h,DreamseekersMod.ASH_BONE_WING_UNIT.get(),0.38,true);
+        expectSpeed(h,DreamseekersMod.SHADOW_HAND_UNIT.get(),0.43,true);
+        expectSpeed(h,DreamseekersMod.FRIENDLY_GHOST_UNIT.get(),0.40,true);
+        expectSpeed(h,DreamseekersMod.CRAZY_TERRORBEAK_UNIT.get(),0.40,false);
+        expectSpeed(h,DreamseekersMod.SHADOW_GOLEM_UNIT.get(),0.28,false);
+        expectSpeed(h,DreamseekersMod.AARONCOS_RIGHT_HAND_UNIT.get(),0.30,true);
+        expectSpeed(h,DreamseekersMod.AARONCOS_LEFT_HAND_UNIT.get(),0.30,true);
+        expectSpeed(h,DreamseekersMod.WEEPING_SQUEAL_GHOST_UNIT.get(),0.34,true);
+        expectSpeed(h,DreamseekersMod.TERRORBEAK_UNIT.get(),0.36,false);
+        expectSpeed(h,DreamseekersMod.BEETLE_MOTHER_UNIT.get(),0.30,false);
+        expectSpeed(h,DreamseekersMod.STONE_SPIRIT_THROWER_UNIT.get(),0.34,false);
+        expectSpeed(h,DreamseekersMod.WIND_KNIGHT_UNIT.get(),0.29,false);
+        expectSpeed(h,DreamseekersMod.STONE_SPIRIT_WORKER.get(),0.25,false);
+        expectSpeed(h,DreamseekersMod.BEETLE.get(),0.37,false);
+        expectSpeed(h,DreamseekersMod.BASALT_SNAIL.get(),0.22,false);
+    }
+
+    private static void expectSpeed(GameTestHelper h, EntityType<? extends LivingEntity> type,double speed,boolean flight) {
+        var attributes=DefaultAttributes.getSupplier(type);
+        h.assertTrue(attributes!=null&&attributes.hasAttribute(Attributes.MOVEMENT_SPEED)
+                        &&attributes.hasAttribute(Attributes.FLYING_SPEED)==flight,
+                "registered ground/flight profile for "+EntityType.getKey(type));
+        close(h,attributes.getBaseValue(Attributes.MOVEMENT_SPEED),speed,"movement "+EntityType.getKey(type));
+        if(flight)close(h,attributes.getBaseValue(Attributes.FLYING_SPEED),speed,"flight "+EntityType.getKey(type));
+    }
+
+    @GameTest(template="work_isolation_arena",batch=BATCH,timeoutTicks=170)
+    public static void groundCavalryOutpacesOldPaceAndHeavyGuardUnderActualOrders(GameTestHelper h){
+        arena(h,44,8,32);
+        String owner=account("GroundPace");player(h,owner);
+        var old=DreamseekersMod.WIND_KNIGHT_UNIT.get().create(h.getLevel());
+        var cavalry=DreamseekersMod.WIND_KNIGHT_UNIT.get().create(h.getLevel());
+        var guard=DreamseekersMod.BASALT_SNAIL.get().create(h.getLevel());
+        h.assertTrue(old!=null&&cavalry!=null&&guard!=null,"real registered ground fighters exist");
+        old.setOwnerName(owner);cavalry.setOwnerName(owner);guard.setOwnerName(owner);
+        old.setNoAi(true);cavalry.setNoAi(true);guard.setNoAi(true);
+        old.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(.25);
+        place(h,old,4,1,6);place(h,cavalry,4,1,14);place(h,guard,4,1,25);
+        double[] start=new double[3];
+        ready(h,old,cavalry,guard).thenExecute(()->{
+            for(Mob mover:List.of(old,cavalry,guard)){
+                mover.setNoAi(false);mover.setDeltaMovement(Vec3.ZERO);mover.setYRot(-90);
+            }
+            order(h,old,UnitAction.MOVE,pos(h,37,0,6));
+            order(h,cavalry,UnitAction.MOVE,pos(h,37,0,14));
+            order(h,guard,UnitAction.MOVE,pos(h,37,0,25));
+        }).thenWaitUntil(()->{
+            for(Mob mover:List.of(old,cavalry,guard))h.assertTrue(!UnitServerEvents.hasPendingImmediateAction(mover.getId())
+                    &&!mover.getNavigation().isDone()&&((Unit)mover).getMoveGoal().getMoveTarget()!=null,
+                    "all three authenticated real MOVE orders have live paths");
+        }).thenExecute(()->{start[0]=old.getX();start[1]=cavalry.getX();start[2]=guard.getX();})
+          .thenIdle(24).thenExecute(()->{
+              double original=old.getX()-start[0], current=cavalry.getX()-start[1], heavy=guard.getX()-start[2];
+              h.assertTrue(h.getLevel().noCollision(old)&&h.getLevel().noCollision(cavalry)&&h.getLevel().noCollision(guard)
+                      &&original>.5&&heavy>.25&&current>original*1.3&&current>heavy*1.5,
+                      "actual ground lanes moved old="+original+" cavalry="+current+" heavy="+heavy);
+              h.assertTrue(cavalry.getUnitAttackDamage()==10&&guard.getUnitAttackDamage()==7,
+                      "their ordinary attack values were not scaled together with movement");
+              System.out.println("DREAMSEEKERS_GROUND_PACE_PASS oldKnight="+original+" tunedKnight="+current+" tunedSnail="+heavy);
+              order(h,old,UnitAction.STOP,BlockPos.ZERO);
+              order(h,cavalry,UnitAction.STOP,BlockPos.ZERO);
+              order(h,guard,UnitAction.STOP,BlockPos.ZERO);
+          }).thenSucceed();
+    }
+
     @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=860)
     public static void actualSenderSelfTokenReplayAndLegacyWorkerRemainAuthoritative(GameTestHelper h){
         arena(h,24,8,24);var worker=worker(h,"Auth",4,1,5);var other=worker(h,"Other",4,1,15);var stone=DreamseekersMod.STONE_SPIRIT_WORKER.get().create(h.getLevel());stone.setOwnerName(account("Auth"));stone.setNoAi(true);place(h,stone,10,1,5);var owner=player(h,"Auth");var foreign=player(h,"Other");
@@ -54,15 +175,15 @@ public final class FireflyRushSkillGameTests {
           .thenIdle(2).thenExecute(()->{h.assertTrue(!FireflyRush.active(worker)&&FireflyRush.remainingTicks(worker)==0&&cd(worker)==399,"normal expiration clears only personal effect, not paid cooldown");close(h,SkillEffects.bonus(worker,BuffKind.MOVEMENT_SPEED),0,"no permanent rush buff remains");idleDriftMatch(h,worker,control,start,"expiration does not invent an old destination or change native idle drift");stableBank(h,"Idle");pass("IDLE_NO_HOME_PATH_TELEPORT_EXACT_EXPIRY");}).thenSucceed();
     }
 
-    @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=1150)
+    @GameTest(template="work_isolation_arena",batch=BATCH,timeoutTicks=1150)
     public static void actualFlightUsesPersonal35OverRealTide10AndRestoresPermanentAttributes(GameTestHelper h){
-        arena(h,24,8,24);var normal=worker(h,"Speed",4,1,6);var fast=worker(h,"Speed",4,1,16);var jelly=DreamseekersMod.JELLYFISH_UNIT.get().create(h.getLevel());jelly.setOwnerName(account("Speed"));jelly.setNoAi(true);place(h,jelly,4,2,13);double[] originalMove=new double[2],originalFly=new double[2];Vec3[] start=new Vec3[2];
+        arena(h,45,8,24);var normal=worker(h,"Speed",4,1,6);var fast=worker(h,"Speed",4,1,16);var jelly=DreamseekersMod.JELLYFISH_UNIT.get().create(h.getLevel());jelly.setOwnerName(account("Speed"));jelly.setNoAi(true);place(h,jelly,6,2,13);double[] originalMove=new double[2],originalFly=new double[2];Vec3[] start=new Vec3[2];
         ready(h,normal,fast,jelly).thenExecute(()->{for(int i=0;i<2;i++){var w=i==0?normal:fast;w.getAttribute(Attributes.MOVEMENT_SPEED).addPermanentModifier(new AttributeModifier(PERMANENT_MOVE,"real permanent movement fixture",.025,AttributeModifier.Operation.ADDITION));w.getAttribute(Attributes.FLYING_SPEED).addPermanentModifier(new AttributeModifier(PERMANENT_FLY,"real permanent flight fixture",.025,AttributeModifier.Operation.ADDITION));originalMove[i]=w.getAttributeValue(Attributes.MOVEMENT_SPEED);originalFly[i]=w.getAttributeValue(Attributes.FLYING_SPEED);}fast.setHealth(fast.getMaxHealth()-2);require(h,SkillService.request(player(h,"Speed"),new SkillRequest(UnitSkill.JELLY_FLOW,jelly.getId(),jelly.getUUID(),jelly.rts().skills().revision(),fast.getId(),fast.getUUID())),SkillResult.SUCCESS,"real jelly healing creates later ordinary tide buff, not a trusted fabricated research provider");})
-          .thenIdle(70).thenExecute(()->{normal.setNoAi(false);fast.setNoAi(false);order(h,normal,UnitAction.MOVE,pos(h,20,0,6));order(h,fast,UnitAction.MOVE,pos(h,20,0,16));})
+          .thenIdle(70).thenExecute(()->{normal.setNoAi(false);fast.setNoAi(false);order(h,normal,UnitAction.MOVE,pos(h,38,0,6));order(h,fast,UnitAction.MOVE,pos(h,38,0,16));})
           .thenWaitUntil(()->{movedOrder(h,normal);movedOrder(h,fast);})
           .thenExecute(()->{start[0]=normal.position();start[1]=fast.position();require(h,cast(h,fast),SkillResult.SUCCESS,"rush preserves already accepted non-work MOVE");h.assertTrue(fast.getMoveGoal().getMoveTarget()!=null&&!FireflyRush.hasPausedWork(fast),"existing non-work movement is not stopped or relabelled work");close(h,fast.getAttributeValue(Attributes.MOVEMENT_SPEED),originalMove[1]*1.35,"real ground attribute consumes exactly personal35");close(h,fast.getAttributeValue(Attributes.FLYING_SPEED),originalFly[1]*1.35,"real flight controller attribute consumes exactly personal35");})
-          .thenIdle(30).thenExecute(()->{double plain=normal.position().distanceTo(start[0]),quick=fast.position().distanceTo(start[1]);System.out.println("FIREFLY_RUSH_ACTUAL_FLIGHT normal="+plain+" rush="+quick+" normalPos="+normal.position()+" rushPos="+fast.position());h.assertTrue(plain>.5&&quick>plain*1.15&&quick<plain*1.6,"genuine matched FlyingMoveControl navigation travels farther during same real thirty ticks, not just attribute display");h.assertTrue(h.getLevel().noCollision(normal)&&h.getLevel().noCollision(fast)&&fast.getNavigation() instanceof LowAltitudeFlyingNavigation&&!fast.noPhysics,"ordinary low collision flight remains real");h.assertTrue(normal.position().distanceTo(Vec3.atBottomCenterOf(pos(h,20,1,6)))>4&&fast.position().distanceTo(Vec3.atBottomCenterOf(pos(h,20,1,16)))>4,"both real flight probes are explicitly still before destination slowdown");order(h,normal,UnitAction.STOP,BlockPos.ZERO);order(h,fast,UnitAction.STOP,BlockPos.ZERO);})
-          .thenIdle(30).thenExecute(()->{h.assertTrue(jelly.distanceToSqr(fast)<=144,"actual completed-heal source/target remain within twelve blocks, not a fabricated tide provider");h.assertTrue(SkillEffects.hasNamedBuff(fast,"light_tide",BuffKind.MOVEMENT_SPEED),"real completed jelly provides overlapping ordinary ten-percent tide");close(h,SkillEffects.bonus(fast,BuffKind.MOVEMENT_SPEED),.35,"personal35 and real ordinary10 take max, never add/multiply twice");})
+          .thenIdle(18).thenExecute(()->{double plain=normal.position().distanceTo(start[0]),quick=fast.position().distanceTo(start[1]);System.out.println("FIREFLY_RUSH_ACTUAL_FLIGHT normal="+plain+" rush="+quick+" normalPos="+normal.position()+" rushPos="+fast.position());h.assertTrue(plain>.5&&quick>plain*1.15&&quick<plain*1.6,"genuine matched FlyingMoveControl navigation travels farther during same real eighteen ticks, not just attribute display");h.assertTrue(h.getLevel().noCollision(normal)&&h.getLevel().noCollision(fast)&&fast.getNavigation() instanceof LowAltitudeFlyingNavigation&&!fast.noPhysics,"ordinary low collision flight remains real");h.assertTrue(normal.position().distanceTo(Vec3.atBottomCenterOf(pos(h,38,1,6)))>4&&fast.position().distanceTo(Vec3.atBottomCenterOf(pos(h,38,1,16)))>4,"both real flight probes are explicitly still before destination slowdown");order(h,normal,UnitAction.STOP,BlockPos.ZERO);order(h,fast,UnitAction.STOP,BlockPos.ZERO);})
+          .thenIdle(42).thenExecute(()->{h.assertTrue(jelly.distanceToSqr(fast)<=144,"actual completed-heal source/target remain within twelve blocks, not a fabricated tide provider");h.assertTrue(SkillEffects.hasNamedBuff(fast,"light_tide",BuffKind.MOVEMENT_SPEED),"real completed jelly provides overlapping ordinary ten-percent tide");close(h,SkillEffects.bonus(fast,BuffKind.MOVEMENT_SPEED),.35,"personal35 and real ordinary10 take max, never add/multiply twice");})
           .thenIdle(41).thenExecute(()->{h.assertTrue(!FireflyRush.active(fast)&&SkillEffects.hasNamedBuff(fast,"light_tide",BuffKind.MOVEMENT_SPEED),"personal100 expires while later actual tide remains");close(h,SkillEffects.bonus(fast,BuffKind.MOVEMENT_SPEED),.10,"expiration exposes still-live weaker ordinary contribution");close(h,fast.getAttributeValue(Attributes.FLYING_SPEED),originalFly[1]*1.10,"only ordinary10 remains on actual flying attribute");})
           .thenIdle(40).thenExecute(()->{close(h,fast.getAttributeValue(Attributes.MOVEMENT_SPEED),originalMove[1],"movement returns to real permanent baseline");close(h,fast.getAttributeValue(Attributes.FLYING_SPEED),originalFly[1],"flight returns to real permanent baseline");h.assertTrue(fast.getAttribute(Attributes.MOVEMENT_SPEED).getModifier(PERMANENT_MOVE)!=null&&fast.getAttribute(Attributes.FLYING_SPEED).getModifier(PERMANENT_FLY)!=null,"permanent modifiers were never removed or rewritten");stableBank(h,"Speed");pass("REAL_FLIGHT_MAX35_TIDE10_PERMANENT_RESTORE");}).thenSucceed();
     }
@@ -118,19 +239,23 @@ public final class FireflyRushSkillGameTests {
     @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=1000)
     public static void ownerAbaDeathUnloadAndNativeNbtClearOnlyShortEffectNotSpentCooldown(GameTestHelper h){
         arena(h,24,8,24);var aba=worker(h,"LifeA",4,1,4);var dead=worker(h,"LifeD",4,1,10);var unloaded=worker(h,"LifeU",4,1,16);var saved=worker(h,"LifeN",10,1,4);var reserveD=worker(h,"LifeD",19,1,10);var reserveU=worker(h,"LifeU",19,1,16);var reserveN=worker(h,"LifeN",19,1,4);FireflyWorker[] loaded={null};double[] baseline={0};
-        ready(h,aba,dead,unloaded,saved,reserveD,reserveU,reserveN).thenExecute(()->{saved.getAttribute(Attributes.FLYING_SPEED).addPermanentModifier(new AttributeModifier(PERMANENT_FLY,"persistent native flight technology fixture",.025,AttributeModifier.Operation.ADDITION));baseline[0]=saved.getAttributeValue(Attributes.FLYING_SPEED);for(var w:new FireflyWorker[]{aba,dead,unloaded,saved})require(h,cast(h,w),SkillResult.SUCCESS,"actual live owned worker activation before lifecycle transition");String old=aba.getOwnerName();aba.setOwnerName(account("LifeB"));aba.setOwnerName(old);h.assertTrue(!FireflyRush.active(aba)&&cd(aba)==500,"same-tick owner ABA immediately revokes rush without refund");close(h,SkillEffects.bonus(aba,BuffKind.MOVEMENT_SPEED),0,"owner revision removes actual speed contribution");dead.hurt(dead.damageSources().genericKill(),10000);h.assertTrue(!dead.isAlive()&&!FireflyRush.active(dead)&&cd(dead)==500,"real death clears short state but not original paid cooldown");unloaded.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);h.assertTrue(!FireflyRush.active(unloaded)&&cd(unloaded)==500,"real unload immediately revokes short authority without refund");CompoundTag tag=saved.saveWithoutId(new CompoundTag());UUID uuid=saved.getUUID();saved.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);var copy=DreamseekersMod.FIREFLY_WORKER.get().create(h.getLevel());copy.load(tag);loaded[0]=copy;ENTITIES.add(copy);h.assertTrue(copy.getUUID().equals(uuid)&&!FireflyRush.active(copy)&&cd(copy)==500,"native same-process NBT load has no transient rush and preserves absolute spent cooldown (not a two-JVM claim)");h.assertTrue(h.getLevel().addFreshEntity(copy),"actual reloaded identity publishes after original was removed");})
+        ready(h,aba,dead,unloaded,saved,reserveD,reserveU,reserveN).thenExecute(()->{saved.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(.25);saved.getAttribute(Attributes.FLYING_SPEED).setBaseValue(.25);saved.getAttribute(Attributes.FLYING_SPEED).addPermanentModifier(new AttributeModifier(PERMANENT_FLY,"persistent native flight technology fixture",.025,AttributeModifier.Operation.ADDITION));baseline[0]=saved.getAttributeValue(Attributes.FLYING_SPEED);for(var w:new FireflyWorker[]{aba,dead,unloaded,saved})require(h,cast(h,w),SkillResult.SUCCESS,"actual live owned worker activation before lifecycle transition");String old=aba.getOwnerName();aba.setOwnerName(account("LifeB"));aba.setOwnerName(old);h.assertTrue(!FireflyRush.active(aba)&&cd(aba)==500,"same-tick owner ABA immediately revokes rush without refund");close(h,SkillEffects.bonus(aba,BuffKind.MOVEMENT_SPEED),0,"owner revision removes actual speed contribution");dead.hurt(dead.damageSources().genericKill(),10000);h.assertTrue(!dead.isAlive()&&!FireflyRush.active(dead)&&cd(dead)==500,"real death clears short state but not original paid cooldown");unloaded.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);h.assertTrue(!FireflyRush.active(unloaded)&&cd(unloaded)==500,"real unload immediately revokes short authority without refund");CompoundTag tag=saved.saveWithoutId(new CompoundTag());UUID uuid=saved.getUUID();saved.remove(Entity.RemovalReason.UNLOADED_TO_CHUNK);var copy=DreamseekersMod.FIREFLY_WORKER.get().create(h.getLevel());copy.load(tag);loaded[0]=copy;ENTITIES.add(copy);h.assertTrue(copy.getUUID().equals(uuid)&&!FireflyRush.active(copy)&&cd(copy)==500,"native same-process NBT load has no transient rush and preserves absolute spent cooldown (not a two-JVM claim)");h.assertTrue(h.getLevel().addFreshEntity(copy),"actual reloaded identity publishes after original was removed");})
           .thenWaitUntil(()->h.assertTrue(loaded[0].tickCount>3&&h.getLevel().getEntity(loaded[0].getUUID())==loaded[0]&&h.getLevel().getEntity(loaded[0].getId())==loaded[0],"normally loaded object has actual published identity"))
-          .thenIdle(5).thenExecute(()->{h.assertTrue(!FireflyRush.active(loaded[0])&&cd(loaded[0])>0&&cd(loaded[0])<500,"natural post-load ticks never replay rush or refund cooldown");close(h,loaded[0].getAttributeValue(Attributes.FLYING_SPEED),baseline[0],"permanent native attribute survives save/load while short modifier does not");h.assertTrue(loaded[0].getAttribute(Attributes.FLYING_SPEED).getModifier(PERMANENT_FLY)!=null,"exact permanent modifier survives");for(String owner:new String[]{"LifeA","LifeD","LifeU","LifeN"})stableBank(h,owner);pass("OWNER_ABA_DEATH_UNLOAD_NATIVE_NBT_NO_REPLAY");}).thenSucceed();
+          .thenIdle(5).thenExecute(()->{h.assertTrue(!FireflyRush.active(loaded[0])&&cd(loaded[0])>0&&cd(loaded[0])<500,"natural post-load ticks never replay rush or refund cooldown");close(h,loaded[0].getAttributeValue(Attributes.FLYING_SPEED),baseline[0],"permanent native attribute survives save/load while short modifier does not");close(h,loaded[0].getAttribute(Attributes.FLYING_SPEED).getBaseValue(),.25,"explicit pre-balance flight base is preserved by native load");close(h,loaded[0].getAttribute(Attributes.MOVEMENT_SPEED).getBaseValue(),.25,"explicit pre-balance movement base is preserved by native load");h.assertTrue(loaded[0].getAttribute(Attributes.FLYING_SPEED).getModifier(PERMANENT_FLY)!=null,"exact permanent modifier survives");for(String owner:new String[]{"LifeA","LifeD","LifeU","LifeN"})stableBank(h,owner);pass("OWNER_ABA_DEATH_UNLOAD_NATIVE_NBT_NO_REPLAY");}).thenSucceed();
     }
 
-    @GameTest(template="unit_isolation_arena",batch=BATCH,timeoutTicks=1000)
+    @GameTest(template="work_isolation_arena",batch=BATCH,timeoutTicks=1000)
     public static void genuinelyIdleWorkerCompletesShortMoveThenDispatchesQueuedNextLegDuringRush(GameTestHelper h){
-        arena(h,24,8,24);var w=worker(h,"ShortQueue",5,1,10);BlockPos first=pos(h,7,0,10),second=pos(h,15,0,10);Vec3[] start={null},completed={null};long[] castAt={0},firstAt={0};
+        arena(h,44,8,24);var w=worker(h,"ShortQueue",5,1,10);BlockPos first=pos(h,7,0,10),second=pos(h,35,0,10);Vec3[] start={null},completed={null};long[] castAt={0},firstAt={0};double[] closestFirst={Double.POSITIVE_INFINITY};
         ready(h,w).thenExecute(()->w.setNoAi(false))
           .thenWaitUntil(()->h.assertTrue(w.getGatherResourceGoal().isIdle()&&w.isIdle()&&w.getGatherResourceGoal().getTargetResourceName()==ResourceName.NONE&&w.getMoveGoal().getMoveTarget()==null&&w.getNavigation().isDone(),"genuine native idle counter transitions naturally before activation; no test setter/forced idle"))
           .thenExecute(()->{start[0]=w.position();require(h,cast(h,w),SkillResult.SUCCESS,"genuinely idle source begins unchanged hundred-tick rush");castAt[0]=h.getLevel().getGameTime();h.assertTrue(!FireflyRush.hasPausedWork(w),"fixture has no old work to pause");order(h,w,UnitAction.MOVE,first);order(h,w,UnitAction.MOVE,second,true);System.out.println("FIREFLY_RUSH_SHORT_QUEUE_CAST time="+castAt[0]+" first="+first+" second="+second+" "+rawRushState(w));})
           .thenWaitUntil(()->h.assertTrue(!UnitServerEvents.hasPendingImmediateAction(w.getId())&&first.above().equals(w.getMoveGoal().getMoveTarget())&&!w.getNavigation().isDone(),"first real short MOVE was dispatched, not skipped by an early Shift leg"))
-          .thenWaitUntil(()->h.assertTrue(w.position().distanceTo(Vec3.atBottomCenterOf(first.above()))<1&&(w.getMoveGoal().getMoveTarget()==null||second.above().equals(w.getMoveGoal().getMoveTarget())),"actual first flight leg reaches its destination and its first MOVE target completes"))
+          .thenWaitUntil(()->{
+              closestFirst[0]=Math.min(closestFirst[0],w.position().distanceTo(Vec3.atBottomCenterOf(first.above())));
+              h.assertTrue(closestFirst[0]<.8&&(w.getMoveGoal().getMoveTarget()==null||second.above().equals(w.getMoveGoal().getMoveTarget())),
+                      "actual first flight leg enters the native .8 arrival radius before completing, closest="+closestFirst[0]);
+          })
           .thenExecute(()->{firstAt[0]=h.getLevel().getGameTime();completed[0]=w.position();boolean alreadySecond=second.above().equals(w.getMoveGoal().getMoveTarget());if(alreadySecond){var live=w.getNavigation().getPath();h.assertTrue(live!=null&&!w.getNavigation().isDone()&&live.getTarget().equals(second.above())&&UnitServerEvents.getUnitActionSlowQueue().stream().noneMatch(q->Arrays.stream(q.getUnitIds()).anyMatch(id->id==w.getId())),"if same-tick native dispatch already occurred it must be the exact real second order, never spawn drift");}else h.assertTrue(w.getDeltaMovement().lengthSqr()<1.0e-10,"first leg naturally stopped before the second-leg observation; never clear velocity in fixture");h.assertTrue(firstAt[0]-castAt[0]<60&&w.position().distanceTo(start[0])>.75&&FireflyRush.active(w),"real two-block first leg finishes early enough that a subsequent twenty-tick test stays inside original rush");System.out.println("FIREFLY_RUSH_SHORT_QUEUE_FIRST_COMPLETE elapsed="+(firstAt[0]-castAt[0])+" queued="+UnitServerEvents.getUnitActionSlowQueue().stream().filter(q->Arrays.stream(q.getUnitIds()).anyMatch(id->id==w.getId())).count()+" "+rawRushState(w));})
           .thenIdle(20).thenExecute(()->{System.out.println("FIREFLY_RUSH_SHORT_QUEUE_SECOND_OBSERVATION elapsed="+(h.getLevel().getGameTime()-castAt[0])+" movedAfterFirst="+w.position().distanceTo(completed[0])+" queued="+UnitServerEvents.getUnitActionSlowQueue().stream().filter(q->Arrays.stream(q.getUnitIds()).anyMatch(id->id==w.getId())).count()+" "+rawRushState(w));h.assertTrue(FireflyRush.active(w)&&FireflyRush.remainingTicks(w)==100-(h.getLevel().getGameTime()-castAt[0]),"second-leg observation still uses original active duration, not expiry or a refreshed cast");var secondPoint=Vec3.atBottomCenterOf(second.above());var toward=secondPoint.subtract(completed[0]).multiply(1,0,1);var horizontal=w.position().subtract(completed[0]).multiply(1,0,1);double forward=horizontal.dot(toward.normalize()),remaining=secondPoint.subtract(w.position()).horizontalDistance(),forwardVelocity=w.getDeltaMovement().dot(toward.normalize());var livePath=w.getNavigation().getPath();System.out.println("FIREFLY_RUSH_SHORT_QUEUE_HORIZONTAL_PROOF forward="+forward+" initialRemaining="+toward.length()+" remaining="+remaining+" forwardVelocity="+forwardVelocity);h.assertTrue(second.above().equals(w.getMoveGoal().getMoveTarget())&&!w.getNavigation().isDone()&&livePath!=null&&livePath.getTarget().equals(second.above())&&forward>1.0e-6&&remaining<toward.length()-1.0e-6&&forwardVelocity>1.0e-6&&UnitServerEvents.getUnitActionSlowQueue().stream().noneMatch(q->Arrays.stream(q.getUnitIds()).anyMatch(id->id==w.getId())),"native no-work transition must dispatch the exact queued second path and make genuine horizontal progress toward it within original twenty ticks; noise tolerance is not a speed quota");h.assertTrue(w.getGatherResourceGoal().getTargetResourceName()==ResourceName.NONE&&w.getItems().isEmpty(),"no gather/work or cargo was fabricated to unblock queue");stableBank(h,"ShortQueue");pass("TRUE_IDLE_SHORT_MOVE_SHIFT_NEXT_LEG_DURING_RUSH");}).thenSucceed();
     }
@@ -159,8 +284,8 @@ public final class FireflyRushSkillGameTests {
     private static SkillResult cast(GameTestHelper h,FireflyWorker w){return SkillService.request(player(h,w.getOwnerName()),request(w));}
     private static int cd(FireflyWorker w){return w.rts().skills().cooldownTicks(UnitSkill.FIREFLY_RUSH);}
     private static void movedOrder(GameTestHelper h,FireflyWorker w){h.assertTrue(!UnitServerEvents.hasPendingImmediateAction(w.getId())&&w.getMoveGoal().getMoveTarget()!=null&&!w.getNavigation().isDone(),"real authenticated non-work MOVE executed with actual path: "+FireflyNavigationTestDiagnostics.describe(w,bank(h,w.getOwnerName())));}
-    private static void order(GameTestHelper h,FireflyWorker w,UnitAction action,BlockPos target){order(h,w,action,target,false);}
-    private static void order(GameTestHelper h,FireflyWorker w,UnitAction action,BlockPos target,boolean shift){var sender=player(h,w.getOwnerName());try{var connection=new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);connection.setListener(sender.connection);var ctor=net.minecraftforge.network.NetworkEvent.Context.class.getDeclaredConstructor(net.minecraft.network.Connection.class,net.minecraftforge.network.NetworkDirection.class,int.class);ctor.setAccessible(true);var context=ctor.newInstance(connection,net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER,-1);h.assertTrue(context.getSender()==sender,"real Forge authenticated sender matches owner");h.assertTrue(new com.solegendary.reignofnether.unit.packets.UnitActionServerboundPacket(w.getOwnerName(),action,-1,new int[]{w.getId()},target,action==UnitAction.BUILD_REPAIR||action==UnitAction.RETURN_RESOURCES?target:BlockPos.ZERO,shift).handle(()->context),"actual authenticated command accepted: "+action);}catch(ReflectiveOperationException error){throw new RuntimeException("exact existing Forge command context",error);}}
+    private static <T extends Mob & Unit> void order(GameTestHelper h,T w,UnitAction action,BlockPos target){order(h,w,action,target,false);}
+    private static <T extends Mob & Unit> void order(GameTestHelper h,T w,UnitAction action,BlockPos target,boolean shift){var sender=player(h,w.getOwnerName());try{var connection=new net.minecraft.network.Connection(net.minecraft.network.protocol.PacketFlow.SERVERBOUND);connection.setListener(sender.connection);var ctor=net.minecraftforge.network.NetworkEvent.Context.class.getDeclaredConstructor(net.minecraft.network.Connection.class,net.minecraftforge.network.NetworkDirection.class,int.class);ctor.setAccessible(true);var context=ctor.newInstance(connection,net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER,-1);h.assertTrue(context.getSender()==sender,"real Forge authenticated sender matches owner");h.assertTrue(new com.solegendary.reignofnether.unit.packets.UnitActionServerboundPacket(w.getOwnerName(),action,-1,new int[]{w.getId()},target,action==UnitAction.BUILD_REPAIR||action==UnitAction.RETURN_RESOURCES?target:BlockPos.ZERO,shift).handle(()->context),"actual authenticated command accepted: "+action);}catch(ReflectiveOperationException error){throw new RuntimeException("exact existing Forge command context",error);}}
     private static void require(GameTestHelper h,SkillResult actual,SkillResult expected,String why){h.assertTrue(actual==expected,why+": expected="+expected+" actual="+actual);}
     private static void close(GameTestHelper h,double actual,double expected,String why){h.assertTrue(Double.isFinite(actual)&&Math.abs(actual-expected)<.0005,why+": expected="+expected+" actual="+actual);}
     private static void pass(String name){System.out.println("DREAMSEEKERS_FIREFLY_RUSH_PASS "+name);}

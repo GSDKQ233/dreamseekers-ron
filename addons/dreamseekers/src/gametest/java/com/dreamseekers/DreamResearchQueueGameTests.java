@@ -11,6 +11,9 @@ import com.solegendary.reignofnether.faction.*;
 import com.solegendary.reignofnether.player.*;
 import com.solegendary.reignofnether.resources.*;
 import com.solegendary.reignofnether.research.ResearchServerEvents;
+import com.solegendary.reignofnether.research.ResearchSaveData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import com.solegendary.reignofnether.research.economy.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.*;
@@ -103,6 +106,85 @@ public final class DreamResearchQueueGameTests {
    h.assertTrue(tree.productionQueue.isEmpty()&&a.paidReceipts.isEmpty()&&ResearchServerEvents.playerHasResearch(OWNER,DreamEconomyResearch.ASCENDANCY_ID),"advanced native completion grant andreceiptconsume");balances(h,a,4100,4100,3950,220,"advanced completion doesnot debit again");
    long revision=a.revision;h.assertTrue(start(owned,tree,DreamEconomyResearch.ASCENDANCY,a).equals("duplicate")&&a.revision==revision,"completed advancedresearch cannotrepurchase");
    System.out.println("DREAM_ADDON_RESEARCH_QUEUE_PASS actual_registry strict_faction host prerequisite payment original_refund full_conversion_duration real_tree_morph advanced_completion");cleanup.run();h.succeed();
+  });
+ }
+
+ private static ReceiptBackedResearchItem rankItem(DreamEconomyResearch.Line line,int rank) {
+  return (ReceiptBackedResearchItem)ReignOfNetherRegistries.PRODUCTION_ITEM.get(line.id(rank));
+ }
+
+ @GameTest(templateNamespace="dreamseekers_research_economy",template="ore_mine_test_arena",batch="dream_capital_ranks",timeoutTicks=80)
+ public static void twoCapitalLinesPayAllRanksOnceAndRoundtrip(GameTestHelper h) {
+  String owner="CapitalRankOwner";var level=h.getLevel();var r=account(owner,DreamseekersMod.DREAMSEEKERS);r.extra.put(DreamPassiveEconomy.SHADOW,1000);
+  var payer=actor(level,owner);var conversion=DreamEconomyResearch.Line.CONVERSION;var ascendancy=DreamEconomyResearch.Line.ASCENDANCY;
+  var origin=new BlockPos(22400,100,22400);var forced=new ArrayList<Long>();
+  for(int x=(origin.getX()-16)>>4;x<=(origin.getX()+72)>>4;x++)
+   for(int z=(origin.getZ()-16)>>4;z<=(origin.getZ()+32)>>4;z++){
+    long chunk=net.minecraft.world.level.ChunkPos.asLong(x,z);
+    if(!level.getForcedChunks().contains(chunk)){level.setChunkForced(x,z,true);forced.add(chunk);}
+    level.getChunk(x,z);
+   }
+  var base=install(level,DreamseekersMod.DREAM_ANCHOR,owner,origin);
+  var shadow=(DreamAnchorPlacement)install(level,DreamseekersMod.DREAM_ANCHOR,owner,origin.offset(40,0,0));
+  Runnable cleanup=()->{ResearchServerEvents.removeAllResearchFor(owner);
+   PlayerServerEvents.rtsPlayers.removeIf(p->owner.equals(p.name));ResourcesServerEvents.resourcesList.remove(r);
+   for(var p:List.of(base,shadow)){p.onRemoved(BuildingPlacement.RemovalReason.RELOAD);BuildingServerEvents.getBuildings().remove(p);}
+   for(long c:forced)level.setChunkForced(net.minecraft.world.level.ChunkPos.getX(c),net.minecraft.world.level.ChunkPos.getZ(c),false);};
+  java.util.function.BiConsumer<Integer,Runnable> at=(tick,action)->h.runAtTickTime(tick,()->{try{action.run();}catch(RuntimeException|Error failure){cleanup.run();throw failure;}});
+  at.accept(20,()->{
+   h.assertTrue(base.isBuilt&&shadow.isBuilt,"both ordinary capital constructions complete");
+   // A native pre-update record uses the two original keys. Duplicate historic records do not stack.
+   var oldRows=new ListTag();
+   for(String key:List.of("dreamseekers:shadow_conversion_efficiency","dreamseekers:shadow_conversion_efficiency","dreamseekers:world_tree_ascendancy")){
+    var row=new CompoundTag();row.putString("ownerName",owner);row.putString("researchKey",key);oldRows.add(row);
+   }
+   var oldTag=new CompoundTag();oldTag.put("researchItems",oldRows);var old=ResearchSaveData.load(oldTag);
+   for(var line:DreamEconomyResearch.Line.values())h.assertTrue(line.level(id->old.researchItems.stream().anyMatch(x->x.getFirst().equals(owner)&&x.getSecond().equals(id)))==1,
+       "legacy native research rows grant exactly one completion per line");
+   long rev=r.revision;
+   h.assertTrue(!start(payer,base,rankItem(conversion,2),r).equals("started")&&!start(payer,base,rankItem(ascendancy,1),r).equals("started")&&r.revision==rev,
+       "no free skip or Ascendancy at a base capital");
+   h.assertTrue(DreamWorldTreeService.start(payer,shadow,shadow.tree().instance).equals("started"),"pay the actual shadow branch first");
+   shadow.tree().remaining=1;
+  });
+  var receipts=new HashSet<UUID>();var completed=new ActiveProduction[2];
+  for(int n=1;n<=3;n++) {
+   final int rank=n;
+   at.accept(24+4*n,()->{
+    h.assertTrue(shadow.ascended(),"real shadow morph completed");
+    var c=rankItem(conversion,rank);var a=rankItem(ascendancy,rank);
+    h.assertTrue(c.getCost(false,owner).ticks==1200*rank&&a.getCost(false,owner).ticks==1800*rank,"per-rank durations");
+    h.assertTrue(start(payer,base,c,r).equals("started"),"next conversion rank starts at base: "+rank);
+    long rev=r.revision;
+    h.assertTrue(start(payer,shadow,c,r).equals("duplicate")&&r.revision==rev,"second capital cannot reserve/pay same rank");
+    if(rank==2){
+     var id=base.productionQueue.get(0).receiptResearch.receiptId();
+     h.assertTrue(cancel(payer,base,id,r).equals("cancelled_refunded")&&cancel(payer,base,id,r).equals("unknown_receipt"),"refund rank-two quote once");
+     h.assertTrue(start(payer,base,c,r).equals("started"),"cancel releases reservation and allows new paid receipt");
+    }
+    h.assertTrue(start(payer,shadow,a,r).equals("started"),"other family stays independent while conversion is queued");
+    completed[0]=base.productionQueue.get(0);completed[1]=shadow.productionQueue.get(0);
+    for(var job:completed){h.assertTrue(receipts.add(job.receiptResearch.receiptId()),"each rank carries a new receipt");job.ticksLeft=1;}
+   });
+   at.accept(26+4*n,()->{
+    h.assertTrue(conversion.serverLevel(owner)==rank&&ascendancy.serverLevel(owner)==rank&&r.paidReceipts.isEmpty()
+        &&base.productionQueue.isEmpty()&&shadow.productionQueue.isEmpty(),"both native queue ticks commit exact next rank");
+    long rev=r.revision;
+    h.assertTrue(!ReceiptResearchService.complete(base,completed[0])&&!ReceiptResearchService.complete(shadow,completed[1])&&r.revision==rev,
+        "replaying consumed completions grants/debits nothing");
+   });
+  }
+  at.accept(40,()->{
+   h.assertTrue(receipts.size()==6&&r.paidReceipts.isEmpty(),"six unique successful rank receipts");
+   balances(h,r,2600,3600,1700,70,"original branch plus exactly six rank prices; cancellation produces no surplus");
+   long rev=r.revision;
+   h.assertTrue(start(payer,base,rankItem(conversion,3),r).equals("duplicate")&&start(payer,shadow,rankItem(ascendancy,3),r).equals("duplicate")
+       &&r.revision==rev,"capped lines cannot debit again");
+   var restored=ResearchSaveData.load(ResearchSaveData.getInstance(level).save(new CompoundTag()));
+   var rows=restored.researchItems.stream().filter(x->x.getFirst().equals(owner)).toList();
+   h.assertTrue(rows.size()==6,"native saved owner has exactly six rank identities");
+   for(var line:DreamEconomyResearch.Line.values())h.assertTrue(line.level(id->rows.stream().anyMatch(x->x.getSecond().equals(id)))==3,"native NBT roundtrip preserves each independent cap");
+   System.out.println("DREAM_CAPITAL_RANKS_PASS paid_two_lines cross_capital_cancel_replay exact_legacy_save capped");cleanup.run();h.succeed();
   });
  }
 }

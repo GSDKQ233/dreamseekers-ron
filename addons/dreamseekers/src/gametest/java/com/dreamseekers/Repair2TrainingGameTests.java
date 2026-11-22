@@ -164,12 +164,12 @@ public final class Repair2TrainingGameTests {
         });
         f.at(25,()->{
             h.assertTrue(head[0].pause().equals(hold[0]) && updates(owner,BuildingAction.SYNC_PRODUCTION_HEAD,hall.originPos).isEmpty()
-                    && paid[0].equals(bank(f.r)) && head[0].ticksLeft==1800,"unchanged reason does not push, advance or settle");
+                    && paid[0].equals(bank(f.r)) && head[0].ticksLeft==1440,"unchanged reason does not push, advance or settle");
             f.install(DreamseekersMod.RESONANCE_LABORATORY,176); // A new building instance, not a revived stale pointer.
         });
         f.at(36,()->{
             var delta=updates(owner,BuildingAction.SYNC_PRODUCTION_HEAD,hall.originPos);
-            h.assertTrue(delta.size()==1 && !delta.get(0).headPause().paused() && head[0].ticksLeft<1800
+            h.assertTrue(delta.size()==1 && !delta.get(0).headPause().paused() && head[0].ticksLeft<1440
                     && hall.productionQueue.get(0)==head[0] && paid[0].equals(bank(f.r)),"same order/receipt resumes when the new laboratory is usable");
             h.getLevel().setBlock(exit,Blocks.STONE.defaultBlockState(),2);
             head[0].ticksLeft=1; // Shorten only the independent final-window wait.

@@ -13,25 +13,39 @@ public final class WorldTreeReceiptIntents {
         var receipt=r.paidReceipts.get(s.receipt);if(receipt==null)return true; // already settled, never synthesize payment
         if(s.target==null||!receipt.payerEpoch().equals(s.payerEpoch))return false;
         // An earned refund always wins over later physical destruction. Terminal intents never reverse.
-        if(receipt.purpose().equals(DreamWorldTreeService.purpose(s.target)+":refund"))return true;
-        if(receipt.purpose().equals(DreamWorldTreeService.purpose(s.target)+":forfeit"))return !refund;
+        if(receipt.purpose().equals(DreamWorldTreeService.purpose(s.model,s.target)+":refund"))return true;
+        if(receipt.purpose().equals(DreamWorldTreeService.purpose(s.model,s.target)+":forfeit"))return !refund;
         if(!DreamWorldTreeService.receiptMatches(s,receipt))return false;
-        return ResourceTransaction.markReceiptDisposition(l.getServer(),r,s.payerEpoch,r.revision,s.receipt,DreamWorldTreeService.purpose(s.target),
+        return ResourceTransaction.markReceiptDisposition(l.getServer(),r,s.payerEpoch,r.revision,s.receipt,DreamWorldTreeService.purpose(s.model,s.target),
             refund?ResourceTransaction.ReceiptDisposition.REFUND:ResourceTransaction.ReceiptDisposition.FORFEIT).applied();
     }
-    private static boolean intent(ResourcePaidReceipt receipt,boolean refund){
-        // Orphaned terminal receipts may outlive both their building and its visual revision.
-        for(var target:WorldTreeModel.values()){
-            if(target.branch==WorldTreeModel.Branch.BASE)continue;
-            var c=DreamWorldTreeService.cost(target);
-            if(receipt.purpose().equals(DreamWorldTreeService.purpose(target)+(refund?":refund":":forfeit"))&&receipt.food()==c.food()&&receipt.wood()==c.wood()&&receipt.ore()==c.ore()&&receipt.emerald()==c.emerald()&&receipt.extra().equals(c.extra()))return true;
-        }return false;
+    private record Disposition(ResourceTransaction.Cost price,boolean refund){}
+    private static final Map<String,Disposition> terminalPurposes=terminalPurposes();
+    /** Immutable whitelist, including orphaned second-stage receipts from either purchase order. */
+    private static Map<String,Disposition> terminalPurposes(){
+        var result=new HashMap<String,Disposition>();
+        for(var source:WorldTreeModel.values())for(var target:WorldTreeModel.values()){
+            if(!WorldTreeModel.supportsSavedTarget(source,target))continue;
+            String purpose=DreamWorldTreeService.purpose(source,target);
+            var price=DreamWorldTreeService.cost(source,target);
+            result.put(purpose+":refund",new Disposition(price,true));
+            result.put(purpose+":forfeit",new Disposition(price,false));
+        }
+        return Map.copyOf(result);
+    }
+    private static Disposition disposition(ResourcePaidReceipt receipt){
+        var disposition=terminalPurposes.get(receipt.purpose());
+        if(disposition==null)return null;
+        var c=disposition.price();
+        return receipt.food()==c.food()&&receipt.wood()==c.wood()&&receipt.ore()==c.ore()
+            &&receipt.emerald()==c.emerald()&&receipt.extra().equals(c.extra())?disposition:null;
     }
     public static void retry(ServerLevel l){
         if(!l.getServer().isSameThread())return;
         for(var r:List.copyOf(ResourcesServerEvents.resourcesList))for(var receipt:List.copyOf(r.paidReceipts.values())){
-            if(!receipt.payerEpoch().equals(r.accountEpoch)||(!intent(receipt,true)&&!intent(receipt,false)))continue;
-            var result=intent(receipt,true)?ResourceTransaction.refund(l.getServer(),r,r.accountEpoch,r.revision,receipt.id(),10000)
+            var disposition=disposition(receipt);
+            if(!receipt.payerEpoch().equals(r.accountEpoch)||disposition==null)continue;
+            var result=disposition.refund()?ResourceTransaction.refund(l.getServer(),r,r.accountEpoch,r.revision,receipt.id(),10000)
                 :ResourceTransaction.consumeReceipt(l.getServer(),r,r.accountEpoch,r.revision,receipt.id());
             if(result.applied()){var actor=l.getServer().getPlayerList().getPlayerByName(r.ownerName);if(actor!=null)EconomyBalanceSync.send(actor);}
         }

@@ -529,7 +529,19 @@ public final class WindDashSkillGameTests {
         WindFangHealthLedger(GameTestHelper helper,String caseName,List<com.solegendary.reignofnether.unit.units.villagers.EvokerUnit> casters,List<Mob> victims){this.helper=helper;this.caseName=caseName;this.casters=List.copyOf(casters);this.victims=List.copyOf(victims);}
         private int index(LivingEntity body){for(int i=0;i<victims.size();i++)if(victims.get(i)==body)return i;return -1;}
         private static boolean closeEnough(float a,float b){return Float.isFinite(a)&&Float.isFinite(b)&&Math.abs(a-b)<.0004;}
-        private static boolean nativeFrame(String name,String method,int line){return Arrays.stream(Thread.currentThread().getStackTrace()).anyMatch(f->f.getClassName().equals(name)&&(method==null||f.getMethodName().equals(method))&&(line<0||f.getLineNumber()==line));}
+        private static boolean directUnitTickHeal(){
+            var frames=Thread.currentThread().getStackTrace();
+            for(int i=0;i+1<frames.length;i++){
+                var frame=frames[i];
+                if(frame.getClassName().equals(LivingEntity.class.getName())&&frame.getMethodName().equals("heal")){
+                    // The first (innermost) heal must be called directly by Unit.tick, not by
+                    // an effect or a callback nested inside another genuine nocturnal heal.
+                    var caller=frames[i+1];
+                    return caller.getClassName().equals(Unit.class.getName())&&caller.getMethodName().equals("tick");
+                }
+            }
+            return false;
+        }
         private void identities(int i,Window w){
             var level=helper.getLevel();var v=victims.get(i);var c=casters.get(i);
             w.require(v.level()==level&&c.level()==level&&!v.isRemoved()&&!c.isRemoved()&&level.getEntity(v.getId())==v&&level.getEntity(v.getUUID())==v&&level.getEntity(c.getId())==c&&level.getEntity(c.getUUID())==c,"original caster/victim identity must stay published");
@@ -551,7 +563,7 @@ public final class WindDashSkillGameTests {
             var w=event(i);if(w==null)return;
             w.require(!canceled&&Float.isFinite(amount)&&amount>0,"canceled/nonpositive/nonfinite damage event");
             w.require(source.getEntity()==casters.get(i)&&source.getDirectEntity()==casters.get(i)&&source.is(net.minecraft.world.damagesource.DamageTypes.INDIRECT_MAGIC),"unknown or unrelated damage source");
-            w.require(nativeFrame("net.minecraft.world.entity.projectile.EvokerFangs",null,-1),"damage must originate in actual native fang call stack");
+            w.require(Arrays.stream(Thread.currentThread().getStackTrace()).anyMatch(f->f.getClassName().equals("net.minecraft.world.entity.projectile.EvokerFangs")),"damage must originate in actual native fang call stack");
             w.require(w.source==null||w.source==source,"multiple DamageSource objects in one tick");w.source=source;
             if(stage==0)w.attacks++;else if(stage==1)w.hurts++;else{w.damages++;w.damageAmount=amount;}
             w.require(w.attacks<=1&&w.hurts<=1&&w.damages<=1&&w.heals==0,"extra damage event or mixed damage/heal tick");
@@ -569,7 +581,7 @@ public final class WindDashSkillGameTests {
             w.heals++;w.healAmount=event.getAmount();
             w.require(!event.isCanceled()&&closeEnough(w.healAmount,1)&&w.heals==1&&w.attacks==0&&w.hurts==0&&w.damages==0,"canceled/extra/nonunit native heal or mixed damage/heal tick");
             w.require(com.solegendary.reignofnether.faction.Factions.getFaction((Unit)body).equals(com.solegendary.reignofnether.faction.Factions.MONSTERS)&&body.tickCount%Unit.MONSTER_HEALING_TICKS==0&&!com.solegendary.reignofnether.time.TimeUtils.isDay(body.level()),"not original nocturnal monster regeneration condition");
-            w.require(nativeFrame("com.solegendary.reignofnether.unit.interfaces.Unit","tick",372),"healing must be original Unit.tick nocturnal heal call, not another effect");
+            w.require(directUnitTickHeal(),"healing must be original Unit.tick nocturnal heal call, not another effect");
             System.out.println("WIND_FANG_HEALTH_HEAL_OBS case="+caseName+" index="+i+" ordinal="+w.ordinal+" gameTime="+w.eventTick+" actorTick="+body.tickCount+" amount="+event.getAmount()+" canceled="+event.isCanceled()+" victimUUID="+body.getUUID()+" exactSetterReceipt=false");
         }
         private void sample(int i,String stage){

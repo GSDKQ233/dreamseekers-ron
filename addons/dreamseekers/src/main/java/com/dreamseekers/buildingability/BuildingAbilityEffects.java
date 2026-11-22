@@ -11,8 +11,6 @@ import com.dreamseekers.skill.SkillEffects;
 import com.dreamseekers.skill.SkillIdentity;
 import com.dreamseekers.summon.BoundedSummons;
 import com.dreamseekers.worldtree.DreamAnchorPlacement;
-import com.dreamseekers.worldtree.WorldTreeModel;
-import com.dreamseekers.worldtree.WorldTreeState;
 import com.solegendary.reignofnether.building.BuildingPlacement;
 import com.solegendary.reignofnether.building.BuildingServerEvents;
 import com.solegendary.reignofnether.building.production.ProductionItems;
@@ -89,8 +87,7 @@ public final class BuildingAbilityEffects {
     }
     private static boolean rootReady(BuildingAbilitySource source) {
         return source.host() instanceof DreamAnchorPlacement anchor&&anchor.productionAvailable()
-                &&anchor.tree().supported&&anchor.tree().phase==WorldTreeState.Phase.COMPLETE
-                &&anchor.tree().model.branch!=WorldTreeModel.Branch.BASE;
+                &&anchor.hasStandingUpgrade();
     }
     static boolean hallReady(BuildingAbilitySource source) {
         if(source.host().getBuilding()!=DreamseekersMod.DREAM_HALL)return false;

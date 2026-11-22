@@ -6,8 +6,6 @@ import com.dreamseekers.building.DreamLaboratory;
 import com.dreamseekers.building.DreamLaboratoryPlacement;
 import com.dreamseekers.economy.DreamPassiveEconomy;
 import com.dreamseekers.worldtree.DreamAnchorPlacement;
-import com.dreamseekers.worldtree.WorldTreeModel;
-import com.dreamseekers.worldtree.WorldTreeState;
 import com.solegendary.reignofnether.api.ReignOfNetherRegistries;
 import com.solegendary.reignofnether.building.*;
 import com.solegendary.reignofnether.building.buildings.placements.ProductionPlacement;
@@ -64,8 +62,7 @@ public final class ExpansionResearch {
             ||!DreamSpecialistResearch.ownerSupported(p.ownerName,client))return false;
         var buildings=client?BuildingClientEvents.getBuildings():BuildingServerEvents.getBuildings();
         boolean anchor=buildings.stream().anyMatch(b->b instanceof DreamAnchorPlacement tree&&physical(b,p)
-            &&tree.model().branch!=WorldTreeModel.Branch.BASE
-            &&(client||(tree.productionAvailable()&&tree.tree().supported&&tree.tree().phase==WorldTreeState.Phase.COMPLETE)));
+            &&tree.hasStandingUpgrade()&&(client||tree.productionAvailable()));
         if(!anchor)return false;
         if(AARONCOS_VORTEX_ID.equals(id)||HAND_PAIRING_ID.equals(id))return AdvancedUnitResearch.unlocked(p.ownerName,AdvancedUnitResearch.HAND_HARMONY_ID,client);
         return true;

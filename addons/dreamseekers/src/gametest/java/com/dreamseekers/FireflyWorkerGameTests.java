@@ -170,9 +170,9 @@ public final class FireflyWorkerGameTests {
         net.pasterdream.procedures.FireflyPr0Procedure.execute(wild,player,player.getMainHandItem());
         helper.assertTrue(wild.isRemoved() && player.getMainHandItem().getCount()==3,"native wild capture remains functional and consumes exactly one jar");
 
-        helper.assertTrue(worker.getAttributeValue(Attributes.MAX_HEALTH)==28 && worker.getAttributeValue(Attributes.MOVEMENT_SPEED)==.25
-                && worker.getAttributeValue(Attributes.FLYING_SPEED)==.25
-                && worker.getAttributeValue(Attributes.ATTACK_DAMAGE)==1 && worker.getAttributeValue(Attributes.ARMOR)==1,"original worker combat/movement attributes preserved; air speed matches nominal ground speed");
+        helper.assertTrue(worker.getAttributeValue(Attributes.MAX_HEALTH)==28 && worker.getAttributeValue(Attributes.MOVEMENT_SPEED)==.50
+                && worker.getAttributeValue(Attributes.FLYING_SPEED)==.50
+                && worker.getAttributeValue(Attributes.ATTACK_DAMAGE)==2 && worker.getAttributeValue(Attributes.ARMOR)==1,"tuned Firefly baselines; air speed matches nominal ground speed");
         helper.assertTrue(worker.getCost().equals(StoneSpiritWorker.COST) || (worker.getCost().food==StoneSpiritWorker.COST.food
                 && worker.getCost().wood==StoneSpiritWorker.COST.wood && worker.getCost().ore==StoneSpiritWorker.COST.ore
                 && worker.getCost().emerald==StoneSpiritWorker.COST.emerald && worker.getCost().ticks==StoneSpiritWorker.COST.ticks

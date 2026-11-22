@@ -61,6 +61,7 @@ def suites = [
     friendly_debt_restart: ['dreamseekers_friendly_debt_contract_skill_restart', true, 'dreamseekers.friendlyDebtContract.test.phase'],
     gel_skill: ['dreamseekers_gel_skill', true],
     jelly_flow: ['dreamseekers_jelly_flow', true],
+    autocast: ['dreamseekers_autocast', true],
     fox_blessing: ['dreamseekers_fox_blessing', true],
     light_amplification: ['dreamseekers_light_amplification', true],
     luminous_research: ['dreamseekers_luminous_research', true],

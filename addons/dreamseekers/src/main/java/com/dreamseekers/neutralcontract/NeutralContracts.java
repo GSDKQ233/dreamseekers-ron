@@ -178,7 +178,7 @@ public final class NeutralContracts {
         next.moveTo(position.x,position.y,position.z,o.target.getYRot(),o.target.getXRot());
         RtsKillValueClaims.markFree(next,RtsKillValueClaims.FreeOrigin.NEUTRAL_CONTRACT);
         CompoundTag provenance=new CompoundTag();provenance.putInt("schema",1);provenance.putUUID("origin",o.origin);provenance.putString("payer",o.stamp.owner());provenance.putUUID("account",o.epoch);next.getPersistentData().put(ORIGIN,provenance);
-        DreamAscendancyAttributes.reconcile(next,DreamAscendancyAttributes.enabledFor(next));
+        DreamAscendancyAttributes.reconcile(next,DreamAscendancyAttributes.rankFor(next));
         DreamSpecialistEffects.reconcileShell(next,DreamSpecialistResearch.unlocked(o.stamp.owner(),DreamSpecialistResearch.SHELL_WEAVING_ID,false));
         next.setHealth(DreamResearchMath.healthAfter(hp,max,next.getMaxHealth()));
         if(!safe(o,next))return "unsafe";

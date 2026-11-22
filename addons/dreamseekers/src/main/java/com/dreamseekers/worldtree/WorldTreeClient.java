@@ -52,7 +52,7 @@ public final class WorldTreeClient {
         WorldTreePackets.CHANNEL.sendToServer(new WorldTreePackets.Request(WorldTreePackets.Action.QUERY,p.getLevel().dimension().location(),p.originPos,WorldTreePackets.ZERO,0,WorldTreePackets.ZERO,WorldTreePackets.ZERO,0));
     }
     private static WorldTreePackets.Snapshot ready(DreamAnchorPlacement p){if(!current())return null;var mc=Minecraft.getInstance();if(p==null||p.getLevel()!=mc.level||!BuildingClientEvents.getBuildings().contains(p))return null;var cached=states.get(p);if(cached==null)return null;var s=cached.value();
-        if(!CLOCK.fresh(cached.tick(),60)||!s.instance().equals(p.clientInstance())||!p.ownerName.equals(mc.player.getName().getString())||!EconomyActionClient.ready(s.epoch()))return null;return s;}
+        if(!CLOCK.fresh(cached.tick(),60)||s.model()!=p.model()||!s.instance().equals(p.clientInstance())||!p.ownerName.equals(mc.player.getName().getString())||!EconomyActionClient.ready(s.epoch()))return null;return s;}
     private static boolean dream(){var mc=Minecraft.getInstance();if(mc.player==null)return false;var owner=PlayerClientEvents.getRTSPlayer(mc.player.getName().getString());return com.dreamseekers.economy.DreamFactionAccess.allows(owner);}
     public static void act(DreamAnchorPlacement p,WorldTreePackets.Action action){var s=ready(p);if(s==null)return;
         record Fingerprint(WorldTreePackets.Action action,ResourceLocation dimension,net.minecraft.core.BlockPos origin,UUID instance,long capture){}
@@ -72,20 +72,40 @@ public final class WorldTreeClient {
         var local=feedback.get(p);String reason=local==null?null:local.visible(feedbackContext(s),CLOCK.now());
         if(reason!=null)lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.action_failed",Component.translatable(reason))));
     }
-    public static List<AbilityButton> buttons(DreamAnchorPlacement p){query(p);var result=new ArrayList<AbilityButton>();
-        var s=ready(p);boolean pending=s!=null&&(s.phase()==WorldTreeState.Phase.RUNNING||s.phase()==WorldTreeState.Phase.BLOCKED||s.phase()==WorldTreeState.Phase.REFUND_PENDING);
-        var lines=new ArrayList<net.minecraft.util.FormattedCharSequence>();lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.upgrade")));lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.cost")));
-        lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.income")));
-        lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.income_rules")));
-        if(s!=null)lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.progress",WorldTreeActionFeedback.progress(s.phase().name(),s.remaining()),2400,Component.translatable("worldtree.dreamseekers.phase."+s.phase().name().toLowerCase(Locale.ROOT)))));
+    private static void addUpgrade(List<AbilityButton> result,DreamAnchorPlacement p,WorldTreePackets.Snapshot s,
+                                   WorldTreeModel requested,WorldTreePackets.Action action,boolean wind){
+        var next=WorldTreeModel.nextUpgrade(p.model(),requested);
+        if(next==null)return; // This branch is already on this placement.
+        var lines=new ArrayList<net.minecraft.util.FormattedCharSequence>();
+        String key=wind?"worldtree.dreamseekers.wind.":"worldtree.dreamseekers.";
+        lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable(key+"upgrade")));
+        lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable(key+"cost")));
+        if(!wind){
+            lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.income")));
+            lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.income_rules")));
+        }
+        lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.combine")));
+        // COMPLETE is the old branch, not 100% progress toward buying the missing one.
+        if(s!=null&&s.phase().pending()&&s.target()==next)
+            lines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.progress",
+                WorldTreeActionFeedback.progress(s.phase().name(),s.remaining()),2400,
+                Component.translatable("worldtree.dreamseekers.phase."+s.phase().name().toLowerCase(Locale.ROOT)))));
         appendFeedback(lines,p,s);
-        result.add(new AbilityButton("world_tree_upgrade",ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/dream_anchor_shadow.png"),Keybindings.abilitySlot4,()->false,()->p.model().branch!=WorldTreeModel.Branch.BASE,()->ready(p)!=null&&ready(p).phase()==WorldTreeState.Phase.IDLE&&dream(),()->act(p,WorldTreePackets.Action.START),null,lines,null,p));
-        var windLines=new ArrayList<net.minecraft.util.FormattedCharSequence>();
-        windLines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.wind.upgrade")));
-        windLines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.wind.cost")));
-        if(s!=null)windLines.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.progress",WorldTreeActionFeedback.progress(s.phase().name(),s.remaining()),2400,Component.translatable("worldtree.dreamseekers.phase."+s.phase().name().toLowerCase(Locale.ROOT)))));
-        appendFeedback(windLines,p,s);
-        result.add(new AbilityButton("world_tree_wind",ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/dream_anchor_wind.png"),Keybindings.abilitySlot5,()->false,()->p.model().branch!=WorldTreeModel.Branch.BASE,()->ready(p)!=null&&ready(p).phase()==WorldTreeState.Phase.IDLE&&dream(),()->act(p,WorldTreePackets.Action.START_WIND),null,windLines,null,p));
+        result.add(new AbilityButton(wind?"world_tree_wind":"world_tree_upgrade",ResourceLocation.fromNamespaceAndPath(
+            "dreamseekers","textures/icons/dream_anchor_"+(wind?"wind":"shadow")+".png"),
+            wind?Keybindings.abilitySlot5:Keybindings.abilitySlot4,()->false,()->false,()->{
+                var fresh=ready(p);return fresh!=null&&fresh.phase().atRest()&&dream()
+                    &&WorldTreeModel.nextUpgrade(fresh.model(),requested)!=null;
+            },()->act(p,action),null,lines,null,p));
+    }
+    public static List<AbilityButton> buttons(DreamAnchorPlacement p){query(p);var result=new ArrayList<AbilityButton>();
+        var s=ready(p);boolean pending=s!=null&&s.phase().pending();
+        addUpgrade(result,p,s,WorldTreeModel.CURRENT_SHADOW,WorldTreePackets.Action.START,false);
+        addUpgrade(result,p,s,WorldTreeModel.CURRENT_WIND,WorldTreePackets.Action.START_WIND,true);
+        if(p.model().branch==WorldTreeModel.Branch.COMBINED)
+            result.add(new AbilityButton("world_tree_combined",ResourceLocation.fromNamespaceAndPath("dreamseekers","textures/icons/dream_anchor_wind.png"),
+                null,()->true,()->false,()->false,null,null,com.dreamseekers.client.DreamTooltipText.wrap(
+                    Component.translatable("worldtree.dreamseekers.combined")),null,p));
         result.add(new AbilityButton("world_tree_cancel",ResourceLocation.fromNamespaceAndPath("minecraft","textures/item/barrier.png"),Keybindings.abilitySlot6,()->false,()->!pending,()->ready(p)!=null&&pending,()->act(p,WorldTreePackets.Action.CANCEL),null,com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("worldtree.dreamseekers.cancel")),null,p));
         return result;
     }

@@ -295,7 +295,7 @@ public final class GolemStrikeFogGameTests {
     }
 
     /** Controlled raw native cache inputs. No production visibility method is replaced or bypassed. */
-    private static final class ControlledFog implements AutoCloseable {
+    static final class ControlledFog implements AutoCloseable {
         final GameTestHelper h;final ServerLevel level;final ServerPlayer owner;
         final boolean oldEnabled,oldForce;final double oldSize,oldX,oldZ;final int oldTimer;
         final Map<UUID,Set<ChunkPos>> live,edge,pending,oldLive,oldEdge,oldPending;

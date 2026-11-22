@@ -2,6 +2,8 @@ package com.dreamseekers.client;
 
 import com.dreamseekers.skill.SkillPotencyView;
 import com.dreamseekers.skill.UnitSkill;
+import com.dreamseekers.worldtree.WorldTreeModel;
+import com.dreamseekers.worldtree.WorldTreeState;
 import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import java.nio.file.Files;
@@ -48,7 +50,19 @@ class LuminousResonancePresentationTest {
         assertTrue(network.contains("SkillNetwork::acceptsProtocol, SkillNetwork::acceptsProtocol"));assertTrue(network.contains("SkillAmplification.currentTier(source,packet.skill())"));
         int sync=network.indexOf("public record Sync(");assertTrue(sync>0);assertFalse(network.substring(network.indexOf("public record Cast("),sync).contains("amplificationTier"));
         assertTrue(network.contains("Sync.class, 1, NetworkDirection.PLAY_TO_CLIENT"));
-        var research=java("resonance/LightResonanceResearch");assertTrue(research.contains("var lines=super.liveTooltip(p)"));assertTrue(research.contains("WorldTreeModel.Branch.BASE"));assertFalse(research.contains("tree.ascended()"));
+        var research=java("resonance/LightResonanceResearch");assertTrue(research.contains("var lines=super.liveTooltip(p)"));assertFalse(research.contains("tree.ascended()"));
+        assertTrue(research.contains("&&physical(b,p)&&advanced(tree,client)"));
+        assertTrue(research.contains("tree.hasStandingUpgrade()&&(client||tree.productionAvailable())"));
+        // The new gate checks committed physical branches, not a paid future target or Shadow-only flag.
+        var tree=new WorldTreeState();tree.phase=WorldTreeState.Phase.RUNNING;
+        tree.target=WorldTreeModel.CURRENT_WIND;tree.payer="Owner";tree.payerEpoch=java.util.UUID.randomUUID();tree.receipt=java.util.UUID.randomUUID();
+        assertFalse(tree.hasStandingUpgrade(),"a paid first branch is not standing yet");
+        tree.model=WorldTreeModel.CURRENT_WIND;tree.target=WorldTreeModel.CONFLUENCE_V6;
+        assertTrue(tree.hasStandingUpgrade(),"an existing first branch still counts during its second purchase");
+        for(var model:List.of(WorldTreeModel.CURRENT_SHADOW,WorldTreeModel.CURRENT_WIND,WorldTreeModel.CONFLUENCE_V6)){
+            tree.model=model;tree.clearTask();assertTrue(tree.hasStandingUpgrade(),model.name());
+        }
+        tree.supported=false;assertFalse(tree.hasStandingUpgrade(),"unknown saved upgrade is not authority");
         String receipt=Files.readString(Path.of("src/main/java/com/solegendary/reignofnether/research/economy/ReceiptBackedResearchItem.java"));
         assertTrue(receipt.contains("var c=getCost(true,p.ownerName)"));assertTrue(receipt.contains("ProductionWorkRates.estimatedSeconds(c.ticks,ProductionWorkRates.percent(p,this))"));
     }

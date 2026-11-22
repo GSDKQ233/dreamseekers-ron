@@ -46,7 +46,7 @@ public final class WorldTreeMorph {
      * removing the block above it: the native neighbour update would drop it, changing HP.
      * Historic paid morphs retain their original hole selection, including the position tie-break. */
     static Comparator<BuildingBlock> damageOrder(WorldTreeModel target){
-        if(target==WorldTreeModel.SHADOW_V5||target==WorldTreeModel.WIND_V5){
+        if(target==WorldTreeModel.SHADOW_V5||target==WorldTreeModel.WIND_V5||target==WorldTreeModel.CONFLUENCE_V6){
             return Comparator.comparingInt((BuildingBlock b)->b.getBlockPos().getY()+(hangingLamp(b)?1:0))
                 .thenComparingInt(b->hangingLamp(b)?1:0)
                 .thenComparingLong(b->b.getBlockPos().asLong());
@@ -59,7 +59,6 @@ public final class WorldTreeMorph {
         if(descriptor==null||descriptor.branch==WorldTreeModel.Branch.BASE)return fail("invalid_model");
         if(!(p.getLevel() instanceof ServerLevel l)||!l.getServer().isSameThread()||!p.isBuilt||p.getHealth()<=0||p.shouldBeDestroyed())return fail("invalid_host");
         var target=p.blocks(descriptor);var old=new HashMap<BlockPos,BlockState>();for(var b:p.getBlocks())old.put(b.getBlockPos(),b.getBlockState());
-        var newMap=new HashMap<BlockPos,BlockState>();for(var b:target)newMap.put(b.getBlockPos(),b.getBlockState());
         var before=new LinkedHashMap<BlockPos,BlockState>();var after=new LinkedHashMap<BlockPos,BlockState>();
         int lowX=Integer.MAX_VALUE,lowY=lowX,lowZ=lowX,highX=Integer.MIN_VALUE,highY=highX,highZ=highX;
         for(var b:target){var at=b.getBlockPos();lowX=Math.min(lowX,at.getX());lowY=Math.min(lowY,at.getY());lowZ=Math.min(lowZ,at.getZ());highX=Math.max(highX,at.getX());highY=Math.max(highY,at.getY());highZ=Math.max(highZ,at.getZ());

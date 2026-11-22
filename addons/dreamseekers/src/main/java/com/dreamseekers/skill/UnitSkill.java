@@ -30,7 +30,7 @@ public enum UnitSkill {
     public int cooldownTicks() { return cooldown; }
     public int range() { return range; }
     public int durationTicks() { return duration; }
-    public boolean supportsAutocast() { return this==JELLY_FLOW; }
-    public boolean defaultAutocast() { return this==JELLY_FLOW; }
+    public boolean supportsAutocast() { return SkillAutocastPolicy.supports(this); }
+    public boolean defaultAutocast() { return SkillAutocastPolicy.defaultEnabled(this); }
     public String id() { return name().toLowerCase(java.util.Locale.ROOT); }
 }

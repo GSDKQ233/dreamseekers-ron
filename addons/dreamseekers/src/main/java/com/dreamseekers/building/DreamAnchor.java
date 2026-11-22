@@ -65,7 +65,7 @@ public final class DreamAnchor extends ProductionBuilding {
     @Override public net.minecraft.resources.ResourceLocation getPortraitIcon(com.solegendary.reignofnether.building.BuildingPlacement placement) {
         if (placement instanceof com.dreamseekers.worldtree.DreamAnchorPlacement anchor) {
             return switch (anchor.model().branch) {
-                case SHADOW -> ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/dream_anchor_shadow.png");
+                case SHADOW, COMBINED -> ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/dream_anchor_shadow.png");
                 case WIND -> ResourceLocation.fromNamespaceAndPath("dreamseekers", "textures/icons/dream_anchor_wind.png");
                 default -> icon;
             };

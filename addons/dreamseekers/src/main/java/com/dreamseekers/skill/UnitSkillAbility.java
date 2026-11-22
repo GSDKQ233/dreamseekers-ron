@@ -5,9 +5,11 @@ import com.solegendary.reignofnether.ability.Ability;
 import com.solegendary.reignofnether.hud.buttons.AbilityButton;
 import com.solegendary.reignofnether.keybinds.Keybinding;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
+import javax.annotation.Nullable;
 import java.util.List;
 
 /** Presentation/input only: real skill mutation and cooldown are owned by SkillService/SkillState. */
@@ -35,6 +37,7 @@ public final class UnitSkillAbility extends Ability {
     public static final UnitSkillAbility AARONCOS_LEFT_PRESS = new UnitSkillAbility(UnitSkill.AARONCOS_LEFT_PRESS);
     public static final UnitSkillAbility AARONCOS_RIGHT_SHOCK = new UnitSkillAbility(UnitSkill.AARONCOS_RIGHT_SHOCK);
     public static final UnitSkillAbility AARONCOS_RIGHT_VORTEX = new UnitSkillAbility(UnitSkill.AARONCOS_RIGHT_VORTEX);
+    private static final String CAST_MODE = "ability.dreamseekers.unit_skill.cast_mode.";
     private final UnitSkill skill;
     private UnitSkillAbility(UnitSkill skill) {
         super(null, skill.cooldownTicks(), skill.range(), 0, true, true);
@@ -61,15 +64,24 @@ public final class UnitSkillAbility extends Ability {
         String cooldown=com.dreamseekers.client.DreamTooltipLayout.number((extended?skill.cooldownTicks()*.9:skill.cooldownTicks())/20.0);
         String tide=com.dreamseekers.client.DreamTooltipLayout.number(extended?4.8:4.0);
         int range=skill==UnitSkill.STONE_HEAVY_SHOT&&source instanceof com.dreamseekers.unit.StoneSpiritThrowerUnit stone?StoneHeavyShot.range(stone):skill.range();
+        var title=Component.translatable(prefix).withStyle(Style.EMPTY.withBold(true));
+        var detail=Component.translatable(detailKey(prefix+".tooltip3",3));
+        Boolean current=skill.supportsAutocast()?SkillClient.autocastPreference(source,skill):null;
+        title.append(Component.literal(" · ").append(castMode(skill,current)).withStyle(Style.EMPTY.withBold(false)));
+        if(skill.supportsAutocast()) {
+            detail.append(" ").append(Component.translatable(prefix+".autocast_trigger"));
+            if(current!=null)
+                detail.append(" ").append(Component.translatable(CAST_MODE+(SkillClient.choosingTarget()?"cancel":"controls")).withStyle(ChatFormatting.GRAY));
+        }
         java.util.List<Component> tooltip=new java.util.ArrayList<>(List.of(
-                Component.translatable(prefix).withStyle(Style.EMPTY.withBold(true)),
+                title,
                 Component.translatable(prefix+".tooltip1",skill==UnitSkill.FIREFLY_RUSH?35:skill==UnitSkill.BEETLE_ADVANCE?25:range,duration,cooldown,primary,potency.healingPulse()),
                 Component.translatable(prefix+".tooltip2",derived,tide),
-                Component.translatable(prefix+".tooltip3")));
+                detail));
         if(skill==UnitSkill.MOTHER_BROOD||skill==UnitSkill.AARONCOS_RIGHT_SHOCK||skill==UnitSkill.AARONCOS_RIGHT_VORTEX)
             for(int line=4;line<=5;line++)tooltip.add(Component.translatable(prefix+".tooltip"+line));
         if(skill==UnitSkill.FOX_DREAM_SEED)for(int line=4;line<=8;line++)tooltip.add(Component.translatable(prefix+".tooltip"+line));
-        if(skill==UnitSkill.BEETLE_ADVANCE||skill==UnitSkill.SNAIL_SHELL_FORMATION||skill==UnitSkill.STONE_HEAVY_SHOT||skill==UnitSkill.SHADOW_CORROSION_TOUCH||skill==UnitSkill.SQUEAL_SUPPRESSION_WAVE||skill==UnitSkill.TERRORBEAK_DREAD_ROAR||skill==UnitSkill.FRIENDLY_DEBT_CONTRACT||skill==UnitSkill.SHADOW_HAND_GRIP||skill==UnitSkill.ASH_EMBER_LANDING||skill==UnitSkill.SHADOW_GOLEM_STRIKE)for(int line=4;line<=6;line++)tooltip.add(Component.translatable(prefix+".tooltip"+line));
+        if(skill==UnitSkill.BEETLE_ADVANCE||skill==UnitSkill.SNAIL_SHELL_FORMATION||skill==UnitSkill.STONE_HEAVY_SHOT||skill==UnitSkill.SHADOW_CORROSION_TOUCH||skill==UnitSkill.SQUEAL_SUPPRESSION_WAVE||skill==UnitSkill.TERRORBEAK_DREAD_ROAR||skill==UnitSkill.FRIENDLY_DEBT_CONTRACT||skill==UnitSkill.SHADOW_HAND_GRIP||skill==UnitSkill.ASH_EMBER_LANDING||skill==UnitSkill.SHADOW_GOLEM_STRIKE)for(int line=4;line<=6;line++)tooltip.add(Component.translatable(detailKey(prefix+".tooltip"+line,line)));
         if(SkillPotencyView.supports(skill)) {
             String key=!SkillClient.hasCurrentState(source,skill)?"unavailable":potency.tier()==0?"baseline":"active";
             tooltip.add(Component.translatable("ability.dreamseekers.unit_skill.amplification."+key,potency.tier(),potency.multiplier()));
@@ -78,6 +90,18 @@ public final class UnitSkillAbility extends Ability {
         if(skill==UnitSkill.MOTHER_NEST||skill==UnitSkill.MOTHER_BROOD)tooltip.add(Component.translatable("ability.dreamseekers.mother_nest.state."+(!SkillClient.hasCurrentState(source,UnitSkill.MOTHER_NEST)?"unknown":SkillClient.motherNestActive(source)?"active":"mobile")));
         if(skill==UnitSkill.AARONCOS_LEFT_PRESS||skill==UnitSkill.AARONCOS_RIGHT_SHOCK)tooltip.add(Component.translatable("ability.dreamseekers.hand_harmony."+(!SkillClient.hasCurrentState(source,skill)?"unknown":SkillClient.handHarmonyActive(source,skill)?"active":"inactive")));
         return ClientTooltip.wrap(tooltip);
+    }
+    static Component castMode(UnitSkill skill, @Nullable Boolean current) {
+        if (!skill.supportsAutocast()) return Component.translatable(CAST_MODE+"manual");
+        var value=Component.translatable(CAST_MODE+(current==null?"unknown":current?"on":"off"))
+                .withStyle(current==null?ChatFormatting.GRAY:current?ChatFormatting.GREEN:ChatFormatting.GOLD);
+        return Component.translatable(CAST_MODE+"status",value,
+                Component.translatable(CAST_MODE+(skill.defaultAutocast()?"on":"off")));
+    }
+    private String detailKey(String key,int line) {
+        if(skill.supportsAutocast() && ((line==3 && (skill==UnitSkill.FOX_BLESSING || skill==UnitSkill.JELLY_FLOW))
+                || (line==6 && skill==UnitSkill.SNAIL_SHELL_FORMATION))) return key+".autocast";
+        return key;
     }
     /** Logical components are split exactly once; no already-visual FCS is reconstructed.
      * Only the client button/hover path invokes this nested helper, never static ability setup. */

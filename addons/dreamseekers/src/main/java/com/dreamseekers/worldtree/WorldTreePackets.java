@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /** Addon transport; its mutations use the same connection/session/sequence authority as core research. */
 public final class WorldTreePackets {
     public static final UUID ZERO=new UUID(0,0);
-    public static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(ResourceLocation.fromNamespaceAndPath("dreamseekers","world_tree"),()->"3","3"::equals,"3"::equals);
+    public static final SimpleChannel CHANNEL=NetworkRegistry.newSimpleChannel(ResourceLocation.fromNamespaceAndPath("dreamseekers","world_tree"),()->"4","4"::equals,"4"::equals);
     private static boolean registered;
     public enum Action{QUERY,START,CANCEL,START_WIND}
     public static void register(){if(registered)return;registered=true;

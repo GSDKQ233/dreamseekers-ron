@@ -18,7 +18,9 @@ public final class DreamShadowKillIncome {
         if(server==null||!server.isSameThread()||!DreamBuildingSupport.FACTION.equals(snapshot.rewardFaction()))return;
         var player=PlayerServerEvents.getRTSPlayer(snapshot.killerOwner());
         if(!DreamPassiveEconomy.isDreamOwner(player))return;
-        int rate=snapshot.hadResearch(DreamEconomyResearch.CONVERSION_ID)?1000:500;
+        // Only completed keys in the death-time snapshot count. Later research cannot revalue a kill.
+        int rank=DreamEconomyResearch.Line.CONVERSION.level(snapshot::hadResearch);
+        int rate=100*CapitalResearchRanks.conversionPercent(rank);
         ResourceTransaction.Result[] committed=new ResourceTransaction.Result[1];
         boolean claimed=event.tryClaim(account->{
             if(!account.accountEpoch.equals(snapshot.accountEpoch()))return false;

@@ -13,6 +13,7 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.phys.Vec3;
 import java.util.ArrayDeque;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -28,12 +29,15 @@ public final class SnailShellFormation {
         final BasaltSnailUnit source;
         final SkillIdentity.Stamp caster;
         final long commandRevision,expiresAt;
-        Formation(BasaltSnailUnit source) {
+        final boolean onExplicitHold;
+        Formation(BasaltSnailUnit source,boolean onExplicitHold) {
+            this.onExplicitHold=onExplicitHold;
             this.source=source;caster=SkillIdentity.capture(source);commandRevision=source.rts().commandRevision;
             expiresAt=source.level().getGameTime()+UnitSkill.SNAIL_SHELL_FORMATION.durationTicks();
         }
         boolean valid() {
-            return BeetleAdvance.loaded(caster)&&source.rts().commandRevision==commandRevision
+            return BeetleAdvance.loaded(caster)&&(!onExplicitHold||source.isHoldingExplicitOrder())
+                    &&source.rts().commandRevision==commandRevision
                     &&source.level().getGameTime()<expiresAt&&!disabled(source)
                     &&!UnitServerEvents.hasPendingImmediateAction(source.getId());
         }
@@ -49,10 +53,19 @@ public final class SnailShellFormation {
         if(!(entity instanceof BasaltSnailUnit source)||!server(source))return false;
         Formation formation=ACTIVE.get(source);return formation!=null&&formation.valid();
     }
+    /** The automatic version is a defensive overlay on a real HOLD, never an order of its own.
+     * Pathing, anchor returns, melee, idle state and future Shift dispatch remain entirely native. */
+    public static boolean occupiesOrders(BasaltSnailUnit source) {
+        if(!server(source))return false;
+        Formation formation=ACTIVE.get(source);
+        return formation!=null&&!formation.onExplicitHold&&formation.valid();
+    }
     public static int remainingTicks(BasaltSnailUnit source) {
         return active(source)?(int)Math.max(0,ACTIVE.get(source).expiresAt-source.level().getGameTime()):0;
     }
-    static SkillResult start(BasaltSnailUnit source) {
+    static SkillResult start(BasaltSnailUnit source) { return start(source,false); }
+    static SkillResult startHolding(BasaltSnailUnit source) { return start(source,true); }
+    private static SkillResult start(BasaltSnailUnit source,boolean onExplicitHold) {
         if(!server(source)||!source.isAlive()||source.isRemoved()||!source.isAddedToWorld()
                 ||source.getOwnerName().isBlank())return SkillResult.INVALID_SOURCE;
         if(active(source))return SkillResult.ALREADY_ACTIVE;
@@ -61,19 +74,32 @@ public final class SnailShellFormation {
         SkillIdentity.Stamp caster=SkillIdentity.capture(source);
         if(!BeetleAdvance.loaded(caster))return SkillResult.INVALID_SOURCE;
         long command=source.rts().commandRevision,revision=source.rts().skills().revision();
-        // Discard the executed order, not explicitly Shift-queued future commands.
-        Unit.fullResetBehaviours(source);
+        SnailShellNavigation navigation=!onExplicitHold&&source.getNavigation() instanceof SnailShellNavigation n?n:null;
+        Vec3 oldCoast=navigation==null?null:navigation.captureOrderCoast();
+        if(onExplicitHold) {
+            if(!source.isHoldingExplicitOrder())return SkillResult.DISABLED;
+        } else {
+            // A manual deployment discards the executed order, not Shift-queued future commands.
+            Unit.fullResetBehaviours(source);
+        }
         if(!BeetleAdvance.loaded(caster))return SkillResult.INVALID_SOURCE;
-        if(source.rts().commandRevision!=command+1||source.rts().skills().revision()!=revision
+        if(source.rts().commandRevision!=(onExplicitHold?command:command+1)||source.rts().skills().revision()!=revision
                 ||UnitServerEvents.hasPendingImmediateAction(source.getId()))return SkillResult.REPLAY;
         if(disabled(source))return SkillResult.DISABLED;
-        Formation formation=new Formation(source);ACTIVE.put(source,formation);
-        if(source.getNavigation() instanceof SnailShellNavigation navigation)navigation.stopForFormation();
+        Formation formation=new Formation(source,onExplicitHold);
+        if(!formation.valid())return SkillResult.DISABLED;
+        ACTIVE.put(source,formation);
+        if(navigation!=null) {
+            navigation.stopForFormation();
+            navigation.brakeOrderCoast(oldCoast);
+        }
         return SkillResult.SUCCESS;
     }
     /** New commands own all subsequent movement. Removing this record never stops their new path. */
     public static void commandChanged(BasaltSnailUnit source) {
-        if(server(source)&&ACTIVE.remove(source)!=null)source.rts().commandRevision++;
+        if(!server(source))return;
+        Formation removed=ACTIVE.remove(source);
+        if(removed!=null&&!removed.onExplicitHold)source.rts().commandRevision++;
     }
     /** Match the existing AbstractMeleeAttackUnitGoal's current, target-width-aware reach exactly. */
     private static boolean inMeleeReach(BasaltSnailUnit source,LivingEntity target) {
@@ -98,7 +124,7 @@ public final class SnailShellFormation {
                 source,target,neutralAggro);
     }
     private static boolean mayActInPlace(BasaltSnailUnit source) {
-        return active(source)&&!source.isNoAi()&&!source.isCasting()&&source.getAggressiveWhenIdle()
+        return occupiesOrders(source)&&!source.isNoAi()&&!source.isCasting()&&source.getAggressiveWhenIdle()
                 &&!source.hasEffect(MobEffectRegistrar.DISARM.get());
     }
     /** Natural paid-snail tick only. No direct attack/goal tick, target snapshot or order restoration.
@@ -106,7 +132,7 @@ public final class SnailShellFormation {
      * the ordinary idle acquisition that the queue guard intentionally suppresses.
      */
     public static void tickCombat(BasaltSnailUnit source) {
-        if(!server(source)||!active(source))return;
+        if(!server(source)||!occupiesOrders(source))return;
         if(source.getTargetGoal().forced)return; // explicit orders own their target, never retarget them
         LivingEntity current=source.getTargetGoal().getTarget();
         if(current!=null&&(!mayActInPlace(source)||!maySelectInPlace(source,current))) {
@@ -125,7 +151,7 @@ public final class SnailShellFormation {
     }
     /** The original goal still spends its own cooldown; only its active-formation hit is revalidated. */
     public static boolean permitsMelee(BasaltSnailUnit source,Entity target) {
-        if(!active(source))return true;
+        if(!occupiesOrders(source))return true;
         return mayActInPlace(source)&&target instanceof LivingEntity living&&maySelectInPlace(source,living);
     }
     private static boolean protects(Formation formation,LivingEntity target) {

@@ -6,8 +6,6 @@ import com.dreamseekers.building.DreamLaboratoryPlacement;
 import com.dreamseekers.economy.DreamPassiveEconomy;
 import com.dreamseekers.unitprogression.DreamSpecialistResearch;
 import com.dreamseekers.worldtree.DreamAnchorPlacement;
-import com.dreamseekers.worldtree.WorldTreeModel;
-import com.dreamseekers.worldtree.WorldTreeState;
 import com.solegendary.reignofnether.api.ReignOfNetherRegistries;
 import com.solegendary.reignofnether.building.*;
 import com.solegendary.reignofnether.building.buildings.placements.ProductionPlacement;
@@ -46,8 +44,7 @@ public final class LightResonanceResearch {
     }
     /** Actual completed known upgraded geometry, including legal shadow and wind variants; not an unlock flag. */
     private static boolean advanced(DreamAnchorPlacement tree,boolean client){
-        return tree.model().branch!=WorldTreeModel.Branch.BASE
-            &&(client||(tree.productionAvailable()&&tree.tree().supported&&tree.tree().phase==WorldTreeState.Phase.COMPLETE));
+        return tree.hasStandingUpgrade()&&(client||tree.productionAvailable());
     }
     public static boolean prerequisites(ProductionPlacement p,boolean client,int targetTier){
         if((targetTier!=1&&targetTier!=2)||p.getBuilding()!=DreamseekersMod.RESONANCE_LABORATORY

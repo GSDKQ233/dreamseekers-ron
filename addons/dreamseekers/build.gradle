@@ -1,7 +1,7 @@
 // Applied from the RoN checkout only with -Pdreamseekers.
 // All third-party content stays in user-provided, locally cached dependencies.
 // Nothing from those dependencies is copied or shaded into the addon JAR.
-ext.dreamseekersVersion = '0.65.0-repair3.1-buildings.1'
+ext.dreamseekersVersion = '0.65.0-repair3.1-autocast.1-alpha'
 
 def dependencyRepository = file(project.findProperty('dreamseekersDependencyRepo') ?: '.dreamseekers-deps/maven')
 def dependencyGroup = 'local.dreamseekers.dependencies'

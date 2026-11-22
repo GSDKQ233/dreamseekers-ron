@@ -19,11 +19,22 @@ public final class DreamWorldTreeService {
     public static final DataType<WorldTreeState> STATE=DataType.createRegistered(ResourceLocation.fromNamespaceAndPath("dreamseekers","world_tree"),(tag,server)->WorldTreeState.read(tag),WorldTreeState::write,WorldTreeState::new);
     public static final ResourceTransaction.Cost COST=new ResourceTransaction.Cost(600,800,600,Map.of(DreamPassiveEconomy.SHADOW,150));
     public static final ResourceTransaction.Cost WIND_COST=new ResourceTransaction.Cost(450,650,450,Map.of(DreamPassiveEconomy.SHADOW,100));
+    // Base -> single retains every historic price and receipt purpose. Second-stage payments
+    // name BOTH the final geometry revision and the missing branch, so opposite-order or
+    // first-stage receipts can never authorize a different paid transaction.
     public static String purpose(WorldTreeModel target){return target==WorldTreeModel.LEGACY_SHADOW?PURPOSE:PURPOSE+":"+target.branch.name().toLowerCase(Locale.ROOT)+":v"+target.revision;}
+    public static String purpose(WorldTreeModel source,WorldTreeModel target){
+        if(target!=WorldTreeModel.CONFLUENCE_V6)return purpose(target);
+        return purpose(target)+(source.hasShadow()?":add_wind":":add_shadow");
+    }
     public static ResourceTransaction.Cost cost(WorldTreeModel target){return target.branch==WorldTreeModel.Branch.WIND?WIND_COST:COST;}
+    public static ResourceTransaction.Cost cost(WorldTreeModel source,WorldTreeModel target){
+        return target==WorldTreeModel.CONFLUENCE_V6?(source.hasShadow()?WIND_COST:COST):cost(target);
+    }
     public static boolean receiptMatches(WorldTreeState state,ResourcePaidReceipt receipt){
-        if(state.target==null||receipt==null)return false;var price=cost(state.target);
-        return receipt.payerEpoch().equals(state.payerEpoch)&&receipt.purpose().equals(purpose(state.target))
+        if(receipt==null||!WorldTreeModel.supportsSavedTarget(state.model,state.target))return false;
+        var price=cost(state.model,state.target);
+        return receipt.payerEpoch().equals(state.payerEpoch)&&receipt.purpose().equals(purpose(state.model,state.target))
             &&receipt.food()==price.food()&&receipt.wood()==price.wood()&&receipt.ore()==price.ore()&&receipt.emerald()==price.emerald()&&receipt.extra().equals(price.extra());
     }
     private record ElectionKey(net.minecraft.server.MinecraftServer server,String owner,UUID epoch){}
@@ -38,19 +49,22 @@ public final class DreamWorldTreeService {
     public static boolean owns(ServerPlayer actor,DreamAnchorPlacement p){return actor!=null&&p.getLevel()==actor.level()&&actor.getName().getString().equals(p.ownerName)
         &&p.getBuilding() instanceof DreamAnchor&&BuildingServerEvents.getBuildings().contains(p)&&p.isBuilt&&!p.isDestroyedServerside&&!p.shouldBeDestroyed()&&p.getHealth()>0;}
     public static String start(ServerPlayer actor,DreamAnchorPlacement p,UUID instance){return start(actor,p,instance,WorldTreeModel.CURRENT_SHADOW);}
-    public static String start(ServerPlayer actor,DreamAnchorPlacement p,UUID instance,WorldTreeModel target){
-        if(!WorldTreeModel.newTarget(target))return "invalid_target";
+    public static String start(ServerPlayer actor,DreamAnchorPlacement p,UUID instance,WorldTreeModel requested){
+        if(!WorldTreeModel.newTarget(requested))return "invalid_target";
         if(!owns(actor,p)||!DreamPassiveEconomy.isDreamOwner(PlayerServerEvents.getRTSPlayer(p.ownerName)))return "invalid_host";
-        var s=p.tree();if(!s.supported||!s.instance.equals(instance)||s.phase!=WorldTreeState.Phase.IDLE||s.model.branch!=WorldTreeModel.Branch.BASE)return "invalid_state";
+        var s=p.tree();
+        if(!s.supported||!s.instance.equals(instance)||!s.phase.atRest()||s.receipt!=null)return "invalid_state";
+        var target=WorldTreeModel.nextUpgrade(s.model,requested);
+        if(target==null)return "invalid_state";
         var plan=WorldTreeMorph.plan(p,target);if(!plan.valid())return plan.error();
         var r=ExtendedResourcesSync.account(p.ownerName);if(r==null)return "invalid_account";
-        var paid=ResourceTransaction.pay(actor.getServer(),r,r.accountEpoch,r.revision,purpose(target),cost(target));if(!paid.applied())return paid.status().name().toLowerCase(Locale.ROOT);
+        var paid=ResourceTransaction.pay(actor.getServer(),r,r.accountEpoch,r.revision,purpose(s.model,target),cost(s.model,target));if(!paid.applied())return paid.status().name().toLowerCase(Locale.ROOT);
         s.target=target;s.payer=p.ownerName;s.payerEpoch=r.accountEpoch;s.receipt=paid.receiptId();s.remaining=2400;s.phase=WorldTreeState.Phase.RUNNING;s.captureRevision=p.getCaptureRevision();s.blockedReason="";
         EconomyBalanceSync.send(actor);return "started";
     }
     public static String cancel(ServerPlayer actor,DreamAnchorPlacement p,UUID instance){
         if(!owns(actor,p)||!p.tree().instance.equals(instance))return "invalid_host";
-        var s=p.tree();if(!s.supported||s.ascended||s.receipt==null)return "invalid_state";
+        var s=p.tree();if(!s.supported||!s.phase.pending()||s.receipt==null)return "invalid_state";
         return requestRefund(p,(ServerLevel)p.getLevel())?"cancelled_refunded":"refund_pending";
     }
     private static boolean requestRefund(DreamAnchorPlacement p,ServerLevel l){var s=p.tree();s.phase=WorldTreeState.Phase.REFUND_PENDING;
@@ -74,13 +88,17 @@ public final class DreamWorldTreeService {
         boolean capture=s.captureRevision!=Long.MIN_VALUE&&s.captureRevision!=p.getCaptureRevision();s.captureRevision=p.getCaptureRevision();
         if(capture||!s.incomeOwner.equals(p.ownerName)){s.incomeElapsed=0;s.wasLeader=false;s.incomeOwner=p.ownerName;s.incomeEpoch=null;}
         if(s.receipt!=null&&(capture||!s.payer.equals(p.ownerName)))requestRefund(p,l);
+        // Keep the original Shadow income clock running through a Wind purchase, block, or refund.
+        // A Wind-only/base tree has no income until its actual Shadow commit.
+        if(s.ascended)income(p,l,s);
         if(s.phase==WorldTreeState.Phase.REFUND_PENDING){requestRefund(p,l);return;}
         if(s.receipt!=null){
             var r=ExtendedResourcesSync.account(s.payer);
             if(r==null||!Objects.equals(s.payerEpoch,r.accountEpoch)){s.blockedReason="account_changed";return;}
+            if(!WorldTreeModel.supportsSavedTarget(s.model,s.target)){s.blockedReason="invalid_target";return;}
             var receipt=r.paidReceipts.get(s.receipt);
-            if(receipt!=null&&receipt.purpose().equals(purpose(s.target)+":refund")){requestRefund(p,l);return;}
-            if(receipt!=null&&receipt.purpose().equals(purpose(s.target)+":forfeit")){WorldTreeReceiptIntents.retry(l);s.clearTask();return;}
+            if(receipt!=null&&receipt.purpose().equals(purpose(s.model,s.target)+":refund")){requestRefund(p,l);return;}
+            if(receipt!=null&&receipt.purpose().equals(purpose(s.model,s.target)+":forfeit")){WorldTreeReceiptIntents.retry(l);s.clearTask();return;}
             if(!receiptMatches(s,receipt)){s.blockedReason="missing_receipt";return;}
             if(!p.isBuilt||p.shouldBeDestroyed()||p.isDestroyedServerside||!loaded(p)||!DreamPassiveEconomy.isDreamOwner(PlayerServerEvents.getRTSPlayer(p.ownerName)))return;
             if(s.remaining>0)s.remaining--;
@@ -88,23 +106,31 @@ public final class DreamWorldTreeService {
                 var plan=WorldTreeMorph.plan(p);
                 if(!plan.valid()){s.phase=WorldTreeState.Phase.BLOCKED;s.blockedReason=plan.error();return;}
                 if(r.revision<0||r.revision==Long.MAX_VALUE||!r.extendedStateSupported()){s.blockedReason="invalid_account";return;}
-                if(s.target.branch==WorldTreeModel.Branch.WIND&&!com.dreamseekers.progression.DreamWindProgression.canEarnWind(l,s.payer,s.payerEpoch)){s.blockedReason="invalid_progression";return;}
+                var source=s.model;var target=s.target;var paid=s.receipt;var epoch=s.payerEpoch;
+                String payer=s.payer;long captureRevision=p.getCaptureRevision();
+                boolean addWind=!source.hasWind()&&target.hasWind();
+                if(addWind&&!com.dreamseekers.progression.DreamWindProgression.canEarnWind(l,payer,epoch)){s.blockedReason="invalid_progression";return;}
                 if(!WorldTreeMorph.commit(p,plan)){s.phase=WorldTreeState.Phase.BLOCKED;s.blockedReason="world_write_rejected";return;}
-                // World writes may invoke native/mixin callbacks. Revalidate entitlement after them,
-                // leaving only the callback-free ledger consume and pure grant in the atomic tail.
-                if(s.target.branch==WorldTreeModel.Branch.WIND&&!com.dreamseekers.progression.DreamWindProgression.canEarnWind(l,s.payer,s.payerEpoch)){
+                // Native block writes can invoke callbacks (including capture/cancellation). Check
+                // the original placement/claim again; never consume an edited or terminal receipt.
+                if(p.isDestroyedServerside||!BuildingServerEvents.getBuildings().contains(p)
+                        ||captureRevision!=p.getCaptureRevision()||!payer.equals(p.ownerName)||s.model!=source
+                        ||s.target!=target||!paid.equals(s.receipt)||s.phase==WorldTreeState.Phase.REFUND_PENDING
+                        ||ExtendedResourcesSync.account(payer)!=r||!receiptMatches(s,r.paidReceipts.get(paid))){
+                    WorldTreeMorph.rollback(p,plan);return;
+                }
+                if(addWind&&!com.dreamseekers.progression.DreamWindProgression.canEarnWind(l,payer,epoch)){
                     WorldTreeMorph.rollback(p,plan);s.phase=WorldTreeState.Phase.BLOCKED;s.blockedReason="invalid_progression";return;
                 }
-                var used=ResourceTransaction.consumeReceipt(l.getServer(),r,s.payerEpoch,r.revision,s.receipt);
+                var used=ResourceTransaction.consumeReceipt(l.getServer(),r,epoch,r.revision,paid);
                 if(!used.applied()){WorldTreeMorph.rollback(p,plan);s.phase=WorldTreeState.Phase.BLOCKED;s.blockedReason="receipt_commit_failed";return;}
-                if(s.target.branch==WorldTreeModel.Branch.WIND){if(!com.dreamseekers.progression.DreamWindProgression.earnWind(l,s.payer,s.payerEpoch))throw new IllegalStateException("Validated Wind grant lost invariant after callback-free receipt consume");com.dreamseekers.progression.DreamWindPackets.sendToOwner(l.getServer(),s.payer);}
-                s.model=s.target;s.geometryHighest=s.model.count;s.ascended=s.model.branch==WorldTreeModel.Branch.SHADOW;s.clearTask();s.incomeElapsed=0;s.wasLeader=false;
-                BuildingClientboundPacket.syncBuilding(p.originPos,p.getBlocksPlaced(),p.partialBlocksDestroyed,p.ownerName,p.scenarioRoleIndex);
+                if(addWind&&!com.dreamseekers.progression.DreamWindProgression.earnWind(l,payer,epoch))throw new IllegalStateException("Validated Wind grant lost invariant after callback-free receipt consume");
+                if(!s.ascended){s.incomeElapsed=0;s.wasLeader=false;}
+                s.model=target;s.geometryHighest=s.model.count;s.ascended=s.model.hasShadow();s.clearTask();
+                if(addWind)com.dreamseekers.progression.DreamWindPackets.sendToOwner(l.getServer(),payer);
+                BuildingClientboundPacket.syncBuilding(p);
             }
-            return;
         }
-        if(!s.ascended)return;
-        income(p,l,s);
     }
     private static void income(DreamAnchorPlacement p,ServerLevel l,WorldTreeState s){
         var player=PlayerServerEvents.getRTSPlayer(p.ownerName);var r=ExtendedResourcesSync.account(p.ownerName);

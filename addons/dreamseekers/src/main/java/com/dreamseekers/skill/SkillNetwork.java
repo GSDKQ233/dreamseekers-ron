@@ -189,7 +189,8 @@ public final class SkillNetwork {
         }
         public void handle(Supplier<NetworkEvent.Context> context) {
             var network=context.get();ServerPlayer sender=network.getSender();network.setPacketHandled(true);
-            if(sender==null)return;
+            // A queued preference belongs to this live connection, not a later login with the same name.
+            if(!com.solegendary.reignofnether.player.ServerPlayerRequest.isCurrent(network))return;
             SkillResult result=execute(sender);Entity entity=sender.serverLevel().getEntity(sourceId);
             if(entity instanceof SkillUnit source&&source.mob().getUUID().equals(sourceUuid)
                     &&source.getOwnerName().equals(sender.getGameProfile().getName())&&source.rts().skills().allowFeedback()) {

@@ -8,7 +8,6 @@ import com.dreamseekers.economy.DreamPassiveEconomy;
 import com.dreamseekers.resonance.LightResonanceResearch;
 import com.dreamseekers.resonance.ResonanceResearch;
 import com.dreamseekers.worldtree.DreamAnchorPlacement;
-import com.dreamseekers.worldtree.WorldTreeModel;
 import com.dreamseekers.worldtree.WorldTreeState;
 import com.solegendary.reignofnether.api.ReignOfNetherRegistries;
 import com.solegendary.reignofnether.building.*;
@@ -67,8 +66,8 @@ public final class AdvancedUnitResearch {
         var buildings=client?BuildingClientEvents.getBuildings():BuildingServerEvents.getBuildings();
         boolean upgraded=HAND_HARMONY_ID.equals(id);
         boolean anchor=buildings.stream().anyMatch(b->b instanceof DreamAnchorPlacement tree&&physical(b,p)
-            &&(!upgraded||tree.model().branch!=WorldTreeModel.Branch.BASE)
-            &&(client||(tree.productionAvailable()&&tree.tree().supported&&(tree.tree().phase==WorldTreeState.Phase.COMPLETE||(!upgraded&&tree.tree().phase==WorldTreeState.Phase.IDLE)))));
+            &&(tree.hasStandingUpgrade()||(!upgraded&&(client||(tree.tree().supported&&tree.tree().phase==WorldTreeState.Phase.IDLE))))
+            &&(client||tree.productionAvailable()));
         if(!anchor)return false;
         if(PULSE_RANGE_ID.equals(id))return ResonanceResearch.unlocked(p.ownerName,client);
         if(MOTHER_NEST_ID.equals(id))return DreamSpecialistResearch.hasEcology(p,client);

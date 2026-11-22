@@ -135,7 +135,7 @@ public class FireflyWorker extends net.pasterdream.entity.FireflyEntity implemen
         setNoGravity(true);
     }
     public static AttributeSupplier.Builder createAttributes() {
-        // Nominal ground/air movement, health, damage, armour and attack rate match the old worker.
-        return DreamRtsUnit.attributes(28, 1, 0.25, 1, 0.5, 0).add(Attributes.FLYING_SPEED, 0.25);
+        // Match air and ground speed at takeoff and landing; the dedicated scout is faster.
+        return DreamRtsUnit.attributes(28, 2, 0.50, 1, 0.5, 0).add(Attributes.FLYING_SPEED, 0.50);
     }
 }

@@ -62,7 +62,7 @@ public final class AaroncosTrainingRestartGameTests {
             h.assertTrue(fixture.r.food==9600&&fixture.r.wood==9750&&fixture.r.ore==9650&&fixture.r.extra.get(DreamPassiveEconomy.SHADOW)==900,"exact original four currency debit");
         });
         h.runAtTickTime(20,()->{
-            h.assertTrue(hall.productionQueue.get(0).ticksLeft>0,"normal unfinished90second queue");
+            h.assertTrue(hall.productionQueue.get(0).ticksLeft>0,"normal unfinished72second queue");
             PlayerServerEvents.saveRTSPlayers();BuildingServerEvents.saveBuildings(h.getLevel());ResourcesServerEvents.saveResources(h.getLevel());
             h.assertTrue(fixture.r.paidReceipts.containsKey(receipt)&&fixture.r.extra.get(DreamPassiveEconomy.SHADOW)==900,"saved projection does not mutate live shadow or consume original receipt");h.succeed();
         });

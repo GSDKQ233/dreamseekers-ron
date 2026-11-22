@@ -87,9 +87,9 @@ public final class TerrorbeakDreadRoar {
         if(!server(target))return null;
         Disarm effect=DISARMS.get(target);return effect!=null&&effect.current()?effect:null;
     }
-    private static boolean eligible(ServerPlayer viewer,TeamSafeCombatUnit source,LivingEntity target) {
+    private static boolean eligible(ServerPlayer viewer,TeamSafeCombatUnit source,LivingEntity target,boolean automatic) {
         return enemy(source,target)&&source.mob().distanceToSqr(target)<=RANGE*RANGE&&source.mob().hasLineOfSight(target)
-                &&CoordinatedMark.visible(viewer,target)&&!hasDisarm(target)&&remainingRecontrolTicks(target)==0;
+                &&(automatic?SkillAutocastPolicy.observable(viewer,target):CoordinatedMark.visible(viewer,target))&&!hasDisarm(target)&&remainingRecontrolTicks(target)==0;
     }
     private static boolean casterValid(ServerPlayer viewer,TeamSafeCombatUnit source,SkillIdentity.Stamp caster,long command) {
         return loaded(caster)&&!disabled(source)&&viewer.isAlive()&&!viewer.isRemoved()&&viewer.serverLevel()==caster.level()
@@ -98,6 +98,9 @@ public final class TerrorbeakDreadRoar {
     }
     /** No damage/sound/event dispatch before the transaction commit. At least one exact install is paid. */
     static SkillResult cast(ServerPlayer viewer,TeamSafeCombatUnit source,BooleanSupplier commit) {
+        return cast(viewer,source,commit,false);
+    }
+    static SkillResult cast(ServerPlayer viewer,TeamSafeCombatUnit source,BooleanSupplier commit,boolean automatic) {
         if(viewer==null||source==null||!approved(source)||commit==null||!body(source.mob())||source.getOwnerName().isBlank())return SkillResult.INVALID_SOURCE;
         if(disabled(source))return SkillResult.DISABLED;
         if(BUSY.containsKey(source))return SkillResult.ALREADY_ACTIVE;
@@ -108,14 +111,14 @@ public final class TerrorbeakDreadRoar {
             SkillIdentity.Stamp caster=SkillIdentity.capture(source.mob());long command=source.rts().commandRevision;
             if(!casterValid(viewer,source,caster,command))return SkillResult.INVALID_SOURCE;
             List<LivingEntity> candidates=caster.level().getEntitiesOfClass(LivingEntity.class,source.mob().getBoundingBox().inflate(RANGE),
-                    target->eligible(viewer,source,target));
+                    target->eligible(viewer,source,target,automatic));
             candidates.sort(Comparator.comparingDouble((LivingEntity target)->source.mob().distanceToSqr(target)).thenComparing(target->target.getUUID().toString()));
             for(LivingEntity target:candidates) {
                 if(!casterValid(viewer,source,caster,command))return SkillResult.INVALID_SOURCE;
-                if(!eligible(viewer,source,target))continue;
+                if(!eligible(viewer,source,target,automatic))continue;
                 SkillIdentity.Stamp stamp=SkillIdentity.capture(target);
                 int duration=SporeEffects.incomingManagedDuration(target,DISARM_TICKS);
-                if(duration<=0||!loaded(stamp)||!casterValid(viewer,source,caster,command)||!eligible(viewer,source,target))continue;
+                if(duration<=0||!loaded(stamp)||!casterValid(viewer,source,caster,command)||!eligible(viewer,source,target,automatic))continue;
                 Disarm effect=new Disarm(caster,stamp,duration);
                 Protection protection=new Protection(target,caster.level(),stamp.uuid(),caster.level().getGameTime()+RECONTROL_TICKS);
                 DISARMS.put(target,effect);PROTECTIONS.put(target,protection);installed.add(effect);protections.put(target,protection);

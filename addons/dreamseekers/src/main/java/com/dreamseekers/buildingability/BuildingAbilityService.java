@@ -3,8 +3,6 @@ package com.dreamseekers.buildingability;
 
 import com.dreamseekers.economy.DreamGardenPlacement;
 import com.dreamseekers.worldtree.DreamAnchorPlacement;
-import com.dreamseekers.worldtree.WorldTreeModel;
-import com.dreamseekers.worldtree.WorldTreeState;
 import com.solegendary.reignofnether.ReignOfNether;
 import com.solegendary.reignofnether.building.BuildingPlacement;
 import com.solegendary.reignofnether.resources.ResourceTransaction;
@@ -25,7 +23,7 @@ public final class BuildingAbilityService {
         if(ability==null||BuildingAbility.forBuilding(p)!=ability||!ability.implemented())return "unavailable";
         if(ability==BuildingAbility.ROOT_CROWN){
             if(!(p instanceof DreamAnchorPlacement tree)||!tree.tree().supported)return "unsupported";
-            return tree.tree().phase==WorldTreeState.Phase.COMPLETE&&tree.model().branch!=WorldTreeModel.Branch.BASE
+            return tree.hasStandingUpgrade()
                 &&tree.productionAvailable()?"ready":"requires_tree_upgrade";
         }
         if(ability==BuildingAbility.GARDEN_RECOVERY)

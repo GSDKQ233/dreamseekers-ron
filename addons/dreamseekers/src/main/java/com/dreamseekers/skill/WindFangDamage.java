@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.skill;
 
+import com.dreamseekers.economy.CapitalResearchRanks;
+import com.dreamseekers.economy.DreamAscendancyAttributes;
 import com.solegendary.reignofnether.unit.Relationship;
 import com.solegendary.reignofnether.api.PrimaryUnitHitHooks;
 import com.solegendary.reignofnether.unit.UnitServerEvents;
@@ -37,9 +39,8 @@ public final class WindFangDamage {
         SkillEffects.BuffLease lease=SkillEffects.captureNamedBonus(owner,WindDash.COMMAND_KEY,BuffKind.ATTACK_DAMAGE);
         PrimaryUnitHitHooks.Impact ordinary=OrdinarySkillHit.captureFang(fangs,victim);
         // Capture an ordinary impact, never grant a multiplier to hand-created/wild/loaded fangs.
-        boolean ascendancy=OrdinaryFangOrigin.capture(fangs)!=null
-                &&com.dreamseekers.economy.DreamAscendancyAttributes.enabledFor(owner);
-        if(lease==null&&ordinary==null&&!ascendancy)return false;
+        int rank=OrdinaryFangOrigin.capture(fangs)!=null?DreamAscendancyAttributes.rankFor(owner):0;
+        if(lease==null&&ordinary==null&&rank==0)return false;
         // Ascendancy-only now opts into this branch too: retain the core override's friendly-fire guard.
         if(UnitServerEvents.getUnitToEntityRelationship(owner,victim)==Relationship.FRIENDLY)return true;
         SkillIdentity.Stamp caster=CASTERS.get(fangs);
@@ -56,7 +57,7 @@ public final class WindFangDamage {
             // Preserve the original live circle flag and the original downstream Zeal +1/level event.
             float base=EvokerUnit.FANGS_DAMAGE*(owner.lastCastedCircleFangs?2:1);
             // Native AD is fixed: apply this owner upgrade once, before unchanged Wind and downstream Zeal/Bone.
-            float amount=(float)(base*(ascendancy?1.15D:1D)*(lease==null?1:1+lease.amount()));
+            float amount=(float)(base*(1+CapitalResearchRanks.ascendancyBonus(rank))*(lease==null?1:1+lease.amount()));
             com.solegendary.reignofnether.resources.kill.EconomicFangHooks.wrap(
                     fangs,victim,ordinary!=null?ordinary:victim::hurt).hurt(damage,amount);
         } finally { if(impact!=null)FRAMES.remove(damage); }

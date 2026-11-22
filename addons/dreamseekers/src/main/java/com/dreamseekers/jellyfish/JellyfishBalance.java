@@ -5,8 +5,8 @@ import com.solegendary.reignofnether.resources.ResourceCost;
  * These values remain subject to balance review; skill parameters are defined separately. */
 public final class JellyfishBalance {
     private JellyfishBalance() { }
-    public static final ResourceCost COST = ResourceCost.Unit(70, 0, 25, 20, 1);
+    public static final ResourceCost COST = ResourceCost.Unit(70, 0, 25, 16, 1);
     public static final double MAX_HEALTH = 30;
-    public static final double SPEED = .28;
+    public static final double SPEED = .40;
     public static final int SIGHT = 18;
 }

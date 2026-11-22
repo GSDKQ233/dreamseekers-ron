@@ -81,6 +81,8 @@ public final class LightSkillAmplificationGameTests {
             for(int dx=-1;dx<=1;dx++)for(int dz=-1;dz<=1;dz++)for(int dy=0;dy<4;dy++)level.setBlock(p.offset(dx,dy,dz),Blocks.AIR.defaultBlockState(),2);
             h.assertTrue(level.addFreshEntity(u),"actual entity publication");units.add(u);return u;}
         void move(Entity u,double x,double y,double z){u.moveTo(dais.originPos.getX()+.5+x,dais.originPos.getY()+.5+y,dais.originPos.getZ()+.5+z);u.setDeltaMovement(Vec3.ZERO);}
+        int eastEdge(){return Math.max(0,dais.maxCorner.getX()-dais.originPos.getX());}
+        int southEdge(){return Math.max(0,dais.maxCorner.getZ()-dais.originPos.getZ());}
         PinkSlimeUnit gel(double x,double z){return mob(DreamseekersMod.PINK_SLIME_UNIT.get(),x,1,z);}
         JellyfishUnit jelly(double x,double z){return mob(DreamseekersMod.JELLYFISH_UNIT.get(),x,1,z);}
         GoldenFoxUnit fox(double x,double z){return mob(DreamseekersMod.GOLDEN_FOX_UNIT.get(),x,1,z);}
@@ -167,13 +169,19 @@ public final class LightSkillAmplificationGameTests {
             crossbow(target).setToMaxAttackCooldown();near(h,crossbow(target).getAttackCooldown(),raw[0],"actual cached goal returns exact legacy baseline");h.assertTrue(target.getAttribute(AttributeRegistrar.ATTACKS_PER_SECOND.get()).getModifier(PERMANENT)!=null,"permanent modifier remains");}).thenSucceed();}
 
     @GameTest(templateNamespace="dreamseekers_light_amplification",template="dreamseekers_test_arena",batch=BATCH,timeoutTicks=180)
-    public static void exactThreeDimensionalTwelveBlockEligibilityNeverBorrowsAlliedNetwork(GameTestHelper h){var f=new F(h,"Boundary",9,2);var source=f.gel(-3,-4);String ally=f.owner+"_ally";f.account(ally);f.tier(ally,2);AlliancesServerEvents.addAlliance(f.owner,ally);
+    public static void exactThreeDimensionalTwelveBlockEligibilityNeverBorrowsAlliedNetwork(GameTestHelper h){var f=new F(h,"Boundary",9,2);var source=f.gel(-3,-4);var patient=f.gel(-1,-4);String ally=f.owner+"_ally";f.account(ally);f.tier(ally,2);AlliancesServerEvents.addAlliance(f.owner,ally);
         f.ready().thenExecute(()->{Set<Long> tickets=Set.copyOf(f.level.getForcedChunks());
-            f.move(source,12,0,0);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==2,"exact horizontal twelve blocks accepted");
-            f.move(source,12,.01,0);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"same horizontal distance outside three-dimensional sphere rejected");
+            int east=f.eastEdge(),south=f.southEdge(),west=Math.min(0,f.dais.minCorner.getX()-f.dais.originPos.getX());
+            h.assertTrue(east>0&&south>0,"fixture uses nonzero reviewed footprint, not a point dais");
+            f.move(source,west-12,0,0);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==2,"near-side horizontal twelve blocks accepted");
+            f.move(source,east+12,0,0);f.move(patient,east+11,0,0);
+            h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==2,"far side exactly twelve beyond footprint (more than twelve from the corner) also gets research");
+            f.success(source,UnitSkill.GEL_GUARD,patient);near(h,SkillEffects.shieldRemaining(patient),18,"far-side tier two applies 18 actual shield points, not the 12-point baseline");
+            f.move(source,east+12.01,0,0);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"just beyond far-side twelve rejected");
+            f.move(source,east+12,.01,0);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"same horizontal distance outside three-dimensional sphere rejected");
             f.move(source,0,12,0);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==2,"exact vertical twelve blocks accepted");
             f.move(source,0,12.01,0);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"vertical outside rejected");
-            f.move(source,9,0,9);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"square corners cannot act as radius");f.move(source,-3,1,-4);
+            f.move(source,east+9,0,south+9);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"square footprint gaps cannot act as radius");f.move(source,-3,1,-4);
             source.setOwnerName(ally);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"fully researched allied owner cannot borrow this owner's live network");source.setOwnerName(f.owner);
             ResourcesServerEvents.resourcesList.remove(f.account);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0,"retired account does not authorize amplification");ResourcesServerEvents.resourcesList.add(f.account);
             CompoundTag good=f.account.addonData.copy();f.account.addonData.putInt("malformed",1);var opaque=f.account.addonData.copy();h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.GEL_GUARD)==0&&f.account.addonData.equals(opaque),"unsupported account data denied without repair");f.account.addonData=good;
@@ -203,7 +211,7 @@ public final class LightSkillAmplificationGameTests {
         .thenIdle(41).thenExecute(()->{near(h,SkillEffects.shieldRemaining(shielded),0,"ordinary shield naturally expires with original duration");near(h,SkillEffects.shieldRemaining(laterTarget),0,"baseline shield also naturally expires");}).thenSucceed();}
 
     @GameTest(templateNamespace="dreamseekers_light_amplification",template="dreamseekers_test_arena",batch=BATCH,timeoutTicks=250)
-    public static void enteringAuraAfterSuccessfulBaselineCastNeverRetroactivelyAmplifies(GameTestHelper h){var f=new F(h,"LaterEntry",12,2);var source=f.jelly(14,-4);var target=f.gel(17,-4);var read=watchHeal(target);
+    public static void enteringAuraAfterSuccessfulBaselineCastNeverRetroactivelyAmplifies(GameTestHelper h){var f=new F(h,"LaterEntry",12,2);var source=f.jelly(f.eastEdge()+14,-4);var target=f.gel(f.eastEdge()+17,-4);var read=watchHeal(target);
         f.ready().thenExecute(()->{target.setHealth(20);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.JELLY_FLOW)==0,"caster starts outside twelve-block aura");f.success(source,UnitSkill.JELLY_FLOW,target);f.move(source,8,1,-4);f.move(target,11,1,-4);h.assertTrue(SkillAmplification.currentTier(source,UnitSkill.JELLY_FLOW)==2,"same caster later enters live final aura");})
         .thenIdle(121).thenExecute(()->{near(h,target.getHealth(),32,"existing baseline cast never gains later amplification");h.assertTrue(read.count==6,"six original pulses");for(float amount:read.requests)near(h,amount,2,"baseline pulse immutable");near(h,SkillEffects.bonus(target,BuffKind.MOVEMENT_SPEED),.10,"baseline-derived tide not recaptured on completion");}).thenSucceed();}
 

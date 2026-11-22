@@ -19,6 +19,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.pasterdream.entity.BasaltSnailEntity;
 
 /**
@@ -26,7 +27,7 @@ import net.pasterdream.entity.BasaltSnailEntity;
  * passive; its melee role and capped shell cooldown are explicitly this addon's design.
  */
 public class BasaltSnailUnit extends BasaltSnailEntity implements DreamRtsUnit {
-    public static final ResourceCost COST = ResourceCost.Unit(90, 0, 35, 30, 3);
+    public static final ResourceCost COST = ResourceCost.Unit(90, 0, 35, 24, 3);
     public static final int SHELL_DURATION = 80;
     public static final int SHELL_COOLDOWN = 200;
     private static final EntityDataAccessor<String> OWNER = SynchedEntityData.defineId(BasaltSnailUnit.class, EntityDataSerializers.STRING);
@@ -35,6 +36,21 @@ public class BasaltSnailUnit extends BasaltSnailEntity implements DreamRtsUnit {
     private static final RtsSyncedData SYNC = new RtsSyncedData(OWNER, SCENARIO, DEATH_COMMAND);
     private RtsUnitState state;
     private int shellCooldown;
+    // Ephemeral provenance, deliberately not saved. Contract births and work posts can also set HOLD.
+    private long explicitHoldRevision=-1;
+    public void acceptedOwnerHold(String owner) {
+        if(!level().isClientSide()&&rts().hold&&owner!=null&&!owner.isBlank()&&owner.equals(getOwnerName()))
+            explicitHoldRevision=rts().commandRevision;
+    }
+    public boolean isHoldingExplicitOrder() {
+        return explicitHoldRevision>=0&&explicitHoldRevision==rts().commandRevision&&rts().hold
+                &&getMoveGoal().getMoveTarget()==null&&getFollowTarget()==null&&getAttackMoveTarget()==null
+                &&!getTargetGoal().forced&&!AttackerUnit.isAttackingBuilding(this)
+                &&!rts().returning.hasReturnOrder()&&rts().portal.getBuildingTarget()==null;
+    }
+    private void changedOrder() {
+        explicitHoldRevision=-1;SnailShellFormation.commandChanged(this);
+    }
 
     @SuppressWarnings("unchecked")
     public BasaltSnailUnit(EntityType<? extends BasaltSnailEntity> type, Level level) {
@@ -57,36 +73,44 @@ public class BasaltSnailUnit extends BasaltSnailEntity implements DreamRtsUnit {
     @Override protected PathNavigation createNavigation(Level level) {
         return new com.dreamseekers.skill.SnailShellNavigation(this,level);
     }
+    @Override public void travel(Vec3 input) {
+        if(!level().isClientSide()&&getNavigation() instanceof com.dreamseekers.skill.SnailShellNavigation navigation) {
+            long command=rts().commandRevision;
+            var path=navigation.beginGroundTravel(input);
+            super.travel(input);
+            navigation.endGroundTravel(path,command);
+        } else super.travel(input);
+    }
     @Override public void updateAbilityButtons() {
         rts().abilities=new com.solegendary.reignofnether.ability.Abilities();
         rts().abilities.add(com.dreamseekers.skill.UnitSkillAbility.SNAIL_SHELL_FORMATION);
     }
-    @Override public boolean isIdle() { return !SnailShellFormation.active(this)&&DreamRtsUnit.super.isIdle(); }
+    @Override public boolean isIdle() { return !SnailShellFormation.occupiesOrders(this)&&DreamRtsUnit.super.isIdle(); }
     @Override public boolean permitsAutomaticAnchorReturn() {
-        return !SnailShellFormation.active(this)&&DreamRtsUnit.super.permitsAutomaticAnchorReturn();
+        return !SnailShellFormation.occupiesOrders(this)&&DreamRtsUnit.super.permitsAutomaticAnchorReturn();
     }
-    @Override public boolean getHoldPosition() { return SnailShellFormation.active(this)||DreamRtsUnit.super.getHoldPosition(); }
+    @Override public boolean getHoldPosition() { return SnailShellFormation.occupiesOrders(this)||DreamRtsUnit.super.getHoldPosition(); }
     @Override public void resetBehaviours() {
-        DreamRtsUnit.super.resetBehaviours();SnailShellFormation.commandChanged(this);
+        DreamRtsUnit.super.resetBehaviours();changedOrder();
     }
     @Override public void setMoveTarget(BlockPos target) {
-        if(target!=null)SnailShellFormation.commandChanged(this);
+        if(target!=null)changedOrder();
         DreamRtsUnit.super.setMoveTarget(target);
     }
     @Override public void setUnitAttackTargetForced(LivingEntity target) {
-        if(target!=null)SnailShellFormation.commandChanged(this);
+        if(target!=null)changedOrder();
         DreamRtsUnit.super.setUnitAttackTargetForced(target);
     }
     @Override public void setFollowTarget(LivingEntity target) {
-        if(target!=null)SnailShellFormation.commandChanged(this);
+        if(target!=null)changedOrder();
         DreamRtsUnit.super.setFollowTarget(target);
     }
     @Override public void setAttackMoveTarget(BlockPos target) {
-        if(target!=null)SnailShellFormation.commandChanged(this);
+        if(target!=null)changedOrder();
         DreamRtsUnit.super.setAttackMoveTarget(target);
     }
     @Override public void setHoldPosition(boolean hold) {
-        if(hold)SnailShellFormation.commandChanged(this);
+        if(hold)changedOrder();else explicitHoldRevision=-1;
         DreamRtsUnit.super.setHoldPosition(hold);
     }
     @Override public LivingEntity getTarget() { return getTargetGoal().getTarget(); }
@@ -127,9 +151,10 @@ public class BasaltSnailUnit extends BasaltSnailEntity implements DreamRtsUnit {
         tag.putInt("DreamseekersShellCooldown", shellCooldown);
     }
     @Override public void readAdditionalSaveData(CompoundTag tag) {
+        explicitHoldRevision=-1;
         super.readAdditionalSaveData(tag);
         readRtsData(tag);
         shellCooldown = Math.max(0, Math.min(SHELL_COOLDOWN, tag.getInt("DreamseekersShellCooldown")));
     }
-    public static AttributeSupplier.Builder createAttributes() { return DreamRtsUnit.attributes(100, 7, 0.16, 5, 0.45, 8); }
+    public static AttributeSupplier.Builder createAttributes() { return DreamRtsUnit.attributes(100, 7, 0.22, 5, 0.45, 8); }
 }

@@ -110,7 +110,9 @@ public final class AshEmberLanding {
         final SkillIdentity.Stamp caster;
         final UUID id,viewer;
         boolean published,committed,spent,revoked;
-        Launch(EmberLandingProjectile projectile,Construction construction) {
+        final boolean automatic;
+        Launch(EmberLandingProjectile projectile,Construction construction,boolean automatic) {
+            this.automatic=automatic;
             this.projectile=projectile;source=construction.source;caster=construction.caster;
             id=projectile.getUUID();viewer=construction.viewer.getUUID();
         }
@@ -121,8 +123,14 @@ public final class AshEmberLanding {
                     &&caster.level().getEntity(id)==projectile&&caster.level().getEntity(projectile.getId())==projectile;
         }
         boolean valid() { return committed&&publishedValid(); }
+        boolean legalVictim(LivingEntity target) {
+            return enemy(source,target)&&(!automatic||SkillAutocastPolicy.observable(commander(caster,viewer),target));
+        }
     }
     static SkillResult cast(ServerPlayer viewer,AshBoneWingUnit source,BlockPos point,BooleanSupplier commit) {
+        return cast(viewer,source,point,commit,false);
+    }
+    static SkillResult cast(ServerPlayer viewer,AshBoneWingUnit source,BlockPos point,BooleanSupplier commit,boolean automatic) {
         if(viewer==null||point==null||commit==null||!server(source)||!source.isAlive()||source.isRemoved()
                 ||!source.isAddedToWorld()||source.getOwnerName().isBlank())return SkillResult.INVALID_SOURCE;
         if(viewer.serverLevel()!=source.level()||!viewer.getGameProfile().getName().equals(source.getOwnerName()))return SkillResult.NOT_OWNER;
@@ -135,7 +143,7 @@ public final class AshEmberLanding {
             if(!construction.valid())return SkillResult.INVALID_SOURCE;
             EmberLandingProjectile projectile=new EmberLandingProjectile(DreamseekersMod.EMBER_LANDING_PROJECTILE.get(),source.level());
             if(!construction.valid()) { projectile.discard();return SkillResult.INVALID_SOURCE; }
-            Launch launch=new Launch(projectile,construction);FLIGHTS.put(projectile,launch);
+            Launch launch=new Launch(projectile,construction,automatic);FLIGHTS.put(projectile,launch);
             try {
                 projectile.setOwner(source);projectile.setPos(source.getX(),source.getEyeY(),source.getZ());
                 // Aim slightly into the supporting block so a successful empty-floor shot has a real collision.
@@ -157,7 +165,7 @@ public final class AshEmberLanding {
     }
     public static boolean canHit(EmberLandingProjectile projectile,Entity victim) {
         Launch launch=FLIGHTS.get(projectile);
-        return flightValid(projectile)&&victim instanceof LivingEntity target&&enemy(launch.source,target);
+        return flightValid(projectile)&&victim instanceof LivingEntity target&&launch.legalVictim(target);
     }
     public static void ownerChanged(EmberLandingProjectile projectile) {
         if(!server(projectile))return;
@@ -172,7 +180,7 @@ public final class AshEmberLanding {
         Launch launch=FLIGHTS.get(projectile);
         if(launch==null||launch.spent||!launch.valid()||hit==null||hit.getType()==HitResult.Type.MISS)return;
         if(hit instanceof net.minecraft.world.phys.EntityHitResult entityHit
-                &&(!(entityHit.getEntity() instanceof LivingEntity target)||!enemy(launch.source,target)))return;
+                &&(!(entityHit.getEntity() instanceof LivingEntity target)||!launch.legalVictim(target)))return;
         launch.spent=true;
         try {
             Vec3 origin=hit.getLocation();
@@ -200,16 +208,22 @@ public final class AshEmberLanding {
         final Map<UUID,Zone> zones=new HashMap<>();
         long lastProcessed=Long.MIN_VALUE;
     }
+    private static ServerPlayer commander(SkillIdentity.Stamp caster,UUID viewer) {
+        ServerPlayer player=caster.level().getServer().getPlayerList().getPlayer(viewer);
+        return player!=null&&player.isAlive()&&!player.isRemoved()&&player.serverLevel()==caster.level()
+                &&player.getGameProfile().getName().equals(caster.owner())?player:null;
+    }
     private static final class Zone {
         final UUID id,viewer;
         final AshBoneWingUnit source;
         final SkillIdentity.Stamp caster;
         final Vec3 center;
         final long landedAt,expiresAt;
+        final boolean automatic;
         int pulses;
         boolean revoked;
         Zone(Launch launch,Vec3 center) {
-            id=launch.id;viewer=launch.viewer;source=launch.source;caster=launch.caster;this.center=center;
+            automatic=launch.automatic;id=launch.id;viewer=launch.viewer;source=launch.source;caster=launch.caster;this.center=center;
             landedAt=caster.level().getGameTime();expiresAt=landedAt+DURATION_TICKS;
         }
         boolean valid() {
@@ -218,13 +232,11 @@ public final class AshEmberLanding {
                     &&caster.level().hasChunkAt(BlockPos.containing(center));
         }
         ServerPlayer viewer() {
-            ServerPlayer player=caster.level().getServer().getPlayerList().getPlayer(viewer);
-            return player!=null&&player.isAlive()&&!player.isRemoved()&&player.serverLevel()==caster.level()
-                    &&player.getGameProfile().getName().equals(caster.owner())?player:null;
+            return commander(caster,viewer);
         }
         boolean targetLegal(LivingEntity target) {
             return valid()&&enemy(source,target)&&target.getBoundingBox().getCenter().distanceToSqr(center)<=RADIUS*RADIUS
-                    &&CoordinatedMark.visible(viewer(),target)&&los(caster.level(),source,center,target.getBoundingBox().getCenter());
+                    &&(automatic?SkillAutocastPolicy.observable(viewer(),target):CoordinatedMark.visible(viewer(),target))&&los(caster.level(),source,center,target.getBoundingBox().getCenter());
         }
     }
     public record ZoneView(UUID id,UUID sourceUuid,String owner,Vec3 center,long landedAt,long expiresAt,int pulses) { }

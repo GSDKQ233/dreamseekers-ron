@@ -16,10 +16,13 @@ public enum WorldTreeModel {
     // Snapshots encode enum ordinals; append revisions and never repurpose a saved identity.
     BASE_V5(Branch.BASE, 5, "dream_anchor_base_v5", 376, 11, 11, 9),
     SHADOW_V5(Branch.SHADOW, 5, "dream_anchor_shadow_v5", 351, 11, 17, 9),
-    WIND_V5(Branch.WIND, 5, "dream_anchor_wind_v5", 393, 11, 18, 9);
+    WIND_V5(Branch.WIND, 5, "dream_anchor_wind_v5", 393, 11, 18, 9),
+    CONFLUENCE_V6(Branch.COMBINED, 6, "dream_anchor_confluence_v6", 495, 11, 18, 9);
 
     public static final WorldTreeModel CURRENT_BASE=BASE_V5, CURRENT_SHADOW=SHADOW_V5, CURRENT_WIND=WIND_V5;
-    public enum Branch { BASE, SHADOW, WIND }
+    public enum Branch { BASE, SHADOW, WIND, COMBINED }
+    public boolean hasShadow(){return branch==Branch.SHADOW||branch==Branch.COMBINED;}
+    public boolean hasWind(){return branch==Branch.WIND||branch==Branch.COMBINED;}
     public final Branch branch;
     public final int revision, count, width, height, depth;
     public final String structure;
@@ -37,9 +40,22 @@ public enum WorldTreeModel {
     }
     public void write(CompoundTag tag,String key){var d=new CompoundTag();d.putString("branch",branch.name());d.putInt("revision",revision);tag.put(key,d);}
     public static boolean newTarget(WorldTreeModel model){return model==CURRENT_SHADOW||model==CURRENT_WIND;}
+    /** Requests name only the branch to purchase. A second purchase never replaces the first. */
+    public static WorldTreeModel nextUpgrade(WorldTreeModel source, WorldTreeModel requested){
+        if(source==null||!newTarget(requested))return null;
+        if(source.branch==Branch.BASE)return requested;
+        if(source.branch==Branch.SHADOW&&requested==CURRENT_WIND
+                ||source.branch==Branch.WIND&&requested==CURRENT_SHADOW)return CONFLUENCE_V6;
+        return null;
+    }
     /** A saved paid operation finishes with the exact model revision written when it was bought. */
     public static boolean supportsSavedTarget(WorldTreeModel source,WorldTreeModel target){
-        if(source==null||source.branch!=Branch.BASE)return false;
+        if(source==null||target==null)return false;
+        if(target==CONFLUENCE_V6)return switch(source){
+            case LEGACY_SHADOW, SHADOW_V3, SHADOW_V5, WIND_V4, WIND_V5 -> true;
+            default -> false;
+        };
+        if(source.branch!=Branch.BASE)return false;
         if(newTarget(target))return true;
         if(source==LEGACY_BASE&&target==LEGACY_SHADOW)return true;
         return (source==LEGACY_BASE||source==BASE_V3)&&(target==SHADOW_V3||target==WIND_V4);

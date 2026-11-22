@@ -71,7 +71,7 @@ public final class StrengtheningEconomicBuildingGameTests {
         var c=((Unit)body).getCost();
         h.assertTrue(c.food==(p==Profile.MOTHER?180:400)&&c.wood==(p==Profile.MOTHER?0:250)
                 &&c.ore==(p==Profile.MOTHER?140:350)&&c.population==(p==Profile.MOTHER?4:8)
-                &&c.ticks==(p==Profile.MOTHER?900:1800),"unchanged exact recipe metadata "+p);
+                &&c.ticks==(p==Profile.MOTHER?720:1440),"unchanged exact recipe metadata "+p);
     }
     private record Budget(long at,double amount,double unit,double beforePartial,double afterPartial,int beforeBlocks,int afterBlocks,boolean nativeGoal) { }
     private static final class BudgetPlacement extends BuildingPlacement {

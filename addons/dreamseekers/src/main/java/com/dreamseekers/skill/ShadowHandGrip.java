@@ -175,13 +175,16 @@ public final class ShadowHandGrip {
             this.viewer=viewer.getUUID();commandRevision=source.rts().commandRevision;
             releaseAt=source.level().getGameTime()+WINDUP_TICKS;
         }
-        boolean valid() {
+        boolean valid() { return valid(false); }
+        boolean valid(boolean loadedOnly) {
             ServerPlayer player=caster.level().getServer().getPlayerList().getPlayer(viewer);
             return CHARGES.get(source)==this&&loaded(caster)&&loaded(target)&&!disabled(source)
                     &&source.rts().commandRevision==commandRevision&&!UnitServerEvents.hasPendingImmediateAction(source.getId())
                     &&player!=null&&player.isAlive()&&!player.isRemoved()&&player.serverLevel()==caster.level()
                     &&player.getGameProfile().getName().equals(caster.owner())&&enemy(source,target.entity())
-                    &&source.distanceToSqr(target.entity())<=RANGE*RANGE&&source.hasLineOfSight(target.entity())
+                    &&source.distanceToSqr(target.entity())<=RANGE*RANGE
+                    &&(loadedOnly?BeetleMotherCommandAura.hasLoadedLineOfSight(caster.level(),source,target.entity())
+                                 :source.hasLineOfSight(target.entity()))
                     &&CoordinatedMark.visible(player,target.entity());
         }
     }
@@ -211,6 +214,13 @@ public final class ShadowHandGrip {
     }
     public static int remainingWindupTicks(ShadowHandUnit source) {
         return active(source)?(int)Math.max(0,CHARGES.get(source).releaseAt-source.level().getGameTime()):0;
+    }
+    /** Read an already visible, same-owner caster only; the release tick itself can still apply the root. */
+    static boolean hasLiveWindupOn(ShadowHandUnit source,LivingEntity target) {
+        if(!server(source))return false;
+        Charge charge=CHARGES.get(source);
+        return charge!=null&&charge.target.entity()==target&&source.level().getGameTime()<=charge.releaseAt
+                &&charge.valid(true);
     }
     public static boolean hasRoot(LivingEntity target) { return remainingRootTicks(target)>0; }
     public static int remainingRootTicks(LivingEntity target) {

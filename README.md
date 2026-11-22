@@ -13,14 +13,14 @@
 | 组件 | 版本 |
 | --- | --- |
 | Reign of Nether 核心 | `1.5.0b-ore-mines.2-dreamseekers-api.65-repair3.1` |
-| 寻梦者附属 | `0.65.0-repair3.1-buildings.1` |
+| 寻梦者附属 | `0.65.0-repair3.1-autocast.1-alpha` |
 | 运行环境 | Minecraft 1.20.1 · Forge 47.4.0 · Java 17 |
 
 `repair3.1` 基于资料库的 `API65-repair3-source.zip`，隔离生产队列包的客户端处理，并移除波斯语固定键数的测试门槛。核心与附属必须精确配对，客户端与服务端也必须同时更新；不要与 `repair3`、`repair2` 或其他版本交叉混装。
 
 **本包是源码，不是可安装模组。** 当前范围见 [repair3.1 验收说明](docs/dreamseekers/REPAIR3.1.zh-CN.md)，前一版修复见 [repair3 修复说明](docs/dreamseekers/REPAIR3.zh-CN.md)。[安装与更新指南](docs/dreamseekers/INSTALL.zh-CN.txt)记载的是此前实测的 repair2，不是本候选的安装说明。
 
-本分支的 13 个建筑造型、旧档处理与配对要求见 [建筑造型接入说明](docs/dreamseekers/BUILDINGS-REVIEWED.zh-CN.md)。项目交接、已验证范围和待办见 [协作板](COLLABORATION.md)。
+本分支保留已接入的 13 个建筑造型，并新增影风共生世界树；旧档处理与配对要求见 [建筑造型接入说明](docs/dreamseekers/BUILDINGS-REVIEWED.zh-CN.md)。项目交接、已验证范围和待办见 [协作板](COLLABORATION.md)。
 
 ## 功能概览
 

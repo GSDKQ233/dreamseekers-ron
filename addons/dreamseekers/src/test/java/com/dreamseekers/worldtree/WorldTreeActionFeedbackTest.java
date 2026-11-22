@@ -136,10 +136,13 @@ class WorldTreeActionFeedbackTest {
         assertTrue(client.contains("currentIdentity=newer||cached==null||feedbackContext(cached.value()).equals(feedbackContext(snapshot))"));
         assertTrue(client.contains(".submitted(\n                new WorldTreeActionFeedback.Context"));
         assertTrue(client.contains("local.accept(feedbackContext(snapshot),snapshot.completed(),snapshot.status(),CLOCK.now())"));
-        assertEquals(2, client.split("WorldTreeActionFeedback.progress\\(s.phase\\(\\).name\\(\\),s.remaining\\(\\)\\)", -1).length - 1);
+        assertEquals(1, client.split("WorldTreeActionFeedback.progress\\(s.phase\\(\\).name\\(\\),s.remaining\\(\\)\\)", -1).length - 1);
         assertFalse(client.contains("2400-s.remaining()"));
         assertTrue(client.contains("appendFeedback(lines,p,s)"));
-        assertTrue(client.contains("appendFeedback(windLines,p,s)"));
+        // Both paths share the same feedback/progress renderer, but show work only for the active target.
+        assertTrue(client.contains("s.phase().pending()&&s.target()==next"));
+        assertTrue(client.contains("addUpgrade(result,p,s,WorldTreeModel.CURRENT_SHADOW,WorldTreePackets.Action.START,false)"));
+        assertTrue(client.contains("addUpgrade(result,p,s,WorldTreeModel.CURRENT_WIND,WorldTreePackets.Action.START_WIND,true)"));
         assertTrue(client.contains("states.clear();queries.clear();feedback.clear()"));
         String buildings = Files.readString(Path.of("addons/dreamseekers/src/main/java/com/dreamseekers/buildingability/BuildingAbilityClient.java"));
         assertEquals(2, buildings.split("statusMessage\\(packet.status\\(\\)\\)", -1).length - 1);

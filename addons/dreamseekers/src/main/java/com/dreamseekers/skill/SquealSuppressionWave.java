@@ -88,8 +88,10 @@ public final class SquealSuppressionWave {
         final SkillIdentity.Stamp caster;
         final UUID projectileId;
         final float baseDamage;
+        final ServerPlayer automaticViewer;
         boolean published,committed,spent,revoked;
-        Launch(SuppressionWaveProjectile projectile,Construction construction,float damage) {
+        Launch(SuppressionWaveProjectile projectile,Construction construction,float damage,boolean automatic) {
+            automaticViewer=automatic?construction.viewer:null;
             this.projectile=projectile;source=construction.source;caster=construction.caster;
             projectileId=projectile.getUUID();baseDamage=damage;
         }
@@ -100,11 +102,20 @@ public final class SquealSuppressionWave {
                     &&caster.level().getEntity(projectileId)==projectile&&caster.level().getEntity(projectile.getId())==projectile;
         }
         boolean valid() { return committed&&publishedValid(); }
+        boolean legalVictim(LivingEntity target) {
+            // A blocking unit or a secondary impact need not be the originally selected target.
+            return enemy(source,target)&&(automaticViewer==null||SkillAutocastPolicy.observable(automaticViewer,target)
+                    &&automaticViewer.isAlive()&&!automaticViewer.isRemoved()
+                    &&caster.level().getServer().getPlayerList().getPlayer(automaticViewer.getUUID())==automaticViewer);
+        }
     }
     /** Busy precedes constructor/Join callbacks and survives invalidation until this exact finally.
      * Only the authenticated service supplies commit, after actual accepted publication and revalidation.
      */
     static SkillResult cast(ServerPlayer viewer,ShadowSquealGhostUnit source,LivingEntity target,BooleanSupplier commit) {
+        return cast(viewer,source,target,commit,false);
+    }
+    static SkillResult cast(ServerPlayer viewer,ShadowSquealGhostUnit source,LivingEntity target,BooleanSupplier commit,boolean automatic) {
         if(viewer==null||commit==null||!server(source)||!source.isAlive()||source.isRemoved()||!source.isAddedToWorld()
                 ||source.getOwnerName().isBlank())return SkillResult.INVALID_SOURCE;
         if(BUSY.containsKey(source))return SkillResult.ALREADY_ACTIVE;
@@ -121,7 +132,7 @@ public final class SquealSuppressionWave {
             if(!construction.valid()) { projectile.discard();return SkillResult.INVALID_SOURCE; }
             float snapshot=source.getUnitAttackDamage(); // one legal launch snapshot AFTER real constructor callbacks
             if(!Float.isFinite(snapshot)||snapshot<=0||!construction.valid()) { projectile.discard();return SkillResult.INVALID_SOURCE; }
-            Launch launch=new Launch(projectile,construction,snapshot);FLIGHTS.put(projectile,launch);
+            Launch launch=new Launch(projectile,construction,snapshot,automatic);FLIGHTS.put(projectile,launch);
             try {
                 projectile.setOwner(source);projectile.setPos(source.getX(),source.getEyeY(),source.getZ());
                 Vec3 delta=target.getBoundingBox().getCenter().subtract(projectile.position());
@@ -145,7 +156,7 @@ public final class SquealSuppressionWave {
     }
     public static boolean canHit(SuppressionWaveProjectile projectile,Entity victim) {
         Launch launch=FLIGHTS.get(projectile);
-        return flightValid(projectile)&&victim instanceof LivingEntity target&&enemy(launch.source,target);
+        return flightValid(projectile)&&victim instanceof LivingEntity target&&launch.legalVictim(target);
     }
     public static void ownerChanged(SuppressionWaveProjectile projectile) {
         if(!server(projectile))return;
@@ -171,7 +182,7 @@ public final class SquealSuppressionWave {
             damage=target.damageSources().thrown(launch.projectile,launch.source);
         }
         boolean targetLegal() {
-            return loaded(target)&&enemy(launch.source,target.entity())&&impactLos(launch,origin,target.entity())
+            return loaded(target)&&launch.legalVictim(target.entity())&&impactLos(launch,origin,target.entity())
                     &&(primary||target.entity().getBoundingBox().getCenter().distanceToSqr(origin)<=SPLASH_RADIUS*SPLASH_RADIUS);
         }
         boolean legal() { return !revoked&&!reported&&entered&&launch.valid()&&targetLegal(); }
@@ -223,7 +234,7 @@ public final class SquealSuppressionWave {
         if(launch==null||launch.spent||!launch.valid())return;
         launch.spent=true;
         try {
-            if(!(hit.getEntity() instanceof LivingEntity target)||!enemy(launch.source,target))return;
+            if(!(hit.getEntity() instanceof LivingEntity target)||!launch.legalVictim(target))return;
             Vec3 origin=hit.getLocation();
             if(!Double.isFinite(origin.x)||!Double.isFinite(origin.y)||!Double.isFinite(origin.z))return;
             Impact primary=new Impact(launch,target,origin,true);
@@ -231,13 +242,13 @@ public final class SquealSuppressionWave {
             if(!primary.receipt||!launch.valid()||!primary.target.identityValid()
                     ||!primary.target.entity().getUUID().equals(primary.target.uuid())||!launch.source.canHarmOwner(primary.target.owner()))return;
             List<SkillIdentity.Stamp> candidates=launch.caster.level().getEntitiesOfClass(LivingEntity.class,
-                    new AABB(origin,origin).inflate(SPLASH_RADIUS),candidate->candidate!=target&&enemy(launch.source,candidate)
+                    new AABB(origin,origin).inflate(SPLASH_RADIUS),candidate->candidate!=target&&launch.legalVictim(candidate)
                             &&candidate.getBoundingBox().getCenter().distanceToSqr(origin)<=SPLASH_RADIUS*SPLASH_RADIUS&&impactLos(launch,origin,candidate))
                     .stream().sorted(Comparator.comparingDouble((LivingEntity candidate)->candidate.getBoundingBox().getCenter().distanceToSqr(origin))
                             .thenComparing(candidate->candidate.getUUID().toString())).limit(SECONDARY_LIMIT).map(SkillIdentity::capture).toList();
             for(SkillIdentity.Stamp candidate:candidates) {
                 if(!launch.valid())break;
-                if(!loaded(candidate)||!enemy(launch.source,candidate.entity())
+                if(!loaded(candidate)||!launch.legalVictim(candidate.entity())
                         ||candidate.entity().getBoundingBox().getCenter().distanceToSqr(origin)>SPLASH_RADIUS*SPLASH_RADIUS
                         ||!impactLos(launch,origin,candidate.entity()))continue;
                 hurt(new Impact(launch,candidate.entity(),origin,false),null);

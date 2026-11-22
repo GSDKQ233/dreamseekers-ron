@@ -38,9 +38,11 @@ public interface SkillAmplification {
                 || !DreamSpecialistResearch.ownerSupported(source.getOwnerName(),false)) return 0;
         int tier=LightResonanceResearch.tier(source.getOwnerName(),false);
         if(tier<1 || tier>2) return 0;
+        // A dais's origin is a corner. Use its footprint and original base-layer height,
+        // just like its pulse; retain the same 12-block three-dimensional boundary.
         boolean connected=ResonanceNetwork.network(level,source.getOwnerName()).active().stream()
-                .anyMatch(p->body.distanceToSqr(p.originPos.getX()+.5,p.originPos.getY()+.5,p.originPos.getZ()+.5)
-                        <=(double)RANGE*RANGE);
+                .anyMatch(p->com.dreamseekers.building.DreamFootprintRange.pointWithin(
+                        p,body.getX(),body.getY(),body.getZ(),RANGE));
         return connected?tier:0;
     }
     static boolean extensionActive(SkillUnit source,UnitSkill skill) {

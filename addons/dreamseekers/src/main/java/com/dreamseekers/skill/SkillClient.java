@@ -138,11 +138,17 @@ public final class SkillClient {
         message("ability.dreamseekers."+skill.id()+".select");
     }
 
-    public static boolean autocastEnabled(SkillUnit source,UnitSkill skill) {
-        View view=currentView(source,skill);return view!=null&&view.autocastEnabled();
+    /** Unknown until this unit's owner receives a fresh snapshot; never guess from the default. */
+    @Nullable static Boolean autocastPreference(SkillUnit source, UnitSkill skill) {
+        View view = currentView(source, skill);
+        return view == null ? null : view.autocastEnabled();
     }
+    public static boolean autocastEnabled(SkillUnit source,UnitSkill skill) {
+        return Boolean.TRUE.equals(autocastPreference(source, skill));
+    }
+    static boolean choosingTarget() { return armedSource != null; }
     public static void rightClick(SkillUnit source,UnitSkill skill) {
-        if(isArmed(source,skill)) { cancel();return; }
+        if(choosingTarget()) { cancel();return; }
         if(!skill.supportsAutocast()) { cancel();return; }
         if(!owned(source)||!(MC.screen instanceof TopdownGui)||!OrthoviewClientEvents.isEnabled())return;
         View view=currentView(source,skill);

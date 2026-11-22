@@ -2,8 +2,6 @@
 package com.dreamseekers.building;
 
 import com.dreamseekers.worldtree.DreamAnchorPlacement;
-import com.dreamseekers.worldtree.WorldTreeModel;
-import com.dreamseekers.worldtree.WorldTreeState;
 import com.solegendary.reignofnether.building.BuildingClientEvents;
 import com.solegendary.reignofnether.building.BuildingPlacement;
 import com.solegendary.reignofnether.building.BuildingServerEvents;
@@ -36,22 +34,13 @@ public final class DreamBuildingMilestones {
                 // The server also checks attachment and supported lifecycle state.
                 laboratory |= client || lab.available();
             } else if (placement instanceof DreamAnchorPlacement anchor) {
-                if (client) {
-                    tree |= anchor.clientInstance() != null && upgraded(anchor.model());
-                } else {
-                    var state = anchor.tree();
-                    // An opaque future descriptor may intentionally have no decoded model.
-                    tree |= state.supported && state.phase == WorldTreeState.Phase.COMPLETE
-                            && upgraded(state.model) && anchor.productionAvailable();
-                }
+                // A second paid upgrade never removes the first standing branch. Unsupported
+                // or still-base placements (including a first purchase in flight) don't count.
+                tree |= anchor.hasStandingUpgrade() && (client || anchor.productionAvailable());
             }
             if (tree && laboratory) return Missing.NONE;
         }
         return laboratory ? Missing.UPGRADED_TREE : Missing.LABORATORY;
     }
 
-    private static boolean upgraded(WorldTreeModel model) {
-        return model != null && (model.branch == WorldTreeModel.Branch.SHADOW
-                || model.branch == WorldTreeModel.Branch.WIND);
-    }
 }
