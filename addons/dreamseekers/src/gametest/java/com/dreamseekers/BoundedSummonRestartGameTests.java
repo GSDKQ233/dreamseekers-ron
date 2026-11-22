@@ -54,7 +54,7 @@ public final class BoundedSummonRestartGameTests {
   var level=h.getLevel();
   try(var peer=new PassiveIncomePeer(level,OWNER)) {
    var request=new SkillRequest(UnitSkill.MOTHER_BROOD,caster.getId(),caster.getUUID(),caster.rts().skills().revision(),caster.getId(),caster.getUUID());
-   var result=SkillService.request(peer.actor,request);
+   long revision=account.revision;var result=SkillService.request(peer.actor,request);
    String diagnostic="result="+result+" casterAdded="+caster.isAddedToWorld()+" casterAlive="+caster.isAlive()
        +" casterRemoved="+caster.isRemoved()+" casterTick="+caster.tickCount+" casterById="+(level.getEntity(caster.getId())==caster)
        +" casterByUuid="+(level.getEntity(caster.getUUID())==caster)+" casterOwner="+caster.getOwnerName()
@@ -65,7 +65,8 @@ public final class BoundedSummonRestartGameTests {
        +" pop="+UnitServerEvents.getCurrentPopulation(OWNER)+" supply="+com.solegendary.reignofnether.building.BuildingServerEvents.getTotalPopulationSupply(OWNER)
        +" shadow="+account.extra.get(DreamPassiveEconomy.SHADOW)+" sourcePos="+caster.position()+" stageTime="+level.getGameTime();
    System.out.println("BOUNDED_SUMMONS_PREPARE_CAST_DIAGNOSTIC "+diagnostic);
-   h.assertTrue(result==SkillResult.SUCCESS,"real paid group before normal save: "+diagnostic);
+   h.assertTrue(result==SkillResult.SUCCESS,"real group before normal save: "+diagnostic);
+   h.assertTrue(account.revision==revision&&account.extra.get(DreamPassiveEconomy.SHADOW)==500,"birth left the original balance and ledger revision unchanged");
   }
   var children=UnitServerEvents.getAllUnits().stream().filter(e->e instanceof Unit u&&OWNER.equals(u.getOwnerName())&&BoundedSummons.isTemporary(e)).toList();
   h.assertTrue(children.size()==2&&BoundedSummons.activeCount(OWNER)==2,"two real live children at save checkpoint");
@@ -85,7 +86,7 @@ public final class BoundedSummonRestartGameTests {
    var caster=(BeetleMotherUnit)level.getEntity(tag.getUUID("caster"));var account=ExtendedResourcesSync.account(OWNER);long now=level.getGameTime();
    h.assertTrue(now>=tag.getLong("now")&&now<tag.getLong("deadline"),"normal world time advanced but original cooldown still live");
    h.assertTrue(caster.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==tag.getLong("deadline")-now,"cooldown exactly original deadline minus loaded clock");
-   h.assertTrue(account!=null&&account.accountEpoch.equals(tag.getUUID("epoch"))&&account.extra.get(DreamPassiveEconomy.SHADOW)==tag.getInt("shadow"),"sameaccount and spentshadow survived without refund");
+   h.assertTrue(account!=null&&account.accountEpoch.equals(tag.getUUID("epoch"))&&account.extra.get(DreamPassiveEconomy.SHADOW)==tag.getInt("shadow"),"same account and unchanged shadow balance survive restart");
    h.assertTrue(level.getEntity(tag.getUUID("child0"))==null&&level.getEntity(tag.getUUID("child1"))==null&&BoundedSummons.activeCount(OWNER)==0,"both saved temporary children absent, no recreated leases");
    h.assertTrue(UnitServerEvents.getAllUnits().stream().noneMatch(e->e instanceof Unit u&&OWNER.equals(u.getOwnerName())&&BoundedSummons.isTemporary(e)),"no temporary child in population roster");
    h.assertTrue(!BoundedSummons.isTemporary(level.getEntity(tag.getUUID("ordinary"))),"ordinary paid same-type unit retained");

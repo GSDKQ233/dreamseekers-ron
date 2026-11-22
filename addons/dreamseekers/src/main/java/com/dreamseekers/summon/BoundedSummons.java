@@ -3,12 +3,12 @@ package com.dreamseekers.summon;
 
 import com.dreamseekers.DreamseekersMod;
 import com.dreamseekers.economy.DreamFactionAccess;
-import com.dreamseekers.economy.DreamPassiveEconomy;
 import com.dreamseekers.skill.*;
 import com.dreamseekers.unit.*;
 import com.solegendary.reignofnether.building.BuildingServerEvents;
 import com.solegendary.reignofnether.player.PlayerServerEvents;
-import com.solegendary.reignofnether.resources.*;
+import com.solegendary.reignofnether.resources.ExtendedResourcesSync;
+import com.solegendary.reignofnether.resources.Resources;
 import com.solegendary.reignofnether.resources.kill.RtsKillValueClaims;
 import com.solegendary.reignofnether.unit.UnitServerEvents;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
@@ -32,7 +32,7 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-/** Temporary, paid, bounded births. Only exact in-memory reservations may publish marked entities.
+/** Temporary, population-limited births. Only exact in-memory reservations may publish marked entities.
  * Saved markers are tombstones, never permission to recreate a lease or extend its lifetime. */
 @Mod.EventBusSubscriber(modid=DreamseekersMod.MOD_ID)
 public final class BoundedSummons {
@@ -62,7 +62,7 @@ public final class BoundedSummons {
         final long expires;
         final List<Mob> bodies=new ArrayList<>();
         final Map<Mob,SkillIdentity.Stamp> children=new IdentityHashMap<>();
-        boolean paid,committed,retired;
+        boolean confirmed,committed,retired;
         Group(ServerPlayer actor,SkillUnit source,UnitSkill skill,Resources account) {
             this.actor=actor;this.source=source;this.skill=skill;this.account=account;
             accountEpoch=account.accountEpoch;caster=SkillIdentity.capture(source.mob());
@@ -80,7 +80,6 @@ public final class BoundedSummons {
         }
     }
     public static boolean isTemporary(Entity entity){return entity!=null&&entity.getPersistentData().contains(MARKER);}
-    public static int shadowCost(UnitSkill skill){return skill==UnitSkill.MOTHER_BROOD?30:skill==UnitSkill.WEEPING_ECHOES?40:-1;}
     private static boolean matches(SkillUnit source,UnitSkill skill) {
         return skill==UnitSkill.MOTHER_BROOD&&source instanceof BeetleMotherUnit
             ||skill==UnitSkill.WEEPING_ECHOES&&source instanceof WeepingSquealGhostUnit;
@@ -118,8 +117,8 @@ public final class BoundedSummons {
         }
         return false;
     }
-    /** Commit callback must perform final SkillService authorization, then pay(), then SkillState.commit().
-     * pay() has no callbacks; after it succeeds only the pure skill-state write may precede return true. */
+    /** After both join events, SkillService rechecks the request, confirms the reservation, then starts
+     * the cooldown. Never publish a group for a stale request or a partial pair. */
     public static SkillResult cast(ServerPlayer actor,SkillUnit source,UnitSkill skill,BooleanSupplier commit) {
         if(!actorValid(actor,source)||!matches(source,skill)||commit==null||isTemporary(source.mob()))return SkillResult.INVALID_SOURCE;
         prune();
@@ -129,8 +128,7 @@ public final class BoundedSummons {
         long occupied=GROUPS.stream().filter(g->!g.retired&&g.caster.owner().equals(owner)).mapToLong(g->g.bodies.stream().filter(g::childValid).count()).sum();
         if(occupied+COUNT>OWNER_CAP)return SkillResult.CAP_REACHED;
         Resources account=ExtendedResourcesSync.account(owner);
-        if(account==null||!account.extendedStateSupported()||!DreamFactionAccess.allows(PlayerServerEvents.getRTSPlayer(owner)))return SkillResult.NOT_OWNER;
-        if(account.extra.getOrDefault(DreamPassiveEconomy.SHADOW,0)<shadowCost(skill))return SkillResult.INSUFFICIENT_RESOURCES;
+        if(account==null||account.accountEpoch==null||!account.extendedStateSupported()||!DreamFactionAccess.allows(PlayerServerEvents.getRTSPlayer(owner)))return SkillResult.NOT_OWNER;
         Group group=new Group(actor,source,skill,account);PENDING.put(source,group);GROUPS.add(group);
         try {
             for(int i=0;i<COUNT;i++) {
@@ -148,10 +146,9 @@ public final class BoundedSummons {
                 if(!group.ownerValid()||!group.caster.level().addFreshEntity(body)||!group.childValid(body))return SkillResult.SPAWN_FAILED;
             }
             if(!group.ownerValid()||!populationFits(group)||group.bodies.stream().anyMatch(b->!group.childValid(b)||!safe(group.caster.level(),b)))return SkillResult.SPAWN_FAILED;
-            if(!commit.getAsBoolean()||!group.paid)return SkillResult.REPLAY;
+            if(!commit.getAsBoolean()||!group.confirmed)return SkillResult.REPLAY;
             group.committed=true;
             for(Mob body:group.bodies)body.setNoAi(false);
-            ExtendedResourcesSync.send(actor);
             return SkillResult.SUCCESS;
         } finally {
             PENDING.remove(source,group);
@@ -161,15 +158,15 @@ public final class BoundedSummons {
             }
         }
     }
-    /** Only an exact currently pending full group may buy; no arbitrary owner/amount/receipt inputs. */
-    public static boolean pay(SkillUnit source,UnitSkill skill) {
+    /** Keep the original actor, match/account epoch, full pair and supply checks at commit.
+     * These spells use population, not a resource transaction (even a zero debit advances the ledger). */
+    public static boolean confirmReservation(SkillUnit source,UnitSkill skill) {
         Group group=PENDING.get(source);
-        if(group==null||group.skill!=skill||group.paid||group.committed||group.bodies.size()!=COUNT
+        if(group==null||group.skill!=skill||group.confirmed||group.committed||group.bodies.size()!=COUNT
                 ||!group.ownerValid()||!actorValid(group.actor,source)||!populationFits(group)
                 ||group.bodies.stream().anyMatch(b->!group.childValid(b)))return false;
-        var result=ResourceTransaction.exchange(group.caster.level().getServer(),group.account,group.accountEpoch,group.account.revision,
-            new ResourceTransaction.Cost(0,0,0,Map.of(DreamPassiveEconomy.SHADOW,shadowCost(skill))),ResourceTransaction.Cost.ZERO);
-        group.paid=result.applied();return group.paid;
+        group.confirmed=true;
+        return true;
     }
     private static void retire(Group group) {
         if(group.retired)return;group.retired=true;GROUPS.remove(group);

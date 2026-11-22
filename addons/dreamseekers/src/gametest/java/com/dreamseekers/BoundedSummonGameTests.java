@@ -46,6 +46,7 @@ public final class BoundedSummonGameTests {
   }
   SkillRequest request(SkillUnit source){var skill=SkillService.skillFor(source);return new SkillRequest(skill,source.mob().getId(),source.mob().getUUID(),source.rts().skills().revision(),source.mob().getId(),source.mob().getUUID());}
   SkillResult cast(SkillUnit source){return SkillService.request(peer.actor,request(source));}
+  CompoundTag ledger(){var tag=new CompoundTag();tag.putInt("food",account.food);tag.putInt("wood",account.wood);tag.putInt("ore",account.ore);tag.putInt("emerald",account.emerald);account.writeExtended(tag);return tag;}
   List<Mob> children(){return UnitServerEvents.getAllUnits().stream().filter(e->e instanceof Mob&&e instanceof Unit u&&u.getOwnerName().equals(owner)&&BoundedSummons.isTemporary(e)).map(e->(Mob)e).toList();}
   void guard(Consumer<EntityJoinLevelEvent> consumer){guards.add(consumer);MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST,consumer);}
   void at(int tick,Runnable run){h.runAtTickTime(tick,()->{try{run.run();}catch(RuntimeException|Error e){close();throw e;}});}
@@ -57,19 +58,21 @@ public final class BoundedSummonGameTests {
  }
  @AfterBatch(batch=BATCH) public static void cleanup(net.minecraft.server.level.ServerLevel level){for(F f:List.copyOf(FIXTURES))f.close();}
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=80)
- public static void paidMotherReplayPopulationAndCaptureCleanup(GameTestHelper h){
+ public static void zeroShadowMotherReplayPopulationAndCaptureCleanup(GameTestHelper h){
   F f=new F(h,"mother");SkillUnit source=f.source(true,0);int pop=UnitServerEvents.getCurrentPopulation(f.owner);SkillRequest old=f.request(source);
-  h.assertTrue(SkillService.request(f.peer.actor,old)==SkillResult.SUCCESS,"real authenticated mother summon succeeds");
+  f.account.extra.put(DreamPassiveEconomy.SHADOW,0);var before=f.ledger();
+  h.assertTrue(SkillService.request(f.peer.actor,old)==SkillResult.SUCCESS,"real authenticated mother summon at zero shadow");
   h.assertTrue(f.children().size()==2&&BoundedSummons.activeCount(f.owner)==2,"exactly two live leases");
-  h.assertTrue(f.account.extra.get(DreamPassiveEconomy.SHADOW)==470,"exactly30shadow debit");
+  h.assertTrue(f.ledger().equals(before)&&source.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==900,"cooldown starts without any resource or ledger revision change");
   h.assertTrue(UnitServerEvents.getCurrentPopulation(f.owner)==pop+4,"two beetles immediately consume native population");
   h.assertTrue(f.children().stream().allMatch(RtsKillValueClaims::isFree),"all temporary births permanently ineligible for kill value");
-  h.assertTrue(SkillService.request(f.peer.actor,old)==SkillResult.REPLAY&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==470,"replay no charge or birth");
+  h.assertTrue(SkillService.request(f.peer.actor,old)==SkillResult.REPLAY&&f.cast(source)==SkillResult.COOLDOWN
+      &&f.children().size()==2&&f.ledger().equals(before),"replay and fresh duplicate cannot add children or mutate the ledger");
   var child=f.children().get(0);((Unit)child).setOwnerName("Summon_other");((Unit)child).setOwnerName(f.owner);
   f.at(4,()->{h.assertTrue(child.isRemoved(),"same-tick child capture ABA invalidates lease");
    source.setOwnerName("Summon_other");source.setOwnerName(f.owner);
   });
-  f.at(8,()->{h.assertTrue(f.children().isEmpty()&&BoundedSummons.activeCount(f.owner)==0&&UnitServerEvents.getCurrentPopulation(f.owner)==pop,"caster capture ABA clears remainder and actual population without refund");h.assertTrue(f.account.extra.get(DreamPassiveEconomy.SHADOW)==470,"capture no refund");f.close();h.succeed();});
+  f.at(8,()->{h.assertTrue(f.children().isEmpty()&&BoundedSummons.activeCount(f.owner)==0&&UnitServerEvents.getCurrentPopulation(f.owner)==pop,"caster capture ABA clears the remaining leases and population");h.assertTrue(f.account.extra.get(DreamPassiveEconomy.SHADOW)==0,"capture does not credit unspent shadow");f.close();h.succeed();});
  }
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=80)
  public static void secondBirthCancellationRollsBackEveryBodyAndNoCost(GameTestHelper h){
@@ -81,26 +84,36 @@ public final class BoundedSummonGameTests {
   f.close();h.succeed();
  }
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=80)
- public static void reentrantJoinCannotDoubleSpendOrReserveMoreChildren(GameTestHelper h){
+ public static void weepingEchoesNeedsNoShadowEntryAndReentrantJoinCannotReserveMoreChildren(GameTestHelper h){
   F f=new F(h,"reenter");var source=f.source(false,0);var other=f.source(true,6);int[] attempts={0};
+  f.account.extra.remove(DreamPassiveEconomy.SHADOW);var before=f.ledger();
   f.guard(e->{if(!e.getLevel().isClientSide()&&BoundedSummons.isTemporary(e.getEntity())&&e.getEntity() instanceof Unit u&&u.getOwnerName().equals(f.owner)){
    attempts[0]++;h.assertTrue(f.cast(other)==SkillResult.ALREADY_ACTIVE,"owner construction lock rejects reentrant other caster");
   }});
   h.assertTrue(f.cast(source)==SkillResult.SUCCESS&&attempts[0]==2,"two actual join callbacks exercised");
-  h.assertTrue(f.children().size()==2&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==460,"only one paid ghost pair");
+  h.assertTrue(f.children().size()==2&&source.rts().skills().cooldownTicks(UnitSkill.WEEPING_ECHOES)==900
+      &&!f.account.extra.containsKey(DreamPassiveEconomy.SHADOW)&&f.ledger().equals(before),"one ghost pair with a full cooldown, without creating a shadow balance or touching the ledger");
   h.assertTrue(other.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==0,"reentrant rejected caster remains ready");f.close();h.succeed();
  }
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=80)
- public static void resourceAndPopulationGatesAreAllOrNothing(GameTestHelper h){
+ public static void zeroShadowStillRequiresPopulationAndALiveAccount(GameTestHelper h){
   F f=new F(h,"gates");var source=f.source(true,0);int pop=UnitServerEvents.getCurrentPopulation(f.owner);
-  f.account.extra.put(DreamPassiveEconomy.SHADOW,29);h.assertTrue(f.cast(source)==SkillResult.INSUFFICIENT_RESOURCES&&f.children().isEmpty(),"insufficientshadow no birth");
-  f.account.extra.put(DreamPassiveEconomy.SHADOW,500);ResearchServerEvents.removeCheat(f.owner,"foodforthought");
+  f.account.extra.remove(DreamPassiveEconomy.SHADOW);var before=f.ledger();
+  ResourcesServerEvents.resourcesList.remove(f.account);
+  try{h.assertTrue(f.cast(source)==SkillResult.NOT_OWNER&&f.children().isEmpty(),"free summons still require a live match account");}
+  finally{ResourcesServerEvents.resourcesList.add(f.account);}
+  ResearchServerEvents.removeCheat(f.owner,"foodforthought");
   h.assertTrue(f.cast(source)==SkillResult.CAP_REACHED&&f.children().isEmpty()&&UnitServerEvents.getCurrentPopulation(f.owner)==pop,"no supply rejects whole group");
-  h.assertTrue(f.account.extra.get(DreamPassiveEconomy.SHADOW)==500&&source.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==0,"no charges on insufficientpop");f.close();h.succeed();
+  h.assertTrue(f.ledger().equals(before)&&source.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==0,"failed admissions leave ledger and cooldown untouched");
+  ResearchServerEvents.addCheat(f.owner,"foodforthought");int[] joins={0};
+  f.guard(e->{if(BoundedSummons.isTemporary(e.getEntity())&&e.getEntity() instanceof Unit u&&f.owner.equals(u.getOwnerName())&&++joins[0]==2)f.account.resetExtendedAccount();});
+  h.assertTrue(f.cast(source)==SkillResult.SPAWN_FAILED&&joins[0]==2,"a match reset during the second real join invalidates the old reservation");
+  h.assertTrue(f.children().isEmpty()&&UnitServerEvents.getCurrentPopulation(f.owner)==pop&&source.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==0,"no partial pair, stale cooldown or leaked population after account replacement");
+  f.close();h.succeed();
  }
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=80)
  public static void markedSavedBodyCannotPublishAndOrdinaryBodyUnaffected(GameTestHelper h){
-  F f=new F(h,"save");var source=f.source(false,0);h.assertTrue(f.cast(source)==SkillResult.SUCCESS,"paid ghost group");
+  F f=new F(h,"save");var source=f.source(false,0);h.assertTrue(f.cast(source)==SkillResult.SUCCESS,"committed ghost group");
   var original=f.children().get(0);CompoundTag tag=new CompoundTag();original.saveWithoutId(tag);original.discard();
   Mob loaded=DreamseekersMod.SHADOW_GHOST_UNIT.get().create(h.getLevel());loaded.load(tag);
   h.assertTrue(BoundedSummons.isTemporary(loaded)&&!h.getLevel().addFreshEntity(loaded),"saved temporary body rejected without a runtime birth reservation");
@@ -109,17 +122,17 @@ public final class BoundedSummonGameTests {
   h.assertTrue(h.getLevel().addFreshEntity(ordinary)&&!BoundedSummons.isTemporary(ordinary),"ordinary same-type paid unit is not removed");f.close();h.succeed();
  }
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=660)
- public static void realSixHundredTickLifetimeNoRefund(GameTestHelper h){
+ public static void realSixHundredTickLifetimeNeverAwardsShadow(GameTestHelper h){
   F f=new F(h,"life");var source=f.source(true,0);h.assertTrue(f.cast(source)==SkillResult.SUCCESS,"mother group before realtimer");
   var born=List.copyOf(f.children());born.forEach(b->b.setNoAi(true));
   f.at(590,()->h.assertTrue(born.stream().allMatch(Entity::isAlive)&&BoundedSummons.activeCount(f.owner)==2,"no premature expiration before600ticks"));
-  f.at(610,()->{h.assertTrue(born.stream().allMatch(Entity::isRemoved)&&BoundedSummons.activeCount(f.owner)==0,"both children expire after actual600server ticks");h.assertTrue(f.account.extra.get(DreamPassiveEconomy.SHADOW)==470,"expiration does not refund spentshadow");f.close();h.succeed();});
+  f.at(610,()->{h.assertTrue(born.stream().allMatch(Entity::isRemoved)&&BoundedSummons.activeCount(f.owner)==0,"both children expire after actual600server ticks");h.assertTrue(f.account.extra.get(DreamPassiveEconomy.SHADOW)==500,"expiration does not create shadow");f.close();h.succeed();});
  }
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=80)
  public static void ownerCapAndPendingChildCaptureNeverGrantFreeSoldiers(GameTestHelper h){
   F f=new F(h,"cap");var first=f.source(true,-5);var second=f.source(false,5);var third=f.source(true,0);
   h.assertTrue(f.cast(first)==SkillResult.SUCCESS&&f.cast(second)==SkillResult.SUCCESS,"two caster groups share four slots");
-  h.assertTrue(f.cast(third)==SkillResult.CAP_REACHED&&BoundedSummons.activeCount(f.owner)==4&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==430,"third group rejected at ownercap withoutcharge");
+  h.assertTrue(f.cast(third)==SkillResult.CAP_REACHED&&BoundedSummons.activeCount(f.owner)==4&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==500,"third group rejected at owner cap; first two free groups never debited existing shadow");
   f.close();h.succeed();
  }
  @GameTest(templateNamespace="dreamseekers_summons",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=80)
@@ -148,7 +161,7 @@ public final class BoundedSummonGameTests {
  }
  private static void interruptedBuildingBudget(GameTestHelper h,boolean motherDeath){
   F f=new F(h,motherDeath?"breakdeath":"breakcapture");var source=f.source(motherDeath,0);
-  h.assertTrue(f.cast(source)==SkillResult.SUCCESS,"real paid children for buildingcallback boundary");var child=f.children().get(0);
+  h.assertTrue(f.cast(source)==SkillResult.SUCCESS,"real summoned children for building callback boundary");var child=f.children().get(0);
   var blocks=new ArrayList<com.solegendary.reignofnether.building.BuildingBlock>();var origin=f.center.offset(0,1,7);
   for(int x=0;x<5;x++)for(int z=0;z<4;z++){var pos=origin.offset(x,0,z);h.getLevel().setBlock(pos,Blocks.STONE_BRICKS.defaultBlockState(),2);blocks.add(new com.solegendary.reignofnether.building.BuildingBlock(pos,Blocks.STONE_BRICKS.defaultBlockState()));}
   var target=new BreakProbe(h.getLevel(),origin,blocks);com.solegendary.reignofnether.building.BuildingServerEvents.getBuildings().add(target);target.onBuilt();
@@ -188,7 +201,7 @@ public final class BoundedSummonGameTests {
 
  private static void finalDamageRevocation(GameTestHelper h,boolean parentDies){
   F f=new F(h,parentDies?"lateparent":"latechild");var source=f.source(parentDies,0);
-  h.assertTrue(f.cast(source)==SkillResult.SUCCESS,"real paid children before late Forge callback");var child=f.children().get(0);
+  h.assertTrue(f.cast(source)==SkillResult.SUCCESS,"real summoned children before late Forge callback");var child=f.children().get(0);
   String enemy=f.owner+"Enemy";PlayerServerEvents.rtsPlayers.add(RTSPlayer.getNewBot(enemy,DreamseekersMod.DREAMSEEKERS));ResourcesServerEvents.resourcesList.add(new Resources(enemy,0,0,0));
   var victim=com.solegendary.reignofnether.registrars.EntityRegistrar.ZOMBIE_UNIT.get().create(h.getLevel());victim.setOwnerName(enemy);victim.moveTo(f.center.getX()+7,100,f.center.getZ()+7);victim.setNoAi(true);h.assertTrue(h.getLevel().addFreshEntity(victim),"real enemyvictim");
   var control=com.solegendary.reignofnether.registrars.EntityRegistrar.ZOMBIE_UNIT.get().create(h.getLevel());control.setOwnerName(enemy);control.moveTo(f.center.getX()+7,100,f.center.getZ()-7);control.setNoAi(true);h.assertTrue(h.getLevel().addFreshEntity(control),"separate real positivecontrol");

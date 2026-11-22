@@ -208,12 +208,14 @@ public final class HandBondGameTests {
         var probe=new ActiveSkillEconomicGameTests.ActiveSkillEconomicSubscriber(h);probe.watch(l,r);f.listeners.add(probe);
         boolean[] reentered={false};Object healOnPartnerDeath=new Object(){@net.minecraftforge.eventbus.api.SubscribeEvent public void death(net.minecraftforge.event.entity.living.LivingDeathEvent event){if(event.getEntity()==r){reentered[0]=true;l.heal(3);}}};
         net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(healOnPartnerDeath);f.listeners.add(healOnPartnerDeath);
-        h.startSequence().thenIdle(30).thenExecute(()->{f.paired(l,r);r.setHealth(.5f);l.setHealth(100);l.setAbsorptionAmount(0);l.getAttribute(Attributes.ARMOR).setBaseValue(0);l.getAttribute(AttributeRegistrar.MAGIC_DAMAGE_RESIST.get()).setBaseValue(0);
+        h.startSequence().thenIdle(30).thenExecute(()->{
+            // The partner must die from sharing the first pulse, not from its own area hit.
+            r.setPos(l.getX()+8,l.getY(),l.getZ());f.paired(l,r);r.setHealth(.5f);l.setHealth(100);l.setAbsorptionAmount(0);l.getAttribute(Attributes.ARMOR).setBaseValue(0);l.getAttribute(AttributeRegistrar.MAGIC_DAMAGE_RESIST.get()).setBaseValue(0);
             var request=new com.dreamseekers.skill.SkillGroundRequest(com.dreamseekers.skill.UnitSkill.AARONCOS_RIGHT_VORTEX,caster.getId(),caster.getUUID(),caster.rts().skills().revision(),f.center.offset(0,0,-16));
             h.assertTrue(com.dreamseekers.skill.SkillService.requestGround(enemyPeer.actor,request)==com.dreamseekers.skill.SkillResult.SUCCESS&&enemyAccount.extra.get(DreamPassiveEconomy.SHADOW)==60,"actual authenticated enemy vortex paid40, no ordinary-mob fallback");
         }).thenIdle(23).thenExecute(()->{
             h.assertTrue(!r.isAlive()&&l.isAlive()&&probe.count(r)==1&&probe.count(l)==0,"first actual vortex pulse shared death confirms only partner once on later tick");
-            h.assertTrue(reentered[0]&&com.dreamseekers.skill.AaroncosVortex.negative(l)!=null,"real partner death callback healing cannot erase original positive exact HP-write receipt/slow");f.hp(l,101.5f,"original vortex2 minus partner remaining0.5 then separate callback healing3");
+            h.assertTrue(reentered[0]&&com.dreamseekers.skill.AaroncosVortex.negative(l)!=null,"real partner death callback healing cannot erase original positive exact HP-write receipt/slow");f.hp(l,98.5f,"five-point pulse: partner takes its remaining 0.5, target loses 4.5 and is healed 3 by the separate callback");
             h.assertTrue(com.solegendary.reignofnether.resources.kill.RtsKillValueClaims.isClaimed(r)&&enemyAccount.ore==1,"original exact source claim pays actual enemy account once");
             h.assertTrue(probe.fatal.get(r.getUUID()).getEntity()==caster&&com.dreamseekers.skill.AaroncosVortex.isPulse(probe.fatal.get(r.getUUID())),"fatal sharing retains original dedicated vortex DamageSource identity");
             h.assertTrue(f.bond(l)!=null&&f.bond(l).missing==2,"shared economic kill is also authentic pending combat replacement");

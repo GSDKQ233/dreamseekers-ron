@@ -77,22 +77,22 @@ public final class StrengtheningGameTests {
         close(h,target.getAttacksPerSecond(),.8*(1+bonus),why+" actual APS getter");
     }
 
-    @GameTest(templateNamespace="dreamseekers_strengthening",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=120)
-    public static void rightRealHpReceiptHasExactFortyTickDeadlineAndSurvivesNormalStop(GameTestHelper h) {
+    @GameTest(templateNamespace="dreamseekers_strengthening",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=165)
+    public static void rightRealHpReceiptHasExactEightyTickDeadlineAndSurvivesNormalStop(GameTestHelper h) {
         var f=fixture(h,"shockclock");var source=f.hand(false);var target=f.target(3,0);long[] castAt={0};
         h.startSequence().thenIdle(30).thenExecute(()->{
             castAt[0]=h.getLevel().getGameTime();h.assertTrue(f.cast(source,source.mob())==SkillResult.SUCCESS,"real paid right cast");
         }).thenIdle(19).thenExecute(()->{f.hp(target,1000,"nineteen ticks never damage");suppression(h,target,1,0,"no pre-release state");})
           .thenIdle(1).thenExecute(()->{
-              f.hp(target,976,"one true twenty-four HP write");suppression(h,target,1.2f,40,"exact receipt installation");
+              f.hp(target,946,"one genuine 54 HP loss");suppression(h,target,1.4f,80,"exact receipt installation");
               h.assertTrue(f.shadow()==470&&!AaroncosCombat.active(source),"cost is spent and charge has already retired");
               new UnitActionItem(f.owner,UnitAction.STOP,-1,new int[]{source.mob().getId()},BlockPos.ZERO,BlockPos.ZERO).action(h.getLevel());
               target.setPos(f.center.getX()+12.5,100,f.center.getZ()+.5);
-              suppression(h,target,1.2f,40,"finished hit is not tied to later STOP or old four-block range");
-          }).thenIdle(39).thenExecute(()->suppression(h,target,1.2f,1,"one final tick"))
+              suppression(h,target,1.4f,80,"finished hit is not tied to later STOP or six-block cast range");
+          }).thenIdle(79).thenExecute(()->suppression(h,target,1.4f,1,"one final tick"))
           .thenIdle(1).thenExecute(()->{
-              h.assertTrue(h.getLevel().getGameTime()==castAt[0]+60,"natural cast20 plus effect40 deadline");
-              suppression(h,target,1,0,"natural expiry");h.assertTrue(f.shadow()==470&&source.rts().skills().cooldownTicks(UnitSkill.AARONCOS_RIGHT_SHOCK)==540,"expiry never refunds thirty shadow or six-hundred cooldown");done(f);
+              h.assertTrue(h.getLevel().getGameTime()==castAt[0]+100,"20 windup ticks plus 80 suppression ticks");
+              suppression(h,target,1,0,"natural expiry");h.assertTrue(f.shadow()==470&&source.rts().skills().cooldownTicks(UnitSkill.AARONCOS_RIGHT_SHOCK)==500,"expiry never refunds thirty shadow or six-hundred cooldown");done(f);
           });
     }
 
@@ -105,11 +105,11 @@ public final class StrengtheningGameTests {
             try(var peer=new PassiveIncomePeer(h.getLevel(),f.enemy)) {
                 h.assertTrue(SkillService.request(peer.actor,new SkillRequest(UnitSkill.GEL_GUARD,slime.getId(),slime.getUUID(),slime.rts().skills().revision(),gel.getId(),gel.getUUID()))==SkillResult.SUCCESS,"real enemy Gel cast before right impact");
             }
-            close(h,SkillEffects.shieldRemaining(gel),12,"real twelve-point shield");absorb.setAbsorptionAmount(50);
+            close(h,SkillEffects.shieldRemaining(gel),12,"real twelve-point shield");absorb.setAbsorptionAmount(80);
             h.assertTrue(f.cast(source,source.mob())==SkillResult.SUCCESS,"real four-target ring");
         }).thenIdle(20).thenExecute(()->{
-            f.hp(hp,976,"normal realHP positive");suppression(h,hp,1.2f,40,"HP receipt positive");
-            f.hp(gel,1000,"Gel-only consumes noHP");close(h,SkillEffects.shieldRemaining(gel),4,"exact final-event eight-point Gel consumption");suppression(h,gel,1.2f,40,"Gel receipt positive");
+            f.hp(hp,946,"normal realHP positive");suppression(h,hp,1.4f,80,"HP receipt positive");
+            f.hp(gel,1000,"Gel-only consumes noHP");close(h,SkillEffects.shieldRemaining(gel),4,"exact final-event eight-point Gel consumption");suppression(h,gel,1.4f,80,"Gel receipt positive");
             f.hp(absorb,1000,"absorption-only noHP");close(h,absorb.getAbsorptionAmount(),26,"true absorption consumed");suppression(h,absorb,1,0,"absorption is not a receipt");
             f.hp(cancel,1000,"Forge canceled noHP");suppression(h,cancel,1,0,"Forge canceled no state");done(f);
         });
@@ -130,8 +130,8 @@ public final class StrengtheningGameTests {
     public static void secondPaidRightHitCannotRefreshOrStealFirstLease(GameTestHelper h) {
         var f=fixture(h,"nosteal");var first=f.hand(false);var second=f.hand(false);var target=f.target(3,0);
         h.startSequence().thenIdle(30).thenExecute(()->h.assertTrue(f.cast(first,first.mob())==SkillResult.SUCCESS,"first paid source"))
-          .thenIdle(20).thenExecute(()->{suppression(h,target,1.2f,40,"first lease");h.assertTrue(f.cast(second,second.mob())==SkillResult.SUCCESS,"second independent paid source");})
-          .thenIdle(20).thenExecute(()->{f.hp(target,952,"two genuine right HP hits");suppression(h,target,1.2f,20,"second hit did not extend existing deadline");h.assertTrue(f.shadow()==440,"both real costs paid");first.mob().discard();suppression(h,target,1,0,"first exact source owns lease; second hit cannot steal it");done(f);});
+          .thenIdle(20).thenExecute(()->{suppression(h,target,1.4f,80,"first lease");h.assertTrue(f.cast(second,second.mob())==SkillResult.SUCCESS,"second independent paid source");})
+          .thenIdle(20).thenExecute(()->{f.hp(target,892,"two genuine 54 HP hits");suppression(h,target,1.4f,60,"second hit did not extend existing deadline");h.assertTrue(f.shadow()==440,"both real costs paid");first.mob().discard();suppression(h,target,1,0,"first exact source owns lease; second hit cannot steal it");done(f);});
     }
 
     @GameTest(templateNamespace="dreamseekers_strengthening",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=110)
@@ -139,7 +139,7 @@ public final class StrengtheningGameTests {
         var f=fixture(h,"shockauthority");var source=f.hand(false);var a=f.target(3,0);var b=f.target(0,3);
         h.startSequence().thenIdle(30).thenExecute(()->h.assertTrue(f.cast(source,source.mob())==SkillResult.SUCCESS,"paid legal source"))
           .thenIdle(20).thenExecute(()->{
-              suppression(h,a,1.2f,40,"first exact target");suppression(h,b,1.2f,40,"second exact target");
+              suppression(h,a,1.4f,80,"first exact target");suppression(h,b,1.4f,80,"second exact target");
               a.setOwnerName(f.owner);a.setOwnerName(f.enemy);suppression(h,a,1,0,"target ownership ABA cannot resurrect receipt");
               ResourcesServerEvents.resourcesList.remove(f.account);var next=new Resources(f.owner,1000,1000,1000);next.extra.put(DreamPassiveEconomy.SHADOW,500);ResourcesServerEvents.resourcesList.add(next);
               suppression(h,b,1,0,"same-name new account cannot authorize old paid source");close(h,next.extra.get(DreamPassiveEconomy.SHADOW),500,"replacement account untouched");done(f);
@@ -153,15 +153,15 @@ public final class StrengtheningGameTests {
             h.assertTrue(f.cast(right,right.mob())==SkillResult.SUCCESS,"right cast");
             h.assertTrue(SkillService.request(f.peer.actor,new SkillRequest(UnitSkill.SQUEAL_SUPPRESSION_WAVE,wave.getId(),wave.getUUID(),wave.rts().skills().revision(),target.getId(),target.getUUID()))==SkillResult.SUCCESS,"true physical wave cast");
         }).thenIdle(20).thenExecute(()->{
-            h.assertTrue(SquealSuppressionWave.hasDebuff(target)&&AaroncosShockSuppression.remainingTicks(target)==40,"both real receipt-based leases active");
-            close(h,ManagedAttackSlowdown.factor(target,1.1f),1.25,"managed classes choose max, not 1.5");
-            target.addEffect(new MobEffectInstance(MobEffectRegistrar.ATTACK_SLOWDOWN.get(),100,5));
-            close(h,ManagedAttackSlowdown.cachedFactor(target),1.3,"native stronger factor wins");
-            close(h,SkillEffects.fixedAttackCooldown(target,100),Math.floor(100d*1.3f),"int reset applies one strongest factor");
-            close(h,SkillEffects.fixedAttackCooldown(target,100f),130,"float reset applies one strongest factor");
-            target.removeEffect(MobEffectRegistrar.ATTACK_SLOWDOWN.get());wave.discard();
-            close(h,ManagedAttackSlowdown.factor(target,1),1.2,"stronger source loss falls back to live right lease");
-            right.mob().discard();close(h,ManagedAttackSlowdown.cachedFactor(target),1,"last source removal is cached no-op");
+            h.assertTrue(SquealSuppressionWave.hasDebuff(target)&&AaroncosShockSuppression.remainingTicks(target)==80,"both real receipt-based leases active");
+            close(h,ManagedAttackSlowdown.factor(target,1.1f),1.4,"shock wins over wave without stacking");
+            target.addEffect(new MobEffectInstance(MobEffectRegistrar.ATTACK_SLOWDOWN.get(),100,9));
+            close(h,ManagedAttackSlowdown.cachedFactor(target),1.5,"native stronger factor wins");
+            close(h,SkillEffects.fixedAttackCooldown(target,100),150,"int reset applies one strongest factor");
+            close(h,SkillEffects.fixedAttackCooldown(target,100f),150,"float reset applies one strongest factor");
+            target.removeEffect(MobEffectRegistrar.ATTACK_SLOWDOWN.get());right.mob().discard();
+            close(h,ManagedAttackSlowdown.factor(target,1),1.25,"after shock ends the smaller live wave penalty remains");
+            wave.discard();close(h,ManagedAttackSlowdown.cachedFactor(target),1,"last source removal is cached no-op");
             h.assertTrue(Float.isNaN(ManagedAttackSlowdown.factor(target,Float.NaN)),"unmanaged native NaN passes through unchanged");done(f);
         });
     }
@@ -175,11 +175,11 @@ public final class StrengtheningGameTests {
             baseline[0]=militia.getAttackCooldown();h.assertTrue(baseline[0]>0,"real current ranged-mode Militia float cooldown baseline");
             h.assertTrue(f.cast(right,right.mob())==SkillResult.SUCCESS,"real paid right hit against actual Militia");
         }).thenIdle(20).thenExecute(()->{
-            suppression(h,militia,1.2f,40,"actual Militia took surviving right receipt");
-            close(h,militia.getAttackCooldown(),baseline[0]*1.2f,"core multiplier already includes managed slow; RETURN adapter must not multiply it twice");
-            militia.addEffect(new MobEffectInstance(MobEffectRegistrar.ATTACK_SLOWDOWN.get(),100,5));
-            close(h,militia.getAttackCooldown(),baseline[0]*1.3f,"stronger native maximum still exactly once on float consumer");
-            right.mob().discard();close(h,militia.getAttackCooldown(),baseline[0]*1.3f,"without managed effect original native float behavior unchanged");
+            suppression(h,militia,1.4f,80,"actual Militia took surviving right receipt");
+            close(h,militia.getAttackCooldown(),baseline[0]*1.4f,"core multiplier already includes managed slow; RETURN adapter must not multiply it twice");
+            militia.addEffect(new MobEffectInstance(MobEffectRegistrar.ATTACK_SLOWDOWN.get(),100,9));
+            close(h,militia.getAttackCooldown(),baseline[0]*1.5f,"stronger native maximum still exactly once on float consumer");
+            right.mob().discard();close(h,militia.getAttackCooldown(),baseline[0]*1.5f,"without managed effect original native float behavior unchanged");
             militia.removeEffect(MobEffectRegistrar.ATTACK_SLOWDOWN.get());close(h,militia.getAttackCooldown(),baseline[0],"all effects removed returns exact original baseline");done(f);
         });
     }
@@ -229,25 +229,25 @@ public final class StrengtheningGameTests {
     }
 
     @GameTest(templateNamespace="dreamseekers_strengthening",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=100)
-    public static void realPaidTemporaryBeetlesBenefitWithoutChangingPopulationFreeOriginOrLease(GameTestHelper h) {
+    public static void summonedBeetlesBenefitWithoutChangingPopulationFreeOriginOrLease(GameTestHelper h) {
         var f=fixture(h,"mothersummon");var mother=mother(f,0,0);
         com.solegendary.reignofnether.research.ResearchServerEvents.addCheat(f.owner,"foodforthought");int[] population={0};List<Mob> children=new ArrayList<>();
         h.startSequence().thenIdle(30).thenExecute(()->{
             population[0]=UnitServerEvents.getCurrentPopulation(f.owner);
-            h.assertTrue(SkillService.request(f.peer.actor,new SkillRequest(UnitSkill.MOTHER_BROOD,mother.getId(),mother.getUUID(),mother.rts().skills().revision(),mother.getId(),mother.getUUID()))==SkillResult.SUCCESS,"real thirty-shadow summon transaction");
+            h.assertTrue(SkillService.request(f.peer.actor,new SkillRequest(UnitSkill.MOTHER_BROOD,mother.getId(),mother.getUUID(),mother.rts().skills().revision(),mother.getId(),mother.getUUID()))==SkillResult.SUCCESS,"actual authenticated brood cast");
             UnitServerEvents.getAllUnits().stream().filter(e->e instanceof Mob&&e instanceof Unit u&&u.getOwnerName().equals(f.owner)&&com.dreamseekers.summon.BoundedSummons.isTemporary(e)).map(e->(Mob)e).forEach(children::add);
-            children.forEach(b->{b.setNoAi(true);f.bodies.add(b);});h.assertTrue(children.size()==2&&f.shadow()==470&&UnitServerEvents.getCurrentPopulation(f.owner)==population[0]+4,"exact two paid children and original population");
+            children.forEach(b->{b.setNoAi(true);f.bodies.add(b);});h.assertTrue(children.size()==2&&f.shadow()==500&&UnitServerEvents.getCurrentPopulation(f.owner)==population[0]+4,"exactly two children; population charged, shadow unchanged");
         }).thenIdle(10).thenExecute(()->{
             for(var body:children){aps(h,(BeetleUnit)body,.15,"real leased child allowed");h.assertTrue(RtsKillValueClaims.isFree(body)&&com.dreamseekers.summon.BoundedSummons.canAct(body),"free kill-value provenance and original active lease preserved");}
-            h.assertTrue(mother.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==890&&f.shadow()==470,"passive never changes paid summon clock or fee");
+            h.assertTrue(mother.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==890&&f.shadow()==500,"passive never changes the summon cooldown or shadow balance");
             mother.discard();for(var body:children)aps(h,(BeetleUnit)body,0,"expired parent lease not rescued by aura");
             com.solegendary.reignofnether.research.ResearchServerEvents.removeCheat(f.owner,"foodforthought");done(f);
         });
     }
 
-    // Overall budget includes original world publication; the post-cast 20+10+22 clock below is unchanged.
+    // Overall budget includes natural world publication and the shortened suppression interval.
     @GameTest(templateNamespace="dreamseekers_strengthening",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=180)
-    public static void realSporeShortensNewRightLeaseOnlyOnceToThirtyTwoTicks(GameTestHelper h) {
+    public static void realSporeShortensNewRightLeaseOnlyOnceToSixtyFourTicks(GameTestHelper h) {
         var f=fixture(h,"shocksporeduration");var right=f.hand(false);var target=f.target(3,0);
         h.startSequence().thenIdle(30).thenWaitUntil(()->{
             // A prior runtime observed added=true but tickCount=0 and absent UUID/ID indexes.
@@ -261,9 +261,9 @@ public final class StrengtheningGameTests {
             }
             h.assertTrue(com.dreamseekers.spore.SporeLease.activeFor(target)!=null,"real published active spore");
             h.assertTrue(f.cast(right,right.mob())==SkillResult.SUCCESS,"real paid ring after active protection");
-        }).thenIdle(20).thenExecute(()->suppression(h,target,1.2f,32,"incoming40 shortened by .8 once"))
-          .thenIdle(10).thenExecute(()->suppression(h,target,1.2f,22,"ten actual ticks subtract ten, no repeated .8"))
-          .thenIdle(22).thenExecute(()->{suppression(h,target,1,0,"exact shortened natural expiry");h.assertTrue(f.shadow()==470,"duration transform never refunds paid skill");done(f);});
+        }).thenIdle(20).thenExecute(()->suppression(h,target,1.4f,64,"incoming80 shortened by .8 once"))
+          .thenIdle(10).thenExecute(()->suppression(h,target,1.4f,54,"ten actual ticks subtract ten, no repeated .8"))
+          .thenIdle(54).thenExecute(()->{suppression(h,target,1,0,"exact shortened natural expiry");h.assertTrue(f.shadow()==470,"duration transform never refunds paid skill");done(f);});
     }
 
     @GameTest(templateNamespace="dreamseekers_strengthening",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=120)
@@ -271,7 +271,7 @@ public final class StrengtheningGameTests {
         var f=fixture(h,"shocksporecleanse");var first=f.hand(false);var second=f.hand(false);var target=f.target(3,0);
         h.startSequence().thenIdle(30).thenExecute(()->h.assertTrue(f.cast(first,first.mob())==SkillResult.SUCCESS,"first real right cast"))
           .thenIdle(20).thenExecute(()->{
-              suppression(h,target,1.2f,40,"live managed shock before cleanse");target.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS,100));
+              suppression(h,target,1.4f,80,"live managed shock before cleanse");target.addEffect(new MobEffectInstance(net.minecraft.world.effect.MobEffects.WEAKNESS,100));
               try(var peer=new PassiveIncomePeer(h.getLevel(),f.enemy)) {
                   h.assertTrue(seedProbe(h,peer.actor,target,f.center.offset(3,0,2))==SkillResult.SUCCESS,"real spore activation chooses original deterministic candidate pool");
               }
@@ -279,7 +279,7 @@ public final class StrengtheningGameTests {
               h.assertTrue(target.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS)&&com.dreamseekers.spore.SporeEffects.cleanseProtectionTicks(target)==200,"only one candidate removed; original vanilla negative remains and deletion throttle starts");
               h.assertTrue(f.cast(second,second.mob())==SkillResult.SUCCESS,"second independent paid right source");
           }).thenIdle(20).thenExecute(()->{
-              suppression(h,target,1.2f,32,"cleanse protection is not new-debuff immunity; active spore shortens once");
+              suppression(h,target,1.4f,64,"cleanse protection is not new-debuff immunity; active spore shortens once");
               h.assertTrue(target.hasEffect(net.minecraft.world.effect.MobEffects.WEAKNESS)&&com.dreamseekers.spore.SporeEffects.cleanseProtectionTicks(target)==180,"no extra automatic cleanse rounds");done(f);
           });
     }

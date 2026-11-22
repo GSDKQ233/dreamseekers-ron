@@ -27,13 +27,13 @@ import java.util.function.BooleanSupplier;
 
 /** Paid controlled-hand skills, not native boss spells. Transient charges never survive reload. */
 public final class AaroncosCombat {
+    private static final float PRESS_DAMAGE_MULTIPLIER=4f, SHOCK_DAMAGE_MULTIPLIER=2.25f;
+    private static final int SHOCK_TARGET_LIMIT=4;
     private static final Map<ControlledAaroncosHand,Charge> CHARGES=new IdentityHashMap<>();
     private static final ArrayDeque<Impact> HITS=new ArrayDeque<>();
     private AaroncosCombat() {}
     public static boolean isHandSkill(UnitSkill skill) {return skill==UnitSkill.AARONCOS_LEFT_PRESS||skill==UnitSkill.AARONCOS_RIGHT_SHOCK;}
     public static int shadowCost(UnitSkill skill) {return skill==UnitSkill.AARONCOS_LEFT_PRESS?20:skill==UnitSkill.AARONCOS_RIGHT_SHOCK?30:-1;}
-    private static int windup(UnitSkill skill) {return skill==UnitSkill.AARONCOS_LEFT_PRESS?12:20;}
-    private static int range(UnitSkill skill) {return skill==UnitSkill.AARONCOS_LEFT_PRESS?6:4;}
     private static boolean matches(ControlledAaroncosHand source,UnitSkill skill) {
         return source instanceof AaroncosLeftHandUnit&&skill==UnitSkill.AARONCOS_LEFT_PRESS
             ||source instanceof AaroncosRightHandUnit&&skill==UnitSkill.AARONCOS_RIGHT_SHOCK;
@@ -51,7 +51,7 @@ public final class AaroncosCombat {
             &&source.level().getServer().getPlayerList().getPlayerByName(source.owner())==actor;
     }
     private static boolean legal(ControlledAaroncosHand source,ServerPlayer viewer,UnitSkill skill,LivingEntity target) {
-        Mob body=source.mob();int r=range(skill);
+        Mob body=source.mob();int r=skill.range();
         return target!=body&&target instanceof Unit&&!(target instanceof com.dreamseekers.spore.JungleSporeCarrier)
             &&target.isAlive()&&!target.isRemoved()&&target.isAddedToWorld()&&!target.isSpectator()
             &&target.level()==body.level()&&body.level().getEntity(target.getId())==target
@@ -63,10 +63,10 @@ public final class AaroncosCombat {
     private static List<SkillIdentity.Stamp> select(ControlledAaroncosHand source,ServerPlayer viewer,UnitSkill skill,LivingEntity target) {
         if(skill==UnitSkill.AARONCOS_LEFT_PRESS)return legal(source,viewer,skill,target)?List.of(SkillIdentity.capture(target)):List.of();
         if(target!=source.mob())return List.of();
-        return source.mob().level().getEntitiesOfClass(LivingEntity.class,source.mob().getBoundingBox().inflate(range(skill)),
+        return source.mob().level().getEntitiesOfClass(LivingEntity.class,source.mob().getBoundingBox().inflate(skill.range()),
                 e->legal(source,viewer,skill,e)).stream()
             .sorted(Comparator.comparingDouble((LivingEntity e)->ShadowGolemStrike.distanceSquared(source.mob().position(),e.getBoundingBox()))
-                .thenComparing(e->e.getUUID().toString())).limit(4).map(SkillIdentity::capture).toList();
+                .thenComparing(e->e.getUUID().toString())).limit(SHOCK_TARGET_LIMIT).map(SkillIdentity::capture).toList();
     }
     private static final class Charge {
         final ControlledAaroncosHand source;final ServerPlayer actor;final UnitSkill skill;
@@ -76,7 +76,7 @@ public final class AaroncosCombat {
         Charge(ControlledAaroncosHand source,ServerPlayer actor,UnitSkill skill,List<SkillIdentity.Stamp> targets,Resources account) {
             this.source=source;this.actor=actor;this.skill=skill;this.targets=List.copyOf(targets);this.account=account;
             caster=SkillIdentity.capture(source.mob());epoch=account.accountEpoch;command=source.rts().commandRevision;
-            releaseAt=caster.level().getGameTime()+windup(skill);
+            releaseAt=caster.level().getGameTime()+skill.durationTicks();
         }
         boolean authority() {
             return CHARGES.get(source)==this&&loaded(caster)&&viewer(actor,caster)&&!disabled(source)
@@ -135,7 +135,8 @@ public final class AaroncosCombat {
         if(source.mob().level().getGameTime()<c.releaseAt)return;
         c.releasing=true;
         try {
-            float ad=(float)(source.getUnitAttackDamage()+com.solegendary.reignofnether.unit.interfaces.AttackerUnit.getWeaponDamageModifier(source)),mult=c.skill==UnitSkill.AARONCOS_LEFT_PRESS?1.75f:1f;
+            float ad=(float)(source.getUnitAttackDamage()+com.solegendary.reignofnether.unit.interfaces.AttackerUnit.getWeaponDamageModifier(source));
+            float mult=c.skill==UnitSkill.AARONCOS_LEFT_PRESS?PRESS_DAMAGE_MULTIPLIER:SHOCK_DAMAGE_MULTIPLIER;
             if(!Float.isFinite(ad)||ad<=0||ad>100000||!c.authority())return;
             for(SkillIdentity.Stamp target:c.targets) {
                 if(!c.authority())break;

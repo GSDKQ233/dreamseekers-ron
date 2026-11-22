@@ -1,6 +1,6 @@
 {
-  "release": "API65-repair3.1-resource-production-source",
-  "status": "work-in-progress local resource production research source; no binary release",
+  "release": "API65-repair3.1-skill-shadow-source",
+  "status": "work-in-progress skill shadow costs and Aaroncos rebalance source; no binary release",
   "runtime_change": true,
   "baseline_archive": "API65-repair3-source.zip",
   "baseline_sha256": "226856fca5f3e9eb7da58f1e190e8863dbba77036480d59a4149c9bf71ea5ef2",
@@ -124,14 +124,21 @@
     "README.md",
     "addons/dreamseekers/build.gradle",
     "addons/dreamseekers/economy_manifest.json",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosSkillCombatGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosTrainingGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosTrainingRestartGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosVortexGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedMotherHandsGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedProgressionRestartGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedUnitResearchGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/Api58StateLifecycleGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AutocastGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/BoundedSummonGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/BoundedSummonRestartGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAbilityEffectsGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAssetGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingObservationTestSupport.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingWardPaidFinalizerGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DefensePassiveBoundaryGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamEconomyResearchGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/DreamFoundationGameTests.java",
@@ -143,6 +150,7 @@
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/FireflyWorkerGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/FoxBlessingSkillGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/GolemStrikeFogGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/HandBondGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightAmplificationRestartGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightResonanceResearchGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/LightSkillAmplificationGameTests.java",
@@ -161,8 +169,12 @@
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ScaffoldBuildingGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SnailShellFormationSkillGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SplitRegressionGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningCadenceGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningEconomicBuildingGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningRestartGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SurvivalBeaconGameTests.java",
+    "addons/dreamseekers/src/gametest/java/com/dreamseekers/TerrorbeakUpgradeShockGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnitHudIconLeashGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/UnknownTowerWorkerRepairAuditGameTests.java",
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/WindDashSkillGameTests.java",
@@ -247,6 +259,9 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeClient.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeService.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/WeepingSquealGhostBalance.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AaroncosCombat.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AaroncosShockSuppression.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AaroncosVortex.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AshEmberLanding.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/BeetleAdvance.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/BeetleMotherCommandAura.java",
@@ -284,6 +299,7 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/spore/SporeEffects.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/spore/SporeLease.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/stone/StoneThrowerBalance.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/summon/BoundedSummons.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BasaltSnailUnit.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/BeetleUnit.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/unit/FireflyWorker.java",
@@ -428,8 +444,8 @@
       "sha256": "aa8e97ff7a23dbb3cb74a9ef59c54205cffe5d8a3d20217287d7d8623d5e6b80"
     },
     "CHANGELOG.zh-CN.md": {
-      "bytes": 5369,
-      "sha256": "e2eff9bdc1e777f2adb7317200552e2a4bb232b6f172f5b2405bddafba16c705"
+      "bytes": 5593,
+      "sha256": "3968c665566e60175b92921dccfbd8b20adddcd122781f2330d152aa62b8632e"
     },
     "COLLABORATION.md": {
       "bytes": 35367,
@@ -528,8 +544,8 @@
       "sha256": "b18a22b56d6af73d6c73e988dd2857f3fddbd041057e9cd8e1ba631a4fb2a191"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosSkillCombatGameTests.java": {
-      "bytes": 21168,
-      "sha256": "2f311c6dc5b8b987d73f49151e136052014bf099e85a7fa242ee6819a18947ee"
+      "bytes": 22292,
+      "sha256": "2cc146254fe2c8850e8477f3ae7784b5727e3d6fcfed9df1f83e42052f697776"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosTestFixture.java": {
       "bytes": 5473,
@@ -544,8 +560,8 @@
       "sha256": "f9be9662c35aeeed05f9e6af2257c4e3065456bbf36d86fb2bbd88d3dc037c23"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AaroncosVortexGameTests.java": {
-      "bytes": 17331,
-      "sha256": "81bef058b936effd66aa3f29325616ec9a37e1306f130d47225ca56830bfb69f"
+      "bytes": 18248,
+      "sha256": "d40a11c7b4a2b8268ee09a9df53688ff2006c95695eaffec06725fa74cca4eef"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/ActiveSkillEconomicGameTests.java": {
       "bytes": 13346,
@@ -560,8 +576,8 @@
       "sha256": "540fa20ca706fb7a18b19b7e4080a5917f75900edf241c63e5192f092f108c33"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedMotherHandsGameTests.java": {
-      "bytes": 24003,
-      "sha256": "f0184d5096313ceb8675df4e845f126b2b5dd12c43e252ee3a10e42ab91527f6"
+      "bytes": 24018,
+      "sha256": "6f525ee3dcd50eef947877d2a1361e371ecbd2b472cd1764d805a3c86517a8ea"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/AdvancedProgressionRestartGameTests.java": {
       "bytes": 23777,
@@ -580,8 +596,8 @@
       "sha256": "db3d485f94afda412b0d46d8543dc0082894bf0f276a9014077c1e9189b63468"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/Api58StateLifecycleGameTests.java": {
-      "bytes": 18464,
-      "sha256": "954a2fd0ddfc91f3f23418787bdd0018b183ba5a260c79273dd2a6171d9fdac2"
+      "bytes": 18457,
+      "sha256": "00d54c774732561425e4184ffb7dddb739818d302cac34823bd5ccc0aa31d75c"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/Api59RandomFactionGameTests.java": {
       "bytes": 2436,
@@ -728,20 +744,20 @@
       "sha256": "a4316331f57ad6bdb8689b6748f9fd89ed1253b11d96bf214e03771c21e6d7f0"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BoundedSummonGameTests.java": {
-      "bytes": 20440,
-      "sha256": "483ff7c7492001e6a3df5f6f52f3d3a900298bca1ba880766c56e0f1d42a7f97"
+      "bytes": 22000,
+      "sha256": "5ff504fe8d5455aa76584d6b720dd54afff665a455bb692088533d5d8773f5e9"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BoundedSummonRestartGameTests.java": {
-      "bytes": 8804,
-      "sha256": "537ff7cbf134f5b591b12697d8bbe69e1a959f4429bb065206dbf07534d997dd"
+      "bytes": 8997,
+      "sha256": "e9b040bee925e50eec0b2b193741113bf24a54073a42a394b6f3f52cb78278a7"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAbilityAuthorityGameTests.java": {
       "bytes": 15364,
       "sha256": "1a85c76ac3076879a4be62d819f6863d1310be012742f3a6a396584b5adc95b6"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAbilityEffectsGameTests.java": {
-      "bytes": 47197,
-      "sha256": "6baf64c12016f811769987f3518571a874e9f7b152a2ae31c80364bcc139d031"
+      "bytes": 47200,
+      "sha256": "ba8f1c8625931ae91abe95a38c593671de028d39b851eb002e7604866d63c244"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingAbilityNoLoadGameTests.java": {
       "bytes": 5804,
@@ -800,8 +816,8 @@
       "sha256": "74246462c9bfaae6f25fbeaa4cfee8cbe68f7fd3331163e09e27d381358475c2"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingWardPaidFinalizerGameTests.java": {
-      "bytes": 20162,
-      "sha256": "a64b7aff26da0ce7f5dc18d53b93774bbb992f368c3df5921b7b5f195f4d4ada"
+      "bytes": 20142,
+      "sha256": "21ff3c733a914acb5f188133174de4c848c6bd66507cf6adb48f04d26b7c43c8"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/BuildingWatchObservationGameTests.java": {
       "bytes": 21281,
@@ -1080,8 +1096,8 @@
       "sha256": "e0f2c71309531dd9f6a7354bd3b5129c75ef8d4584e71ce1debba34ce59c85d6"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/HandBondGameTests.java": {
-      "bytes": 26710,
-      "sha256": "14f850e50a8d914a9447ffc9888ac5e74827ff3657e25f0afdcea6e4dd9f2eeb"
+      "bytes": 26887,
+      "sha256": "b1fabb0c37b8558997147976bf1ea10de39a57ad4dfe235175af4a3ae09d3fed"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/HandBondRestartGameTests.java": {
       "bytes": 10374,
@@ -1572,16 +1588,16 @@
       "sha256": "4a371b2c2f06d548d3259cb5773e98e2453bb0cb6b11f9280115034efcf9c3d8"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningCadenceGameTests.java": {
-      "bytes": 21576,
-      "sha256": "e1c09081980833708733e2406811365ab3273cdd62be86e5e7a7b378957899ff"
+      "bytes": 21479,
+      "sha256": "281344f56fc8d0cae63ce5b1c3a08542c1a255ba5eca3b2ad040051b2c2163d6"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningEconomicBuildingGameTests.java": {
-      "bytes": 25943,
-      "sha256": "d6e5c47888aa235d20bbaf39aef88823e6783b806dd73622f37afffeeb615713"
+      "bytes": 25983,
+      "sha256": "08bd2f0aa01ad4d78f4d834b26b8dd2bccf6e7a41b1a3abff67a662acab1ad76"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningGameTests.java": {
-      "bytes": 28748,
-      "sha256": "95e81ba8a661520b08cb7c0b9f15ceaad4da02b5c8b4e21f158badf0813c1c20"
+      "bytes": 28729,
+      "sha256": "dc3dfe60502a2a552bf9581b89b02b1b88f51617dc21cdf2ae3c36a14471b7d0"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningMigrationGameTests.java": {
       "bytes": 21415,
@@ -1592,8 +1608,8 @@
       "sha256": "6d59875891719bf4b84586b982d0a46241fe1bf2265a1e35b53a62e6491ede07"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/StrengtheningRestartGameTests.java": {
-      "bytes": 41353,
-      "sha256": "cc821db26fba2dcaa2660e02aae80c2ccfd775e570e3ab1c4768b466c5f504a4"
+      "bytes": 41465,
+      "sha256": "215bdf00aeb8fb8b49cd1a0ba04eb9f877b9cfde48165d376049ebf58318a2fc"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/SurvivalBeaconGameTests.java": {
       "bytes": 18463,
@@ -1648,8 +1664,8 @@
       "sha256": "35359afe31e0dc23d46babac735377491c43fc7733e4e7aa7816125cd1a17d6c"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/TerrorbeakUpgradeShockGameTests.java": {
-      "bytes": 14226,
-      "sha256": "cabf875ed0b037a6db07c916f99cc5d7f2187a56e8e385d9d791a246488cec11"
+      "bytes": 14228,
+      "sha256": "c75dc295dcc066856687725a01738d8cb8f6ebc07f83a8aba0100cb1a8ae98d3"
     },
     "addons/dreamseekers/src/gametest/java/com/dreamseekers/TowerManagementGameTests.java": {
       "bytes": 16181,
@@ -3468,8 +3484,8 @@
       "sha256": "ee3c4d259bfcd53e7ef96dd9094cfdca8cfba4134ee75411c5f95e035a5995a2"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AaroncosCombat.java": {
-      "bytes": 15588,
-      "sha256": "8ef804554e15a56b3556ad9dfc8cea8d20f41b91acecd435b46c45eefc359f5d"
+      "bytes": 15617,
+      "sha256": "4713dd97984130f598c140c335bd317e4352673756353eba801c2411614fee15"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AaroncosHarmony.java": {
       "bytes": 4161,
@@ -3477,11 +3493,11 @@
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AaroncosShockSuppression.java": {
       "bytes": 5338,
-      "sha256": "8658da0ed5aef13111287029c6180765a96013126339e2e6bdd6506e703fda62"
+      "sha256": "e3a36dff3cf6bdabe3e1869368608b8c3fa23ca9faba5b39d72d3a146be10f03"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AaroncosVortex.java": {
-      "bytes": 18823,
-      "sha256": "a63b389bc968d78bf5fb6a8ea96b27981812605cc7a5891676a5d45b9f4d1207"
+      "bytes": 18969,
+      "sha256": "35e09d44ecad83c6fac6fa44f74ff2589c0cca1d6e3da30ada33f7e99f722457"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AshEmberLanding.java": {
       "bytes": 22071,
@@ -3640,8 +3656,8 @@
       "sha256": "78984b314b2ec14d2ee29061abd92696ac2b4c4d088e1a2c214e5f4d9e591f7a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillService.java": {
-      "bytes": 32402,
-      "sha256": "ad9fa05eea32d858bf660816613493c50b37425063be23315c417004a69c4d76"
+      "bytes": 32417,
+      "sha256": "5da527471b03e2b0d47175c28770c1eb68e3ec815c2ef374aa795fce55a562c3"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillState.java": {
       "bytes": 7578,
@@ -3685,7 +3701,7 @@
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/UnitSkill.java": {
       "bytes": 1574,
-      "sha256": "91b97c25edf83d9065800897e1275905dfcd1f0e95c98f7979c93cf8296137e9"
+      "sha256": "7ce7ee57d2bcf63e3b36d9eb1cc03fcc48b6bcba66eb4877e694e1da0d12c065"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/UnitSkillAbility.java": {
       "bytes": 11492,
@@ -3748,8 +3764,8 @@
       "sha256": "70cd183977dd41f1ccfcd2c0815791dbc652516e80bf782c9bb160ebe35b47b0"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/summon/BoundedSummons.java": {
-      "bytes": 17279,
-      "sha256": "2faf8efc0936ef54ff446ab1316f194121f97f34dd311b08acb4fa44d758c2f9"
+      "bytes": 16853,
+      "sha256": "de64b295559ccd7d3689d03c673b1ab3adc660f613ef68b91fb4a892be4f7596"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/summon/SummonSafeBuildingGoal.java": {
       "bytes": 1254,
@@ -4452,12 +4468,12 @@
       "sha256": "6ac52037c1d1964818eab4366a94d037b04791e3ac949b72c5a3de6f63ac5aae"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/en_us.json": {
-      "bytes": 80104,
-      "sha256": "09af2d33a463c49132391193db8b4b9e7f9c1eac9b9e8d9727770d4c44557b39"
+      "bytes": 79965,
+      "sha256": "26ae371f2a7893fc2c611c678f373fd6ec638a4d794f5cdc2faeaf1c5eec1169"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/zh_cn.json": {
-      "bytes": 75537,
-      "sha256": "c417e7878c5ccf3583203b64c9f86eccc9c4ee542f8e9ccc7cedb018a155d1b4"
+      "bytes": 75445,
+      "sha256": "6883e940502c8a7b7502848ce4a8fa4613d8a46cd7d9bd8b7d915a7120b8d137"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/models/block/decorative_garden_wheat.json": {
       "bytes": 140,
@@ -5216,8 +5232,8 @@
       "sha256": "d975522368d727c478288f7d23b6b241ec157acc6bf56ddeafbe5846b7a80138"
     },
     "docs/dreamseekers/FEATURES.zh-CN.md": {
-      "bytes": 8458,
-      "sha256": "55415f25b6b4fdcf946d4312d0dd68eeee70cb5ed515477c4afc81c0073d9ee0"
+      "bytes": 8966,
+      "sha256": "7f12c61f1a03f96225fc0b0bb6eba528910648885e48f2659b156799f2521fb0"
     },
     "docs/dreamseekers/INSTALL.zh-CN.txt": {
       "bytes": 4972,
@@ -5248,8 +5264,8 @@
       "sha256": "afe45b8c5ecaf916c287fd90db7d91f6dfac7d38f0a2623c9aac101b6346c2cc"
     },
     "gradle/gametest-plan.gradle": {
-      "bytes": 18931,
-      "sha256": "94916253f4cd478036b8804d87979f65c22da9a27fd95966affdca5c465a4a6f"
+      "bytes": 19078,
+      "sha256": "3f29694150664a49e08d1ae8688505401cb38b29299d4e7a28914dc935d3732d"
     },
     "gradle/repository-test-inputs.gradle": {
       "bytes": 1893,

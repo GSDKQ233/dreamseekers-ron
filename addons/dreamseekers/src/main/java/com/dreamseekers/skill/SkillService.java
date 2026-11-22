@@ -115,7 +115,7 @@ public final class SkillService {
                     ||state.cooldownTicks(request.skill())>0||disabled(source)||auto!=null&&!auto.current())return false;
             if(AaroncosCombat.isHandSkill(request.skill())&&!AaroncosCombat.pay((com.dreamseekers.aaroncos.ControlledAaroncosHand)source,request.skill()))return false;
             if((request.skill()==UnitSkill.MOTHER_BROOD||request.skill()==UnitSkill.WEEPING_ECHOES)
-                    &&!com.dreamseekers.summon.BoundedSummons.pay(source,request.skill()))return false;
+                    &&!com.dreamseekers.summon.BoundedSummons.confirmReservation(source,request.skill()))return false;
             state.commit(request.skill());return true;
         };
         SkillResult result;

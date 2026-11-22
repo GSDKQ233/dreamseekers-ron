@@ -146,7 +146,7 @@ public final class AdvancedMotherHandsGameTests {
             h.assertTrue(s.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==0&&f.shadow()==500,"no phantom summon cooldown or charges");h.succeed();});
     }
     @GameTest(templateNamespace="dreamseekers_advanced_mother_hands",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=100)
-    public static void stationedMotherCanUseUnchangedPaidBroodWithoutLeavingNest(GameTestHelper h){
+    public static void stationedMotherCanUseFreeBroodWithoutLeavingNest(GameTestHelper h){
         var f=fixture(h,"NestBrood");var s=mother(f);unlock(f,AdvancedUnitResearch.MOTHER_NEST_ID);
         h.startSequence().thenIdle(25).thenExecute(()->{h.assertTrue(toggle(f,s)==SkillResult.SUCCESS,"nest active");
             long revision=s.rts().skills().revision();
@@ -165,8 +165,8 @@ public final class AdvancedMotherHandsGameTests {
             h.assertTrue(supply>=used+4&&!ResearchServerEvents.playerHasCheat(f.owner,"foodforthought"),"real completed population supply, no cheat");
             var result=new SkillNetwork.Cast(UnitSkill.MOTHER_BROOD,s.getId(),s.getUUID(),s.rts().skills().revision(),s.getId(),s.getUUID()).execute(f.peer.actor);
             System.out.println("API54_NEST_BROOD_AFTER_SUPPLY result="+result+" used="+used+" supply="+supply+" owner="+f.owner+" position="+s.position());
-            h.assertTrue(result==SkillResult.SUCCESS,"stationary mother actual paid summon with physical supply: "+result);
-            h.assertTrue(MotherNestStance.active(s)&&f.shadow()==470&&s.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==900,"unchanged30S/45s and stance remains");
+            h.assertTrue(result==SkillResult.SUCCESS,"stationary mother summons with real physical supply: "+result);
+            h.assertTrue(MotherNestStance.active(s)&&f.shadow()==500&&s.rts().skills().cooldownTicks(UnitSkill.MOTHER_BROOD)==900,"no shadow debit, unchanged 45-second cooldown, and stance remains");
             h.assertTrue(h.getLevel().getEntitiesOfClass(BeetleUnit.class,s.getBoundingBox().inflate(12),b->com.dreamseekers.summon.BoundedSummons.isTemporary(b)&&b.getOwnerName().equals(f.owner)).size()==2,"exact two genuine temporary beetles");h.succeed();});
     }
     @GameTest(templateNamespace="dreamseekers_advanced_mother_hands",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=130)

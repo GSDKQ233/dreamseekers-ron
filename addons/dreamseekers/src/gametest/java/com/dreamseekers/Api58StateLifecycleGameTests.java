@@ -189,11 +189,11 @@ public final class Api58StateLifecycleGameTests {
           .thenExecute(()->{
             try(var peer=new PassiveIncomePeer(level,owner)){
                 var request=new SkillRequest(UnitSkill.MOTHER_BROOD,caster.getId(),caster.getUUID(),caster.rts().skills().revision(),caster.getId(),caster.getUUID());
-                h.assertTrue(SkillService.request(peer.actor,request)==SkillResult.SUCCESS,"real authenticated paid temporary group before stop");
+                h.assertTrue(SkillService.request(peer.actor,request)==SkillResult.SUCCESS,"real authenticated temporary group before stop");
             }
             UnitServerEvents.getAllUnits().stream().filter(e->e instanceof BeetleUnit b&&owner.equals(b.getOwnerName())&&BoundedSummons.isTemporary(e))
                 .map(e->(BeetleUnit)e).forEach(b->{b.setNoAi(true);STOP_SUMMONS.add(b);});
-            h.assertTrue(STOP_SUMMONS.size()==2&&account.extra.get(DreamPassiveEconomy.SHADOW)==470,"two actual temporary births, original cost paid");
+            h.assertTrue(STOP_SUMMONS.size()==2&&account.extra.get(DreamPassiveEconomy.SHADOW)==500,"two actual temporary births, shadow unchanged");
           }).thenWaitUntil(()->{for(BeetleUnit body:STOP_SUMMONS)ready(h,body);})
           .thenExecute(()->{summonControlToken=token(summonStopControl);for(BeetleUnit body:STOP_SUMMONS)SUMMON_STOP_TOKENS.put(body,token(body));MinecraftForge.EVENT_BUS.register(new TemporaryStopWitness());})
           .thenSucceed();

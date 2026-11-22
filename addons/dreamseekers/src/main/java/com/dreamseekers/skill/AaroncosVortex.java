@@ -36,9 +36,10 @@ import java.util.function.BooleanSupplier;
  * The six server pulses and slow leases are transient; the ordinary SkillState owns the spent cooldown.
  */
 public final class AaroncosVortex {
-    public static final int RANGE=10,RADIUS=4,COST=40,PULSE_INTERVAL=20,PULSES=6,SLOW_TICKS=25;
-    public static final float DAMAGE=2;
-    public static final double SLOW=.15;
+    public static final int RANGE=UnitSkill.AARONCOS_RIGHT_VORTEX.range(),RADIUS=6,COST=40,PULSE_INTERVAL=20,PULSES=6,SLOW_TICKS=40;
+    public static final float DAMAGE=5;
+    public static final double SLOW=.35;
+    private static final int TARGETS_PER_PULSE=6;
     public static final ResourceLocation EFFECT_ID=ResourceLocation.fromNamespaceAndPath("dreamseekers","aaroncos_vortex");
     public static final ResourceKey<DamageType> DAMAGE_TYPE=ResourceKey.create(Registries.DAMAGE_TYPE,EFFECT_ID);
     private static final UUID SLOW_ID=UUID.fromString("7e80b86a-c6ec-4b10-bdce-600af935e461");
@@ -218,7 +219,7 @@ public final class AaroncosVortex {
         Map<Recipient,Impact> hits=new LinkedHashMap<>();
         for(Zone zone:due){zone.pulses++;Vec3 center=Vec3.atBottomCenterOf(zone.point).add(0,.25,0);
             var targets=level.getEntitiesOfClass(LivingEntity.class,new AABB(center,center).inflate(RADIUS),zone::target).stream()
-                    .sorted(Comparator.comparingDouble((LivingEntity e)->e.getBoundingBox().getCenter().distanceToSqr(center)).thenComparing(e->e.getUUID().toString())).limit(6).toList();
+                    .sorted(Comparator.comparingDouble((LivingEntity e)->e.getBoundingBox().getCenter().distanceToSqr(center)).thenComparing(e->e.getUUID().toString())).limit(TARGETS_PER_PULSE).toList();
             for(var target:targets)hits.putIfAbsent(new Recipient(zone.caster.owner(),target.getUUID()),new Impact(zone,target));
         }
         for(Impact hit:hits.values()){if(!hit.zone.target(hit.target.entity()))continue;HITS.push(hit);
@@ -227,7 +228,8 @@ public final class AaroncosVortex {
         for(Zone zone:due)if(zone.valid())particles(level,zone);
     }
     private static void particles(ServerLevel level,Zone zone){Vec3 center=Vec3.atBottomCenterOf(zone.point).add(0,.25,0);
-        var packet=new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(ParticleTypes.PORTAL,false,center.x,center.y,center.z,2,.4f,2,0,12);
+        float spread=RADIUS*.5f;
+        var packet=new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(ParticleTypes.PORTAL,false,center.x,center.y,center.z,spread,.4f,spread,0,12);
         for(ServerPlayer player:level.players())if(player.connection!=null&&player.blockPosition().closerToCenterThan(center,512)
                 &&(!FogOfWarServerEvents.isFogActiveFor(player)||level.dimension()==Level.OVERWORLD&&FogOfWarServerEvents.isBlockVisibleFor(player,zone.point.getX(),zone.point.getZ())))player.connection.send(packet);
     }

@@ -21,8 +21,8 @@ import java.util.UUID;
 
 /** Exact post-impact interval penalty. No damage, payment, serialization or command ownership. */
 public final class AaroncosShockSuppression {
-    public static final int DURATION=40;
-    public static final float FACTOR=1.20f;
+    public static final int DURATION=80;
+    public static final float FACTOR=1.40f;
     public static final ResourceLocation EFFECT_ID=ResourceLocation.fromNamespaceAndPath("dreamseekers","aaroncos_shock_suppression");
     private static final Map<LivingEntity,Debuff> DEBUFFS=new IdentityHashMap<>();
     private AaroncosShockSuppression() { }

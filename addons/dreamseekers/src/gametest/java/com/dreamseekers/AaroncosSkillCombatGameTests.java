@@ -75,27 +75,35 @@ public final class AaroncosSkillCombatGameTests {
 
     @GameTest(templateNamespace="dreamseekers_aaroncos_skills",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=480)
     public static void leftNaturalTwelveTickDamageAndFourHundredCooldown(GameTestHelper h) {
-        F f=new F(h,"leftclock");var s=f.hand(true);var target=f.target(5,0);long[] start={0};
+        F f=new F(h,"leftclock");var s=f.hand(true);var target=f.target(7.5,0);long[] start={0};
         h.startSequence().thenIdle(30).thenExecute(()->{
             var q=f.request(s,target);start[0]=h.getLevel().getGameTime();
-            h.assertTrue(SkillService.request(f.peer.actor,q)==SkillResult.SUCCESS,"auth left paid cast");
+            h.assertTrue(ShadowGolemStrike.distanceSquared(s.mob().position(),target.getBoundingBox())>6*6,"target truly outside previous six-block reach");
+            h.assertTrue(SkillService.request(f.peer.actor,q)==SkillResult.SUCCESS,"auth left paid cast within expanded eight-block reach");
             h.assertTrue(f.shadow()==480&&s.rts().skills().cooldownTicks(q.skill())==400&&AaroncosCombat.remainingTicks(s)==12,"exact shadow20/CD400/windup12");
             h.assertTrue(SkillService.request(f.peer.actor,q)==SkillResult.REPLAY&&f.shadow()==480,"same revision cannot spend twice");
         }).thenIdle(11).thenExecute(()->f.hp(target,1000,"no instant/11tick damage"))
-          .thenIdle(1).thenExecute(()->{f.hp(target,954.5f,"exact actual45.5 HP loss at12");h.assertTrue(AaroncosShockSuppression.remainingTicks(target)==0,"left press never grants right suppression");h.assertTrue(!AaroncosCombat.active(s),"single release only");})
+          .thenIdle(1).thenExecute(()->{f.hp(target,896,"104 actual HP lost at tick 12 (26 AD x 4)");h.assertTrue(AaroncosShockSuppression.remainingTicks(target)==0,"left press never grants right suppression");h.assertTrue(!AaroncosCombat.active(s),"single release only");})
           .thenIdle(387).thenExecute(()->{h.assertTrue(h.getLevel().getGameTime()==start[0]+399&&s.rts().skills().cooldownTicks(UnitSkill.AARONCOS_LEFT_PRESS)==1,"natural last cooldowntick");h.assertTrue(f.cast(s,target)==SkillResult.COOLDOWN,"cannot recast one tickearly");})
           .thenIdle(1).thenExecute(()->{h.assertTrue(s.rts().skills().cooldownTicks(UnitSkill.AARONCOS_LEFT_PRESS)==0,"real400 deadline");h.assertTrue(f.cast(s,target)==SkillResult.SUCCESS&&f.shadow()==460,"second real paid cast after deadline");Unit.fullResetBehaviours(s);f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_skills",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=100)
     public static void rightFixedFourTargetsAndTwentyTickRelease(GameTestHelper h) {
-        F f=new F(h,"rightcap");var s=f.hand(false);var targets=List.of(f.target(3,0),f.target(0,3),f.target(-3,0),f.target(0,-3),f.target(3,2));
+        F f=new F(h,"rightcap");var s=f.hand(false);var outer=f.target(0,-5.25);
+        var targets=List.of(f.target(3,0),f.target(0,3),f.target(-3,0),outer,f.target(5.5,2));
+        var ally=f.target(-3,-2);ally.setOwnerName(f.owner);
         List<UUID> actual=new ArrayList<>();List<LivingEntity> expected=new ArrayList<>();
         f.guard(e->{if(AaroncosCombat.isStrike(e.getSource())&&e.getSource().getEntity()==s.mob())actual.add(e.getEntity().getUUID());});
         h.startSequence().thenIdle(30).thenExecute(()->{
             expected.addAll(targets.stream().sorted(Comparator.comparingDouble((GoldenFoxUnit t)->ShadowGolemStrike.distanceSquared(s.mob().position(),t.getBoundingBox())).thenComparing(t->t.getUUID().toString())).limit(4).toList());
+            h.assertTrue(expected.contains(outer)&&ShadowGolemStrike.distanceSquared(s.mob().position(),outer.getBoundingBox())>4*4,"fourth lock must prove reach beyond the old radius");
             h.assertTrue(f.cast(s,s.mob())==SkillResult.SUCCESS&&f.shadow()==470,"self input casts ring for30shadow");
         }).thenIdle(19).thenExecute(()->{for(var t:targets)f.hp(t,1000,"no19tick damage");})
-          .thenIdle(1).thenExecute(()->{for(var t:targets){f.hp(t,expected.contains(t)?976:1000,"fixedmax4 actual damage");h.assertTrue(AaroncosShockSuppression.remainingTicks(t)==(expected.contains(t)?40:0),"only exact four real surviving hit receipts obtain forty-tick suppression");}
+          .thenIdle(1).thenExecute(()->{for(var t:targets){
+                boolean hit=expected.contains(t);f.hp(t,hit?946:1000,"54 actual HP lost (24 AD x 2.25), at most four enemies");
+                h.assertTrue(AaroncosShockSuppression.remainingTicks(t)==(hit?80:0)&&Math.abs(AaroncosShockSuppression.factor(t)-(hit?1.4f:1))<.0001,"only four genuine surviving receipts get 80 ticks of +40% attack interval");
+            }
+            f.hp(ally,1000,"own unit inside expanded area protected");h.assertTrue(AaroncosShockSuppression.remainingTicks(ally)==0,"no friendly suppression");
             h.assertTrue(actual.equals(expected.stream().map(Entity::getUUID).toList()),"stable distance UUID hit ordering");h.assertTrue(s.rts().skills().cooldownTicks(UnitSkill.AARONCOS_RIGHT_SHOCK)==580,"actual600 cooldown consumed20");f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_skills",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=100)
@@ -105,6 +113,9 @@ public final class AaroncosSkillCombatGameTests {
             long revision=s.rts().skills().revision();f.account.extra.put(DreamPassiveEconomy.SHADOW,19);
             h.assertTrue(f.cast(s,target)==SkillResult.INSUFFICIENT_RESOURCES,"insufficientshadow rejected before reset");f.account.extra.put(DreamPassiveEconomy.SHADOW,500);
             target.setOwnerName(f.owner);h.assertTrue(f.cast(s,target)==SkillResult.INVALID_TARGET,"own target rejected");target.setOwnerName(f.enemy);
+            com.solegendary.reignofnether.alliance.AlliancesServerEvents.addAlliance(f.owner,f.enemy);
+            try {h.assertTrue(f.cast(s,target)==SkillResult.INVALID_TARGET,"allied units cannot be hit by paid crush");}
+            finally {com.solegendary.reignofnether.alliance.AlliancesServerEvents.removeAlliance(f.owner,f.enemy);}
             target.setInvisible(true);h.assertTrue(f.cast(s,target)==SkillResult.INVALID_TARGET,"invisible target rejected");target.setInvisible(false);
             for(BlockPos p:BlockPos.betweenClosed(f.center.offset(3,0,-2),f.center.offset(3,5,2)))h.getLevel().setBlock(p,Blocks.STONE.defaultBlockState(),2);
             h.assertTrue(f.cast(s,target)==SkillResult.INVALID_TARGET,"actual solid wall blocks lineofsight");
@@ -130,7 +141,7 @@ public final class AaroncosSkillCombatGameTests {
         F f=new F(h,"reentry");var s=f.hand(true);var a=f.target(5,0);var b=f.target(5,2);boolean[] nested={false};DamageSource[] seen={null};
         f.guard(e->{if(AaroncosCombat.isStrike(e.getSource())&&e.getSource().getEntity()==s.mob()&&seen[0]==null){seen[0]=e.getSource();nested[0]=b.hurt(e.getSource(),999);}});
         h.startSequence().thenIdle(30).thenExecute(()->h.assertTrue(f.cast(s,a)==SkillResult.SUCCESS,"left starts"))
-          .thenIdle(15).thenExecute(()->{h.assertTrue(seen[0]!=null&&!nested[0],"same privateDS on unplannedtarget refused");f.hp(a,954.5f,"originaltarget keeps legitimatehit");f.hp(b,1000,"nestedtarget untouched");h.assertTrue(!a.hurt(seen[0],999),"retainedDS rejected outside exact invocation");f.done();});
+          .thenIdle(15).thenExecute(()->{h.assertTrue(seen[0]!=null&&!nested[0],"same privateDS on unplannedtarget refused");f.hp(a,896,"original target keeps legitimate 104 damage");f.hp(b,1000,"nestedtarget untouched");h.assertTrue(!a.hurt(seen[0],999),"retainedDS rejected outside exact invocation");f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_skills",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=110)
     public static void ordinaryArmorAbsorptionAndGelApplyOnce(GameTestHelper h) {
@@ -140,7 +151,7 @@ public final class AaroncosSkillCombatGameTests {
             try(var other=new PassiveIncomePeer(h.getLevel(),f.enemy)) {
                 h.assertTrue(SkillService.request(other.actor,new SkillRequest(UnitSkill.GEL_GUARD,gel.getId(),gel.getUUID(),gel.rts().skills().revision(),target.getId(),target.getUUID()))==SkillResult.SUCCESS,"realenemyGel applied");
             }
-            expected[0]=45.5*(1-target.getUnitPhysicalArmorPercentage())*(1-target.getUnitResistPercentage())-5-12;
+            expected[0]=104*(1-target.getUnitPhysicalArmorPercentage())*(1-target.getUnitResistPercentage())-5-12;
             h.assertTrue(expected[0]>0,"positiveactual physical remainder");h.assertTrue(f.cast(s,target)==SkillResult.SUCCESS,"castagainstrealdefenses");
         }).thenIdle(15).thenExecute(()->{f.hp(target,(float)(1000-expected[0]),"armor absorption Gel each once");h.assertTrue(target.getAbsorptionAmount()==0&&SkillEffects.shieldRemaining(target)==0,"shields consumed not bypassed");f.done();});
     }
@@ -168,7 +179,7 @@ public final class AaroncosSkillCombatGameTests {
             h.assertTrue(s.mob().doHurtTarget(ordinary),"actual native ordinary attack succeeds");normal[0]=1000-ordinary.getHealth();
             h.assertTrue(normal[0]>24,"real equipped weapon counted by ordinary pipeline");
             h.assertTrue(f.cast(s,skill)==SkillResult.SUCCESS,"real paid skill after ordinarybaseline");
-        }).thenIdle(15).thenExecute(()->{f.hp(skill,(float)(1000-normal[0]*1.75),"175 percent current ordinary baseline, not raw vanilla hurt amount");f.done();});
+        }).thenIdle(15).thenExecute(()->{f.hp(skill,(float)(1000-normal[0]*4),"400 percent current ordinary baseline, not raw vanilla hurt amount");f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_skills",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=110)
     public static void sameTargetRecursiveHurtRevokesEntireExactImpact(GameTestHelper h){
@@ -186,9 +197,9 @@ public final class AaroncosSkillCombatGameTests {
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_skills",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=110)
     public static void nonRtsPlayersOutOfRangeAndTerrainAreNeverValidTargets(GameTestHelper h){
-        F f=new F(h,"bounds");var s=f.hand(true);var far=f.target(8,0);var near=f.target(5,0);
+        F f=new F(h,"bounds");var s=f.hand(true);var far=f.target(9,0);var near=f.target(5,0);
         h.startSequence().thenIdle(30).thenExecute(()->{
-            h.assertTrue(f.cast(s,f.peer.actor)==SkillResult.INVALID_TARGET,"player cannot be attacked/grabbed");h.assertTrue(f.cast(s,far)==SkillResult.INVALID_TARGET,"outside6 AABB rejected");
+            h.assertTrue(f.cast(s,f.peer.actor)==SkillResult.INVALID_TARGET,"player cannot be attacked/grabbed");h.assertTrue(f.cast(s,far)==SkillResult.INVALID_TARGET,"outside8 AABB rejected");
             h.assertTrue(f.shadow()==500,"invalid starts cost zero");h.assertTrue(f.cast(s,near)==SkillResult.SUCCESS,"legal targetstarts");
         }).thenIdle(15).thenExecute(()->{h.assertTrue(h.getLevel().getBlockState(f.center.below()).is(Blocks.STONE),"ring/strike never mutates ground");f.hp(far,1000,"outside target unaffected");f.done();});
     }

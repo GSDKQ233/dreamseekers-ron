@@ -284,7 +284,7 @@ public final class BuildingAbilityEffectsGameTests {
           .thenWaitUntil(()->h.assertTrue(writes[0]>=1&&writes[1]>=1,"both real physical skill writes arrived"))
           .thenExecute(()->{
               h.assertTrue(released[0]==started[0]+12&&released[1]==started[0]+12&&writes[0]==1&&writes[1]==1,"exactly one real physical write per skill recorded at original12tick deadline");
-              near(h,1000-b.getHealth(),plainAd[0]*1.75,"original fixed1.75 skill coefficient unchanged");near(h,1000-a.getHealth(),(1000-b.getHealth())*1.10,"actual paid skill HP loss is10percent once, never1.1 squared");
+              near(h,1000-b.getHealth(),plainAd[0]*4,"expected 400% of native AD for a baseline left crush");near(h,1000-a.getHealth(),(1000-b.getHealth())*1.10,"actual paid skill HP loss is10percent once, never1.1 squared");
               h.assertTrue(cooldownAtRelease[0]==388&&cooldownAtRelease[1]==388,"actual release event sees the unchanged400tick deadline minus12");
           }).thenExecuteAfter(3,()->{
               h.assertTrue(writes[0]==1&&writes[1]==1&&!AaroncosCombat.active(boosted)&&!AaroncosCombat.active(control),"completed paid skill cannot repeat a later physical write");

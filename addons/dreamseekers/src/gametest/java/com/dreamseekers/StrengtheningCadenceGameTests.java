@@ -137,15 +137,15 @@ public final class StrengtheningCadenceGameTests {
           .thenExecute(()->{
               probe.intervals("before",40,3);probe.castAt=h.getLevel().getGameTime();
               h.assertTrue(f.cast(right,right.mob())==SkillResult.SUCCESS&&f.shadow()==470,"genuine authenticated right ring spends thirty shadow once");
-          }).thenWaitUntil(()->h.assertTrue(probe.impactAt>=0&&probe.count("suppressed")>=1,"real twenty-tick impact and subsequent naturally scheduled melee hit inside forty-tick suppression"))
+          }).thenWaitUntil(()->h.assertTrue(probe.impactAt>=0&&probe.count("suppressed")>=2,"two naturally scheduled melee hits inside the 80-tick suppression"))
           .thenExecute(()->{
-              close(h,probe.impactAfter,probe.impactBefore-24,"post-return actual right HP loss, not event amount");
+              close(h,probe.impactAfter,probe.impactBefore-54,"post-return actual right HP loss, not event amount");
               h.assertTrue(probe.impactAt==probe.castAt+20,"natural original twenty-tick windup");
-              for(Hit hit:probe.select("suppressed"))h.assertTrue(hit.reset()==48,"actual goal reset is forty times1.20 once, not twice");
+              probe.intervals("suppressed",56,2); // Actual attack times reflect 40 x 1.40 once, not twice.
           }).thenWaitUntil(()->h.assertTrue(probe.expiryAt>=0&&probe.count("after")>=3,"original deadline and three later unsuppressed natural hits"))
           .thenExecute(()->{
               probe.intervals("after",40,3);
-              h.assertTrue(probe.expiryAt==probe.impactAt+40,"original forty-tick absolute effect deadline");
+              h.assertTrue(probe.expiryAt==probe.impactAt+80,"eighty-tick absolute effect deadline");
               Hit firstAfter=probe.select("after").get(0);
               h.assertTrue(firstAfter.at()==probe.expiryAt+probe.expiryRemaining+1,"first post-expiry hit follows observed native remaining countdown, no invented immutable-CD contract");
               h.assertTrue(AaroncosShockSuppression.remainingTicks(actor)==0&&f.shadow()==470
@@ -237,7 +237,7 @@ public final class StrengtheningCadenceGameTests {
             boolean shock=right!=null&&AaroncosShockSuppression.remainingTicks(actor)>0;
             double aura=right==null?SkillEffects.bonus(actor,BuffKind.ATTACK_SPEED):0;
             h.assertTrue(right!=null||aura==0||Math.abs(aura-.15)<.0001,"only real mother fifteen-percent APS participates");
-            float expected=right==null?(float)(20/(.8*(1+aura))):40*(shock?1.2f:1);
+            float expected=right==null?(float)(20/(.8*(1+aura))):40*(shock?1.4f:1);
             float interval=((AttackerUnit)actor).getAttackCooldown();close(h,interval,expected,"actual cadence getter matches independent baseline/category calculation");
             int reset=remaining(actor);h.assertTrue(reset==(int)expected,"real installed melee goal resets exactly once before hurt: expected="+(int)expected+" actual="+reset);
             String current=right==null?phase:shock?"suppressed":impactAt<0?"before":"after";
@@ -249,8 +249,8 @@ public final class StrengtheningCadenceGameTests {
             long now=event.level.getGameTime();int actualRemaining=remaining(actor);
             if(impactPendingAt>=0) {
                 h.assertTrue(now==impactPendingAt,"first same-impact Level END captures completed HP write");impactAt=impactPendingAt;impactPendingAt=-1;impactAfter=actor.getHealth();
-                close(h,impactAfter,impactBefore-24,"genuine twenty-four-point loss installs right suppression");
-                h.assertTrue(AaroncosShockSuppression.remainingTicks(actor)==40,"fresh paid HP receipt has original forty ticks");
+                close(h,impactAfter,impactBefore-54,"genuine 54-point loss installs right suppression");
+                h.assertTrue(AaroncosShockSuppression.remainingTicks(actor)==80,"fresh paid HP receipt has eighty ticks");
             }
             boolean shock=right!=null&&AaroncosShockSuppression.remainingTicks(actor)>0;
             if(pending!=null) {
@@ -258,7 +258,7 @@ public final class StrengtheningCadenceGameTests {
                 h.assertTrue(actualRemaining==Math.max(0,pending.reset()-1),"normal AttackerUnit.tick consumes one real cooldown tick after the natural hit");
                 hits.add(new Hit(now,pending.phase(),pending.reset(),actualRemaining,pending.interval(),pending.before(),victim.getHealth()));pending=null;
             } else if(right!=null&&previousShock&&!shock&&previousAt==now-1) {
-                h.assertTrue(expiryAt<0&&impactAt>=0&&now==impactAt+40,"only original natural forty-tick expiry");
+                h.assertTrue(expiryAt<0&&impactAt>=0&&now==impactAt+80,"only natural eighty-tick expiry");
                 int nativeCap=40;
                 int expected=Math.max(0,(previousRemaining>nativeCap?nativeCap:previousRemaining)-1);
                 h.assertTrue(actualRemaining==expected,"unmodified native dynamic cap/decrement at expiry: before="+previousRemaining+" expected="+expected+" actual="+actualRemaining);

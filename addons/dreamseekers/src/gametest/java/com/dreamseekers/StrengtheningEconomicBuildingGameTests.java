@@ -230,9 +230,9 @@ public final class StrengtheningEconomicBuildingGameTests {
           .thenExecute(()->{
               Mob contracted=f.converted().get(0);h.assertTrue(contracted instanceof BeetleUnit&&nativeBody.isRemoved()&&!NeutralContracts.pending(contracted)&&RtsKillValueClaims.isFree(contracted),"real completed contract provenance");
               h.assertTrue(f.account.food==950&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==485,"real contract paid50F15S once");
-              h.assertTrue(SkillService.request(f.peer.actor,new SkillRequest(UnitSkill.MOTHER_BROOD,mother.getId(),mother.getUUID(),mother.rts().skills().revision(),mother.getId(),mother.getUUID()))==SkillResult.SUCCESS,"real paid mother summon rather than injected temporary marker");
+              h.assertTrue(SkillService.request(f.peer.actor,new SkillRequest(UnitSkill.MOTHER_BROOD,mother.getId(),mother.getUUID(),mother.rts().skills().revision(),mother.getId(),mother.getUUID()))==SkillResult.SUCCESS,"real mother summon rather than injected temporary marker");
               var children=UnitServerEvents.getAllUnits().stream().filter(e->e instanceof Mob&&e instanceof Unit u&&u.getOwnerName().equals(f.owner)&&BoundedSummons.isTemporary(e)).map(e->(Mob)e).toList();
-              h.assertTrue(children.size()==2&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==455,"exact genuine two-child group and30S payment");free.add(contracted);free.addAll(children);
+              h.assertTrue(children.size()==2&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==485,"exact genuine two-child group, no shadow beyond the contract payment");free.add(contracted);free.addAll(children);
               for(var body:free){body.setNoAi(true);probe.watch(body);h.assertTrue(RtsKillValueClaims.isFree(body),"exact genuine free-origin victim");origins.add(body.getPersistentData().get(RtsKillValueClaims.FREE_ORIGIN_KEY).copy());}
               var normal=DreamseekersMod.BEETLE.get().create(h.getLevel());normal.setOwnerName(f.owner);normal.setNoAi(true);normal.moveTo(f.origin.getX()-7+.5,f.origin.getY()+1,f.origin.getZ()+5+.5);h.assertTrue(h.getLevel().addFreshEntity(normal),"ordinary same-type non-free comparator");f.bodies.add(normal);ordinary[0]=normal;probe.watch(normal);
               killer.moveTo(f.origin.getX()-10+.5,f.origin.getY()+1,f.origin.getZ()-15+.5);
@@ -244,7 +244,7 @@ public final class StrengtheningEconomicBuildingGameTests {
           }).thenIdle(5).thenExecute(()->{
               var events=probe.seen.getOrDefault(ordinary[0].getUUID(),List.of());h.assertTrue(events.size()==1&&events.get(0).totalCost()==95&&RtsKillValueClaims.isClaimed(ordinary[0]),"same native death path accepts ordinary95-cost comparator exactly once");
               h.assertTrue(bank.extra.get(DreamPassiveEconomy.SHADOW)==4&&bank.conversionRemainders.getOrDefault(DreamShadowKillIncome.REMAINDER,0L)==7500,"positive comparator proves live faction consumer and exact4.75 conversion");
-              h.assertTrue(f.account.food==950&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==455,"free deaths do not refund actual contract/summon costs");
+              h.assertTrue(f.account.food==950&&f.account.extra.get(DreamPassiveEconomy.SHADOW)==485,"free deaths never refund contract costs or create shadow for summoned units");
               System.out.println("API52_TRUE_FREE_VICTIM_DEATH_PASS contract=0 summons=0 ordinary95=4+7500/10000");h.succeed();
           });
     }

@@ -21,8 +21,8 @@ public enum UnitSkill {
     SHADOW_GOLEM_STRIKE(480, 3, 20),
     MOTHER_BROOD(900, 0, 600),
     WEEPING_ECHOES(900, 0, 600),
-    AARONCOS_LEFT_PRESS(400, 6, 12),
-    AARONCOS_RIGHT_SHOCK(600, 4, 20),
+    AARONCOS_LEFT_PRESS(400, 8, 12),
+    AARONCOS_RIGHT_SHOCK(600, 6, 20),
     MOTHER_NEST(0, 0, 0),
     AARONCOS_RIGHT_VORTEX(800, 10, 120);
     private final int cooldown, range, duration;

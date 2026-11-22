@@ -119,7 +119,7 @@ public final class BuildingWardPaidFinalizerGameTests {
         var probe=new PaidWardReceiptProbe(event->{if(!AaroncosCombat.isStrike(event.getSource()))return;
             int lane=event.getEntity()==protectedTarget&&event.getSource().getEntity()==protectedHand?0:event.getEntity()==plainTarget&&event.getSource().getEntity()==plainHand?1:-1;
             if(lane<0)return;events[lane]++;released[lane]=own.level.getGameTime();cdAtRelease[lane]=(lane==0?protectedHand:plainHand).rts().skills().cooldownTicks(UnitSkill.AARONCOS_LEFT_PRESS);
-            near(h,event.getAmount(),ad[0]*1.75,"genuine dedicated pre-final snapshot keeps original AD times1.75, not a second native attack sample");
+            near(h,event.getAmount(),ad[0]*4,"genuine dedicated pre-final snapshot keeps native AD times four, not a second native attack sample");
             h.assertTrue((DaisWardEffects.matching(event.getEntity(),event.getSource())!=null)==(lane==0),"same genuine skill path captures ward only for in-range original recipient");
         });
         h.startSequence().thenWaitUntil(()->ready(own,protectedTarget,plainTarget,protectedHand,plainHand)).thenExecute(()->{
@@ -134,7 +134,7 @@ public final class BuildingWardPaidFinalizerGameTests {
         }).thenWaitUntil(()->h.assertTrue(events[0]>0&&events[1]>0,"both genuine paid physical releases observed"))
           .thenExecute(()->{
               h.assertTrue(events[0]==1&&events[1]==1&&released[0]==started[0]+12&&released[1]==started[0]+12&&cdAtRelease[0]==388&&cdAtRelease[1]==388,"one actual event each at original12tick release with400-minus12CD");
-              near(h,1000-plainTarget.getHealth(),ad[0]*1.75,"actual unwarded paid HP loss preserves original1.75 coefficient");
+              near(h,1000-plainTarget.getHealth(),ad[0]*4,"actual unwarded paid HP loss uses 400% of the sampled AD");
               near(h,1000-protectedTarget.getHealth(),(1000-plainTarget.getHealth())*.9,"actual protected paid HP loss gets one10percent reduction, never0.9 squared");
           }).thenExecuteAfter(3,()->{
               long elapsed=own.level.getGameTime()-started[0];
@@ -156,12 +156,12 @@ public final class BuildingWardPaidFinalizerGameTests {
         var probe=new PaidWardReceiptProbe(event->{if(event.getEntity()!=target||!AaroncosCombat.isStrike(event.getSource()))return;
             int lane=event.getSource().getEntity()==first?0:event.getSource().getEntity()==second?1:-1;if(lane<0)return;
             events[lane]++;released[lane]=own.level.getGameTime();cdAtRelease[lane]=(lane==0?first:second).rts().skills().cooldownTicks(UnitSkill.AARONCOS_LEFT_PRESS);
-            near(h,event.getAmount(),amount[0],"each genuine paid hit reaches final boundary with unchanged native AD/weapon1.75 snapshot");
+            near(h,event.getAmount(),amount[0],"each genuine paid hit reaches final boundary with a single 400% native AD/weapon snapshot");
             h.assertTrue(DaisWardEffects.matching(target,event.getSource())!=null,"actual dedicated finalizer has original paid ward at both releases");
         });
         h.startSequence().thenWaitUntil(()->ready(own,target,donor,first,second)).thenExecute(()->{
             recipient(target);calm(first);calm(second);near(h,first.getAttribute(AttributeRegistrar.ATTACK_DAMAGE.get()).getBaseValue(),26,"real26AD LeftHand, no small-damage special fixture");
-            amount[0]=nativeAttack(first)*1.75;near(h,nativeAttack(second)*1.75,amount[0],"fresh second real hand has matching original paid snapshot");
+            amount[0]=nativeAttack(first)*4;near(h,nativeAttack(second)*4,amount[0],"fresh second real hand has matching original paid snapshot");
             h.assertTrue(amount[0]*.9>12,"first real native hit genuinely exhausts full12Gel; test never assumes residual shield");aps[0]=target.getNonBaseAttacksPerSecond();
             readyAt[0]=ward(h,own);int shadow=own.shadow();long revision=own.account.revision;
             var gel=new SkillRequest(UnitSkill.GEL_GUARD,donor.getId(),donor.getUUID(),donor.rts().skills().revision(),target.getId(),target.getUUID());

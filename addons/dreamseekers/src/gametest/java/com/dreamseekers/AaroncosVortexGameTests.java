@@ -74,22 +74,36 @@ public final class AaroncosVortexGameTests {
 
     @GameTest(templateNamespace="dreamseekers_aaroncos_vortex",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=900)
     public static void researchPaidClockSixPulsesSlowRefreshAndTerrain(GameTestHelper h){
-        F f=new F(h,"clock");var s=f.hand();var t=f.target(5,1);var ally=f.target(5,-1);ally.setOwnerName(f.owner);
+        F f=new F(h,"clock");var s=f.hand();var t=f.target(10.25,0);var ally=f.target(5,2);ally.setOwnerName(f.owner);
+        var far=f.target(12,0);var screened=f.target(5,-4);
+        for(BlockPos p:BlockPos.betweenClosed(f.center.offset(4,0,-2),f.center.offset(6,4,-2)))
+            h.getLevel().setBlock(p,Blocks.STONE.defaultBlockState(),2);
         double speed=t.getAttributeValue(Attributes.MOVEMENT_SPEED);long[] start={0};List<Long> hits=new ArrayList<>();
         f.guard(e->{if(AaroncosVortex.isPulse(e.getSource())&&e.getEntity()==t)hits.add(h.getLevel().getGameTime());});
         var seq=h.startSequence().thenIdle(30).thenExecute(()->{
             h.assertTrue(f.cast(s)==SkillResult.DISABLED&&f.shadow()==500,"research locked no spend");f.unlock();
             f.account.extra.put(DreamPassiveEconomy.SHADOW,39);h.assertTrue(f.cast(s)==SkillResult.INSUFFICIENT_RESOURCES,"insufficient resources rejected");f.account.extra.put(DreamPassiveEconomy.SHADOW,500);
+            var center=net.minecraft.world.phys.Vec3.atBottomCenterOf(f.ground(s).position()).add(0,.25,0);
+            double distance=t.getBoundingBox().getCenter().distanceToSqr(center);
+            h.assertTrue(distance>4*4&&distance<=6*6,"target is inside the new six-block radius, outside the former four");
             var q=f.ground(s);start[0]=h.getLevel().getGameTime();h.assertTrue(SkillService.requestGround(f.peer.actor,q)==SkillResult.SUCCESS,"real authorized ground cast");
             h.assertTrue(f.shadow()==460&&s.rts().skills().cooldownTicks(q.skill())==800,"exact cost and cooldown");h.assertTrue(SkillService.requestGround(f.peer.actor,q)==SkillResult.REPLAY&&f.shadow()==460,"replay cannot pay twice");
         });
         for(int i=1;i<=6;i++){final int n=i;seq.thenWaitUntil(()->h.assertTrue(h.getLevel().getGameTime()>=start[0]+20*n-1,"before pulse"))
-            .thenExecute(()->f.hp(t,1000-2*(n-1),"no early pulse"))
+            .thenExecute(()->f.hp(t,1000-5*(n-1),"no early pulse"))
             .thenWaitUntil(()->h.assertTrue(h.getLevel().getGameTime()>=start[0]+20*n+1,"after natural END pulse"))
-            .thenExecute(()->{f.hp(t,1000-2*n,"fixed magic2 each pulse");f.hp(ally,1000,"no own-unit damage");h.assertTrue(hits.size()==n&&hits.get(n-1)==start[0]+20*n,"exact pulse timeline");h.assertTrue(Math.abs(t.getAttributeValue(Attributes.MOVEMENT_SPEED)-speed*.85)<1e-6,"15 percent slow never stacked");});}
-        seq.thenWaitUntil(()->h.assertTrue(h.getLevel().getGameTime()>=start[0]+140,"last pulse slow still current"))
-            .thenExecute(()->h.assertTrue(AaroncosVortex.negative(t)!=null,"sixth pulse refreshed final25tick slow"))
-            .thenIdle(6).thenExecute(()->{h.assertTrue(AaroncosVortex.negative(t)==null&&Math.abs(t.getAttributeValue(Attributes.MOVEMENT_SPEED)-speed)<1e-6&&!AaroncosVortex.active(s),"natural zone and slow expiry");h.assertTrue(h.getLevel().getBlockState(f.center.offset(5,-1,0)).is(Blocks.STONE)&&h.getLevel().getBlockState(f.center.offset(5,0,0)).isAir(),"no terrain or fire mutation");})
+            .thenExecute(()->{
+                f.hp(t,1000-5*n,"fixed five magic damage each pulse");f.hp(s,420,"no self damage");
+                for(var protectedUnit:List.of(ally,far,screened)){
+                    f.hp(protectedUnit,1000,"no friendly, distant or through-wall damage");
+                    h.assertTrue(AaroncosVortex.negative(protectedUnit)==null,"no slow on a rejected target");
+                }
+                h.assertTrue(hits.size()==n&&hits.get(n-1)==start[0]+20*n,"exact pulse timeline");
+                h.assertTrue(Math.abs(t.getAttributeValue(Attributes.MOVEMENT_SPEED)-speed*.65)<1e-6,"35 percent slow never stacked");
+            });}
+        seq.thenWaitUntil(()->h.assertTrue(h.getLevel().getGameTime()>=start[0]+159,"last pulse slow still current"))
+            .thenExecute(()->h.assertTrue(AaroncosVortex.negative(t)!=null,"sixth pulse refreshed the final 40-tick slow"))
+            .thenIdle(2).thenExecute(()->{h.assertTrue(AaroncosVortex.negative(t)==null&&Math.abs(t.getAttributeValue(Attributes.MOVEMENT_SPEED)-speed)<1e-6&&!AaroncosVortex.active(s),"natural zone and slow expiry");h.assertTrue(h.getLevel().getBlockState(f.center.offset(5,-1,0)).is(Blocks.STONE)&&h.getLevel().getBlockState(f.center.offset(5,0,0)).isAir(),"no terrain or fire mutation");})
             .thenWaitUntil(()->h.assertTrue(h.getLevel().getGameTime()>=start[0]+799,"last cooldown tick"))
             .thenExecute(()->h.assertTrue(s.rts().skills().cooldownTicks(UnitSkill.AARONCOS_RIGHT_VORTEX)==1&&f.cast(s)==SkillResult.COOLDOWN,"not early at799"))
             .thenIdle(1).thenExecute(()->{h.assertTrue(f.cast(s)==SkillResult.SUCCESS&&f.shadow()==420,"recast exactly800 pays once");f.done();});
@@ -98,7 +112,7 @@ public final class AaroncosVortexGameTests {
     public static void sameOwnerOverlapCapsSixActualEnemies(GameTestHelper h){
         F f=new F(h,"overlap");var a=f.hand();var b=f.hand();f.unlock();List<GoldenFoxUnit> targets=new ArrayList<>();for(int i=0;i<7;i++){double angle=i*Math.PI*2/7;targets.add(f.target(5+Math.cos(angle)*2,Math.sin(angle)*2));}
         h.startSequence().thenIdle(30).thenExecute(()->h.assertTrue(f.cast(a)==SkillResult.SUCCESS&&f.cast(b)==SkillResult.SUCCESS&&f.shadow()==420,"two independently paid zones"))
-            .thenIdle(21).thenExecute(()->{h.assertTrue(targets.stream().filter(t->Math.abs(t.getHealth()-998)<.001).count()==6&&targets.stream().filter(t->t.getHealth()==1000).count()==1,"six recipients only, same-owner overlapping zones do not double hit");f.done();});
+            .thenIdle(21).thenExecute(()->{h.assertTrue(targets.stream().filter(t->Math.abs(t.getHealth()-995)<.001).count()==6&&targets.stream().filter(t->t.getHealth()==1000).count()==1,"six recipients only, same-owner overlapping zones do not double hit");f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_vortex",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=900)
     public static void stopCancelsWindupWithoutRefund(GameTestHelper h){
@@ -118,8 +132,8 @@ public final class AaroncosVortexGameTests {
     public static void disconnectAndRemovalCancelTransientEffects(GameTestHelper h){
         F f=new F(h,"offline");var s=f.hand();var t=f.target(5,0);f.unlock();
         h.startSequence().thenIdle(30).thenExecute(()->h.assertTrue(f.cast(s)==SkillResult.SUCCESS,"paid before disconnect"))
-            .thenIdle(21).thenExecute(()->{f.hp(t,998,"first actual hit");h.assertTrue(AaroncosVortex.negative(t)!=null,"actual slow installed");f.peer.close();})
-            .thenIdle(21).thenExecute(()->{f.hp(t,998,"offline caster no secondpulse");h.assertTrue(AaroncosVortex.negative(t)==null&&!AaroncosVortex.active(s),"disconnect revokes lease and slow");s.discard();h.assertTrue(f.shadow()==460,"no refund on unload");f.done();});
+            .thenIdle(21).thenExecute(()->{f.hp(t,995,"first actual hit");h.assertTrue(AaroncosVortex.negative(t)!=null,"actual slow installed");f.peer.close();})
+            .thenIdle(21).thenExecute(()->{f.hp(t,995,"offline caster no secondpulse");h.assertTrue(AaroncosVortex.negative(t)==null&&!AaroncosVortex.active(s),"disconnect revokes lease and slow");s.discard();h.assertTrue(f.shadow()==460,"no refund on unload");f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_vortex",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=120)
     public static void actualEntityNbtRetainsCooldownButNotTransientZone(GameTestHelper h){
@@ -138,7 +152,7 @@ public final class AaroncosVortexGameTests {
                 h.assertTrue(SkillService.request(peer.actor,new SkillRequest(UnitSkill.GEL_GUARD,gel.getId(),gel.getUUID(),gel.rts().skills().revision(),t.getId(),t.getUUID()))==SkillResult.SUCCESS,"real enemy Gel shield");
             }
             h.assertTrue(SkillEffects.shieldRemaining(t)==12&&f.cast(s)==SkillResult.SUCCESS,"paid vortex against12 Gel");
-        }).thenIdle(21).thenExecute(()->{f.hp(t,1000,"full Gel absorption no health write");h.assertTrue(SkillEffects.shieldRemaining(t)==10&&AaroncosVortex.negative(t)!=null,"exact2 shield receipt still applies slow once");f.done();});
+        }).thenIdle(21).thenExecute(()->{f.hp(t,1000,"full Gel absorption no health write");h.assertTrue(SkillEffects.shieldRemaining(t)==7&&AaroncosVortex.negative(t)!=null,"five points of shield absorbed: one genuine slow receipt");f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_vortex",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=120)
     public static void canceledDamageHasNoSlowButNextRealPulseDoes(GameTestHelper h){
@@ -146,7 +160,7 @@ public final class AaroncosVortexGameTests {
         f.guard(e->{if(AaroncosVortex.isPulse(e.getSource())&&e.getEntity()==t&&!canceled[0]){canceled[0]=true;e.setCanceled(true);}});
         h.startSequence().thenIdle(30).thenExecute(()->h.assertTrue(f.cast(s)==SkillResult.SUCCESS,"real paid cast"))
             .thenIdle(21).thenExecute(()->{f.hp(t,1000,"canceled actual final damage writes no health");h.assertTrue(canceled[0]&&AaroncosVortex.negative(t)==null,"zero damage not a successful receipt");})
-            .thenIdle(20).thenExecute(()->{f.hp(t,998,"second independent pulse health write");h.assertTrue(AaroncosVortex.negative(t)!=null,"next genuine receipt installs slow");f.done();});
+            .thenIdle(20).thenExecute(()->{f.hp(t,995,"second independent pulse health write");h.assertTrue(AaroncosVortex.negative(t)!=null,"next genuine receipt installs slow");f.done();});
     }
     @GameTest(templateNamespace="dreamseekers_aaroncos_vortex",template="ore_mine_test_arena",batch=BATCH,timeoutTicks=120)
     public static void recursiveSamePulseCannotReportHealthOrSlowTwice(GameTestHelper h){

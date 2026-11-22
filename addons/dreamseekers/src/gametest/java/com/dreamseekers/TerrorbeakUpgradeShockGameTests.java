@@ -117,15 +117,15 @@ public final class TerrorbeakUpgradeShockGameTests {
             castAt[0]=h.getLevel().getGameTime();beforeHp[0]=source.getHealth();population[0]=UnitServerEvents.getCurrentPopulation(f.arena.enemy);
             h.assertTrue(f.arena.cast(right,right.mob())==SkillResult.SUCCESS&&f.arena.shadow()==470,"actual right cast paid thirty shadow through real skill codec/service");
         }).thenIdle(20).thenExecute(()->{
-            h.assertTrue(source.isAlive()&&source.getHealth()<beforeHp[0]&&AaroncosShockSuppression.remainingTicks(source)==40,
-                    "natural twenty-tick right release caused real surviving HP loss and forty-tick suppression");
+            h.assertTrue(source.isAlive()&&source.getHealth()<beforeHp[0]&&AaroncosShockSuppression.remainingTicks(source)==80,
+                    "natural twenty-tick right release caused real surviving HP loss and eighty-tick suppression");
             h.assertTrue(source.hurtTime>0,"native damage really produced hurtTime before natural recovery");
-            deadline[0]=h.getLevel().getGameTime()+40;
+            deadline[0]=h.getLevel().getGameTime()+80;
             System.out.println("UPGRADE_SHOCK_HIT source="+originalUuid+" castAt="+castAt[0]+" now="+h.getLevel().getGameTime()
                     +" deadline="+deadline[0]+" hurtTime="+source.hurtTime+" hpBefore="+beforeHp[0]+" hpAfter="+source.getHealth());
         }).thenIdle(12).thenExecute(()->{
             otherEffectsClear(h,source);int remaining=(int)(deadline[0]-h.getLevel().getGameTime());
-            h.assertTrue(remaining==28&&AaroncosShockSuppression.remainingTicks(source)==remaining&&original.valid()
+            h.assertTrue(remaining==68&&AaroncosShockSuppression.remainingTicks(source)==remaining&&original.valid()
                     &&source.getUUID().equals(originalUuid),"same exact body retains unexpired shock after native hurtTime naturally reached zero");
             var position=source.position();float hp=source.getHealth(),ratio=hp/source.getMaxHealth();
             long revision=source.rts().skills().revision(),accountRevision=f.account.revision,command=source.rts().commandRevision;
@@ -152,7 +152,7 @@ public final class TerrorbeakUpgradeShockGameTests {
             }
             h.assertTrue(f.arena.shadow()==470&&right.rts().skills().cooldownTicks(UnitSkill.AARONCOS_RIGHT_SHOCK)==568,
                     "right's original payment and naturally elapsed cooldown are unchanged by upgrade attempt");
-        }).thenIdle(27).thenExecute(()->{
+        }).thenIdle(67).thenExecute(()->{
             h.assertTrue(h.getLevel().getGameTime()==deadline[0]-1,"observe natural final shock tick without rewriting time");
             if(!legacy) {
                 otherEffectsClear(h,source);
@@ -161,7 +161,7 @@ public final class TerrorbeakUpgradeShockGameTests {
                 h.assertTrue(AaroncosShockSuppression.remainingTicks(source)==1&&f.published.isEmpty()&&original.valid(),"no deadline refresh, cleanse or new publication on repeated refusal");f.unspent();
             }
         }).thenIdle(1).thenExecute(()->{
-            h.assertTrue(h.getLevel().getGameTime()==deadline[0],"natural forty-tick suppression deadline reached");
+            h.assertTrue(h.getLevel().getGameTime()==deadline[0],"natural eighty-tick suppression deadline reached");
             if(!legacy) {
                 otherEffectsClear(h,source);
                 h.assertTrue(AaroncosShockSuppression.remainingTicks(source)==0&&TerrorbeakUpgradeService.mayOffer(f.defender.actor,source),"same original becomes eligible exactly at natural expiry");
