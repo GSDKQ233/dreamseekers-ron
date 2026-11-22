@@ -1,6 +1,6 @@
 {
-  "release": "API65-repair3.1-dais-upgrade-source",
-  "status": "work-in-progress local resonance dais upgrade source; no binary release",
+  "release": "API65-repair3.1-2026-11-22-source",
+  "status": "work-in-progress 2026-11-22 source checkpoint; no binary release",
   "runtime_change": true,
   "baseline_archive": "API65-repair3-source.zip",
   "baseline_sha256": "226856fca5f3e9eb7da58f1e190e8863dbba77036480d59a4149c9bf71ea5ef2",
@@ -413,6 +413,7 @@
     "docs/dreamseekers/BUILDINGS-REVIEWED.zh-CN.md",
     "docs/dreamseekers/FEATURES.zh-CN.md",
     "docs/dreamseekers/REPAIR3.1.zh-CN.md",
+    "docs/dreamseekers/VALIDATION.zh-CN.md",
     "gradle/gametest-plan.gradle",
     "src/gametest/java/com/solegendary/reignofnether/building/ResourceBuildingRoundTrip.java",
     "src/gametest/java/com/solegendary/reignofnether/building/production/NativeProductionCompletionGameTests.java",
@@ -453,12 +454,12 @@
       "sha256": "aa8e97ff7a23dbb3cb74a9ef59c54205cffe5d8a3d20217287d7d8623d5e6b80"
     },
     "CHANGELOG.zh-CN.md": {
-      "bytes": 5821,
-      "sha256": "adab7376aa3ba7858111e532606cc2cd57301bf34134346823a9ee429d82c70d"
+      "bytes": 6002,
+      "sha256": "637cd6963235f8ceac594f2bb8d15dbf1d3aabb31c1a852d9846bb24edd56b61"
     },
     "COLLABORATION.md": {
-      "bytes": 35367,
-      "sha256": "78f8558caa4303269d32f95bddaffd7c1992cd860878b38641b24591f40d106d"
+      "bytes": 36472,
+      "sha256": "99d7b835421c6278c58c2dac91b6fe7e29667a49c1e5f9d33d286bf89f9473a1"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -469,8 +470,8 @@
       "sha256": "9152d90f20557128a640c659ad1b5f6ee16c43c155719bee92c1d885f97bb35d"
     },
     "README.md": {
-      "bytes": 6452,
-      "sha256": "371ec0488bac976317c0f8196c927a1ee85a15789c57c0c3edcbcc3653480ccf"
+      "bytes": 6661,
+      "sha256": "470bdf336ff5277a4fab11ce4465b4e7d2f63bbdc3d5aed79ac0389e711ef00a"
     },
     "addons/dreamseekers/build.gradle": {
       "bytes": 64019,
@@ -5273,8 +5274,8 @@
       "sha256": "ea9da63bd304f57beffe8420f55890c3c61bff2de139713e75767b0815f4f1b8"
     },
     "docs/dreamseekers/VALIDATION.zh-CN.md": {
-      "bytes": 7388,
-      "sha256": "db6b3cc0cc93d62741612d433fbb80e4ad34b06ecf1a1b58be756b672734072e"
+      "bytes": 9270,
+      "sha256": "b891de67abd7d291a7d9c9af0befca9e7a3a086a7033b3ef6b6e7bf7769cc26a"
     },
     "gradle.properties": {
       "bytes": 266,
