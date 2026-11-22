@@ -8,7 +8,6 @@ import com.dreamseekers.unit.TeamSafeCombatUnit;
 import com.dreamseekers.unit.TeamSafeMeleeAttackGoal;
 import com.solegendary.reignofnether.registrars.MobEffectRegistrar;
 import com.solegendary.reignofnether.unit.UnitServerEvents;
-import com.solegendary.reignofnether.unit.interfaces.Unit;
 import com.solegendary.reignofnether.unit.interfaces.AttackerUnit;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -136,9 +135,7 @@ public final class TerrorbeakDreadRoar {
         }
     }
     private static boolean outsideMeleeReach(TeamSafeCombatUnit source,LivingEntity target) {
-        float width=source.mob().getBbWidth()+source.getBonusMeleeRange();
-        float targetWidth=target.getBbWidth()+(target instanceof Unit unit?unit.getBonusMeleeRangeForAttackers():0);
-        double reach=width*2f*width*2f+targetWidth;
+        double reach=OrdinaryMeleeReach.rawSquared(source.mob(),source,target);
         return Double.isFinite(reach)&&reach>=0&&source.mob().distanceToSqr(target)>reach;
     }
     /** Pure current-intent query. Never creates a path, target, move order or effect lease. */

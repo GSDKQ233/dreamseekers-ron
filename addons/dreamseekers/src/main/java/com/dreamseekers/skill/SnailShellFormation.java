@@ -101,11 +101,8 @@ public final class SnailShellFormation {
         Formation removed=ACTIVE.remove(source);
         if(removed!=null&&!removed.onExplicitHold)source.rts().commandRevision++;
     }
-    /** Match the existing AbstractMeleeAttackUnitGoal's current, target-width-aware reach exactly. */
     private static boolean inMeleeReach(BasaltSnailUnit source,LivingEntity target) {
-        float width=source.getBbWidth()+source.getBonusMeleeRange();
-        float targetWidth=target.getBbWidth()+(target instanceof Unit unit?unit.getBonusMeleeRangeForAttackers():0);
-        double reach=width*2f*width*2f+targetWidth;
+        double reach=OrdinaryMeleeReach.rawSquared(source,source,target);
         return Double.isFinite(reach)&&reach>=0&&source.distanceToSqr(target)<=reach;
     }
     private static boolean maySelectInPlace(BasaltSnailUnit source,LivingEntity target) {

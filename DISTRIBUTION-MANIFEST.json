@@ -1,6 +1,6 @@
 {
-  "release": "API65-repair3.1-passive-skills-source",
-  "status": "work-in-progress skill triggers source; no binary release",
+  "release": "API65-repair3.1-native-reuse-source",
+  "status": "work-in-progress native reuse source; no binary release",
   "runtime_change": true,
   "baseline_archive": "API65-repair3-source.zip",
   "baseline_sha256": "226856fca5f3e9eb7da58f1e190e8863dbba77036480d59a4149c9bf71ea5ef2",
@@ -29,6 +29,7 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/economy/CapitalResearchRanks.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/DamageTriggeredDefense.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/FoxDreamSeedAutocast.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinaryMeleeReach.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/PassiveSplashTargets.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillAutocastPolicy.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillCastAnimation.java",
@@ -82,6 +83,7 @@
     "addons/dreamseekers/src/test/java/com/dreamseekers/economy/CapitalResearchRanksTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/AutocastTooltipTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/HardCodedSkillNumbersTest.java",
+    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/OrdinaryMeleeReachTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/worldtree/WorldTreeCombinedStateTest.java",
     "docs/dreamseekers/BUILDINGS-REVIEWED.zh-CN.md",
     "docs/dreamseekers/REPAIR3.1.zh-CN.md",
@@ -211,14 +213,19 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/TerrorbeakUpgradeService.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/shadow/WeepingSquealGhostBalance.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/AshEmberLanding.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/BeetleAdvance.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/BeetleMotherCommandAura.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/DamageTriggeredDefense.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/FireflyRush.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/FoxDreamSeedAutocast.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/FriendlyDebtContract.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/MotherNestStance.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/NativeOrdinaryDebtHit.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinaryAttackGate.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinaryMeleeReach.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinarySkillHit.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/PassiveSplashTargets.java",
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/ShadowCorrosionTouch.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/ShadowGolemStrike.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/ShadowHandGrip.java",
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillAmplification.java",
@@ -325,6 +332,7 @@
     "addons/dreamseekers/src/test/java/com/dreamseekers/economy/DreamEconomyTooltipTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/AutocastTooltipTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/HardCodedSkillNumbersTest.java",
+    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/OrdinaryMeleeReachTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillTooltipLayoutTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/worldtree/WorldTreeActionFeedbackTest.java",
     "addons/dreamseekers/src/test/java/com/dreamseekers/worldtree/WorldTreeCombinedStateTest.java",
@@ -3396,8 +3404,8 @@
       "sha256": "40207ee99163a17762c9310c677dc1b352c66ba52a86322e6f4a051589e1e786"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/BeetleAdvance.java": {
-      "bytes": 10257,
-      "sha256": "6d0ca291e15051242ef1592883bfe13f50105d7375d9515ca9b3c908d11be399"
+      "bytes": 10054,
+      "sha256": "16cc5393678daf2d5966c15265ae40f3733118b8cf032bd0678842df4f9e441e"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/BeetleGuard.java": {
       "bytes": 10063,
@@ -3444,12 +3452,12 @@
       "sha256": "2ac9964c75603a04f76648137f019cd44edcdf534d65df79bf1da463f996a0f3"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/MotherNestStance.java": {
-      "bytes": 6636,
-      "sha256": "7adef6b99cd4f064cb574175d73243d9a7ec6b1c15979e3d328f04fa8fbd8ad5"
+      "bytes": 6510,
+      "sha256": "8ab94d5f1aee192b704fccb98df05da74944527607d1062c51b971e34999af8b"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/NativeOrdinaryDebtHit.java": {
-      "bytes": 8350,
-      "sha256": "f09d3b29ce49b6d62b35ad39d38beb9335d6cefcbf27dc7ba1260e5bb7157731"
+      "bytes": 8115,
+      "sha256": "98cb9a20c1b4064fb80200460a384febe439d06bc56d3d3b0dc8bc931373f819"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinaryAttackGate.java": {
       "bytes": 4076,
@@ -3458,6 +3466,10 @@
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinaryFangOrigin.java": {
       "bytes": 5887,
       "sha256": "b7fbd64968ff14d3a8548ad92b9efec8dc5a670e56411b6bbf7f23b1de0a5149"
+    },
+    "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinaryMeleeReach.java": {
+      "bytes": 1275,
+      "sha256": "ef0026b1b462b232d48813ab3507a8b566878c0ab620bc580af39e41a1f61676"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/OrdinarySkillHit.java": {
       "bytes": 25906,
@@ -3476,8 +3488,8 @@
       "sha256": "092c68db589799222373bf313dc2d1bfbac757260be8a7981af996200e3fb245"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/ShadowCorrosionTouch.java": {
-      "bytes": 13522,
-      "sha256": "010000abe06f256e68770bd2ed4dfe98f4c615e4b0c1d482a91ce8bb021dda42"
+      "bytes": 13386,
+      "sha256": "c1f402b5f81a29cb560e0681de52f5bafc5fbde163658b114300d96ed627de44"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/ShadowGolemStrike.java": {
       "bytes": 24479,
@@ -3492,8 +3504,8 @@
       "sha256": "0eb41119fe7b2ee85504168b0def8044063a3592ac778ebebc0e7eca39855366"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillAutocastPolicy.java": {
-      "bytes": 13961,
-      "sha256": "654ebe652cb312002f182c1681861470ccc4c5a5418e18cccfc009b3d27c20b4"
+      "bytes": 13847,
+      "sha256": "d1683bb4b4f4fcc4fe642fbcfd9404ea55b48a36c279ed256311eabd1b74c815"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SkillBuildingRequest.java": {
       "bytes": 398,
@@ -3564,8 +3576,8 @@
       "sha256": "0bf1ab7d20792d86df2be9e11040c82fde3b63d176c18ff2173d7dcb0e5affa9"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SnailShellFormation.java": {
-      "bytes": 14665,
-      "sha256": "d42cac1fc118e11693a449fc1488f552d25915bb5e4f6aaf58e518e7a6f15a5c"
+      "bytes": 14398,
+      "sha256": "06cb7ec85be7c670a3bf842388994e12dac1a389bea8007be78de8728b58ce5a"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/SnailShellNavigation.java": {
       "bytes": 4275,
@@ -3584,8 +3596,8 @@
       "sha256": "6daf71690ca79375584081dcfbdb397ce49c58745c8a4da69680117d1408d66b"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/TerrorbeakDreadRoar.java": {
-      "bytes": 12669,
-      "sha256": "5f4e606d418288cbceb505add696096d07773d3d6091940d27ab9ca55b53520e"
+      "bytes": 12446,
+      "sha256": "4bd8dd5c3a37f022277056953d10e53c2d8c656bf7405fd91398156d10299d65"
     },
     "addons/dreamseekers/src/main/java/com/dreamseekers/skill/UnitSkill.java": {
       "bytes": 1574,
@@ -4994,6 +5006,10 @@
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/HardCodedSkillNumbersTest.java": {
       "bytes": 2445,
       "sha256": "afe377ad780a7dd3c5a3eeab5a93cfabca66e2e13e1dcc38a1eed812b15ac6c7"
+    },
+    "addons/dreamseekers/src/test/java/com/dreamseekers/skill/OrdinaryMeleeReachTest.java": {
+      "bytes": 1671,
+      "sha256": "2ab67250f272fc9a34582533cb60c515ef01fb495560a94656ff50d3fc15e6cf"
     },
     "addons/dreamseekers/src/test/java/com/dreamseekers/skill/SkillReadinessTest.java": {
       "bytes": 1235,

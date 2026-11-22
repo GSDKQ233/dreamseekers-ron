@@ -171,9 +171,8 @@ final class SkillAutocastPolicy {
     }
 
     private static boolean meleeReach(LivingEntity fighter, AttackerUnit attacker, LivingEntity target) {
-        float w = fighter.getBbWidth() + attacker.getBonusMeleeRange();
-        float tw = target.getBbWidth() + (target instanceof Unit u ? u.getBonusMeleeRangeForAttackers() : 0);
-        return fighter.distanceToSqr(target) <= w * 2 * w * 2 + tw;
+        double reach = OrdinaryMeleeReach.rawSquared(fighter, attacker, target);
+        return fighter.distanceToSqr(target) <= reach;
     }
 
     private static boolean ranged(AttackerUnit attacker) {

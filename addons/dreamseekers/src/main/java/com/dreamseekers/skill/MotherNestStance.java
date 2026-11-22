@@ -57,8 +57,7 @@ public final class MotherNestStance {
     }
     public static void commandChanged(BeetleMotherUnit s){if(server(s))ACTIVE.remove(s);}
     private static boolean inReach(BeetleMotherUnit s,LivingEntity t){
-        float width=s.getBbWidth()+s.getBonusMeleeRange();float tw=t.getBbWidth()+(t instanceof Unit u?u.getBonusMeleeRangeForAttackers():0);
-        double reach=width*2f*width*2f+tw;
+        double reach=OrdinaryMeleeReach.rawSquared(s,s,t);
         return Double.isFinite(reach)&&reach>=0&&s.distanceToSqr(t)<=reach;
     }
     private static boolean legalTarget(BeetleMotherUnit s,LivingEntity t){

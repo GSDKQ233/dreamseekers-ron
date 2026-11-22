@@ -5,7 +5,6 @@ import com.dreamseekers.unit.BeetleUnit;
 import com.solegendary.reignofnether.api.FinalUnitDamageHooks;
 import com.solegendary.reignofnether.registrars.MobEffectRegistrar;
 import com.solegendary.reignofnether.unit.UnitServerEvents;
-import com.solegendary.reignofnether.unit.interfaces.AttackerUnit;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -70,9 +69,8 @@ public final class BeetleAdvance {
                 ||source.hasEffect(MobEffectRegistrar.UNCONTROLLABLE.get());
     }
     private static boolean inReach(BeetleUnit source,LivingEntity target) {
-        float width=source.getBbWidth()+source.getBonusMeleeRange();
-        float targetWidth=target.getBbWidth()+(target instanceof Unit unit?unit.getBonusMeleeRangeForAttackers():0);
-        return source.distanceToSqr(target)<=width*2f*width*2f+targetWidth;
+        double reach=OrdinaryMeleeReach.rawSquared(source,source,target);
+        return source.distanceToSqr(target)<=reach;
     }
     public static boolean active(LivingEntity source) {
         if(!(source instanceof BeetleUnit beetle)||!server(source))return false;

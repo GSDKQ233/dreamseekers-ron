@@ -76,10 +76,8 @@ public final class NativeOrdinaryDebtHit {
                     ||!CoordinatedMark.enemy(mob,target.entity())||!mob.hasLineOfSight(target.entity()))return false;
             // Historical contribution does not require the owner to remain online, alive, in this
             // dimension or able to see the target. Existing cast/settlement visibility gates own that rule.
-            // Mirror the unchanged native AbstractMeleeAttackUnitGoal reach, including target's bonus.
-            float width=mob.getBbWidth()+attacker.getBonusMeleeRange();
-            float targetWidth=target.entity().getBbWidth()+((Unit)target.entity()).getBonusMeleeRangeForAttackers();
-            return mob.distanceToSqr(target.entity())<=width*2.0F*width*2.0F+targetWidth;
+            double reach=OrdinaryMeleeReach.rawSquared(mob,attacker,target.entity());
+            return mob.distanceToSqr(target.entity())<=reach;
         }
     }
     private static boolean loaded(SkillIdentity.Stamp stamp) {

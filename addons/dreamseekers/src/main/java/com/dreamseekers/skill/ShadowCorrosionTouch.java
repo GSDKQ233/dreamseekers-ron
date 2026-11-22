@@ -52,9 +52,8 @@ public final class ShadowCorrosionTouch {
                 ||source.hasEffect(MobEffectRegistrar.UNCONTROLLABLE.get())||source.hasEffect(MobEffectRegistrar.DISARM.get());
     }
     private static boolean inReach(ShadowGhostUnit source,LivingEntity target) {
-        float width=source.getBbWidth()+source.getBonusMeleeRange();
-        float targetWidth=target.getBbWidth()+(target instanceof Unit unit?unit.getBonusMeleeRangeForAttackers():0);
-        return source.distanceToSqr(target)<=width*2f*width*2f+targetWidth;
+        double reach=OrdinaryMeleeReach.rawSquared(source,source,target);
+        return source.distanceToSqr(target)<=reach;
     }
     private static final class Arm {
         final SkillIdentity.Stamp caster;
