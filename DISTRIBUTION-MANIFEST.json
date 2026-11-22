@@ -185,8 +185,8 @@
       "sha256": "bbe01e2255e4449447f7a335a8d277898849f94dc9b1fd898f2c87f784d315cc"
     },
     "COLLABORATION.md": {
-      "bytes": 32030,
-      "sha256": "41058f4485ae8ceef4e60271c34efbe879d0f919f3da0b5b11fd6ebfe2adc3ee"
+      "bytes": 33318,
+      "sha256": "69828026d22c2f00785cae3e25992b591449ad3e5a0e4b1fa15f176e61189e72"
     },
     "CREDITS.txt": {
       "bytes": 3317,
@@ -4093,12 +4093,12 @@
       "sha256": "6ac52037c1d1964818eab4366a94d037b04791e3ac949b72c5a3de6f63ac5aae"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/en_us.json": {
-      "bytes": 83922,
-      "sha256": "c623cf5d6d2bbd3723ff0771bd072055b60551d0688edbd0418d9f7aba90ea19"
+      "bytes": 75980,
+      "sha256": "2ac2ee5b4b56f4e9666a12bf5829db601538b9d91d8768ece061dff0f0a346e4"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/lang/zh_cn.json": {
-      "bytes": 78432,
-      "sha256": "22f348b10658ff514dffb869c4f02686cca66fbc5ffc743c023df816b6c48e15"
+      "bytes": 71173,
+      "sha256": "4ebff734f0639fdde242b9a6a4062e920490752a355e152f8795cde3b86153dc"
     },
     "addons/dreamseekers/src/main/resources/assets/dreamseekers/models/block/decorative_garden_wheat.json": {
       "bytes": 140,
