@@ -18,6 +18,6 @@ public abstract class OrdinaryRabbitSoundMixin {
     @Redirect(method="doHurtTarget",remap=true,at=@At(value="INVOKE",
             target="Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z",remap=true),require=1)
     private boolean dreamseekers$lastOrdinaryHurt(net.minecraft.world.entity.Entity target,net.minecraft.world.damagesource.DamageSource damage,float amount) {
-        return com.dreamseekers.skill.OrdinaryAttackGate.finalMelee((KillerRabbitUnit)(Object)this,target,()->target.hurt(damage,amount));
+        return com.dreamseekers.skill.OrdinaryAttackGate.finalMelee((KillerRabbitUnit)(Object)this,target,damage,()->target.hurt(damage,amount));
     }
 }

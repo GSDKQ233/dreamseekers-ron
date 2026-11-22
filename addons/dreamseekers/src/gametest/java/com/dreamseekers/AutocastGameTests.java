@@ -116,17 +116,19 @@ public final class AutocastGameTests {
         // Count actual registered entity skill routes, not HUD buttons or tooltip strings.
         var expected=EnumSet.of(JELLY_FLOW,GEL_GUARD,FOX_BLESSING,COORDINATED_MARK,BEETLE_ADVANCE,
             SHADOW_CORROSION_TOUCH,SQUEAL_SUPPRESSION_WAVE,TERRORBEAK_DREAD_ROAR,FRIENDLY_DEBT_CONTRACT,
-            SHADOW_HAND_GRIP,ASH_EMBER_LANDING,SNAIL_SHELL_FORMATION);
+            SHADOW_HAND_GRIP,ASH_EMBER_LANDING,SNAIL_SHELL_FORMATION,FOX_DREAM_SEED,STONE_HEAVY_SHOT,SHADOW_GOLEM_STRIKE,
+            WIND_DASH,FIREFLY_RUSH);
         for(var skill:UnitSkill.values())h.assertTrue(skill.defaultAutocast()==expected.contains(skill),"new defaults explicit for "+skill);
         var knight=f.spawn(WIND_KNIGHT_UNIT.get(),f.own,6,6);
         var mother=f.spawn(BEETLE_MOTHER_UNIT.get(),f.own,5,15);
         var hand=f.spawn(AARONCOS_RIGHT_HAND_UNIT.get(),f.own,15,13);
         var enemy=f.durable(f.spawn(PINK_SLIME_UNIT.get(),f.foe,8,7));
         f.ready().thenExecute(()->{
-            f.focus(knight,enemy);for(var s:List.of(knight,mother,hand))s.setNoAi(false);
+            for(var s:List.of(knight,mother,hand))s.setNoAi(false);
             h.assertTrue(pref(mother,MOTHER_BROOD,true).execute(f.peer.actor)!=SkillResult.SUCCESS,"summon cannot be enabled by forged toggle");
         }).thenIdle(45).thenExecute(()->{
-            for(var s:List.<SkillUnit>of(knight,mother,hand))for(UnitSkill k:SkillService.skillsFor(s))
+            h.assertTrue(knight.rts().skills().autocastEnabled(WIND_DASH)&&cd(knight,WIND_DASH)==0,"idle knight enables hit rally, but never an automatic dash");
+            for(var s:List.<SkillUnit>of(mother,hand))for(UnitSkill k:SkillService.skillsFor(s))
                 h.assertTrue(!s.rts().skills().autocastEnabled(k)&&cd(s,k)==0,"manual tactical/economic skill stayed ready: "+k);
             h.assertTrue(!MotherNestStance.active(mother)&&!WindDash.isActive(knight),"no autonomous stance or dash");
             f.done();
@@ -134,29 +136,25 @@ public final class AutocastGameTests {
     }
 
     @GameTest(template=ARENA,batch=BATCH,timeoutTicks=185)
-    public static void combatShieldRanksInjuredVisibleAlliesByRatioDistanceAndUuid(GameTestHelper h) {
-        var f=new F(h,"Shield");var caster=f.spawn(PINK_SLIME_UNIT.get(),f.own,10,10);
-        var closer=f.spawn(BONE_WING_UNIT.get(),f.own,10,12);
-        // Spawn the higher UUID first: encounter order must not decide the tie.
-        var later=f.spawn(BONE_WING_UNIT.get(),f.own,13,10,UUID.fromString("20000000-0000-0000-8000-000000000001"));
-        var winner=f.spawn(BONE_WING_UNIT.get(),f.ally,13,10,UUID.fromString("10000000-0000-0000-8000-000000000001"));
-        // Two motionless, collision-isolated targets share a point solely to force an exact UUID tie on the actual server cast tick.
-        later.noPhysics=true;winner.noPhysics=true;f.stationary(later);f.stationary(winner);
-        var idle=f.spawn(BONE_WING_UNIT.get(),f.own,10,7);f.shortReach(idle);
-        var enemy=f.durable(f.spawn(BEETLE.get(),f.foe,10,14));
+    public static void combatShieldWaitsForRealDamageAndSelectsTheActualAlly(GameTestHelper h) {
+        var f=new F(h,"Shield");var gel=f.spawn(PINK_SLIME_UNIT.get(),f.own,10,10);
+        var wounded=f.spawn(BONE_WING_UNIT.get(),f.own,9,10);
+        var recipient=f.durable(f.spawn(BEETLE.get(),f.ally,13,10));var enemy=f.spawn(BONE_WING_UNIT.get(),f.foe,13,15);
+        float[] before={0};
         f.ready().thenExecute(()->{
             f.peer.actor.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
-            h.assertTrue(f.peer.actor.isSpectator(),"real bound RTS commander remains authorized in top-down spectator mode");
-            f.order(idle,UnitAction.STOP,null);idle.setHealth(1);closer.setHealth(closer.getMaxHealth()*.65f);
-            for(var ally:List.of(later,winner))ally.setHealth(ally.getMaxHealth()*.30f);
-            for(var ally:List.of(later,winner,closer))f.focus(ally,enemy);
-            h.assertTrue(Math.abs(caster.distanceToSqr(winner)-caster.distanceToSqr(later))<0.0001,"exact distance tie established");
-            caster.setNoAi(false);
-        }).thenWaitUntil(()->h.assertTrue(cd(caster,GEL_GUARD)>0,"shield selected through native tick")).thenExecute(()->{
-            h.assertTrue(Math.abs(caster.distanceToSqr(winner)-caster.distanceToSqr(later))<0.0001&&SkillEffects.shieldRemaining(winner)==SkillEffects.GEL_AMOUNT&&SkillEffects.shieldRemaining(later)==0
-                &&SkillEffects.shieldRemaining(closer)==0&&SkillEffects.shieldRemaining(idle)==0,"shield picks wounded engaged ally by ratio/distance/UUID, not encounter order or nearly-dead idle bystander; shields winner/later/closer/idle="+List.of(SkillEffects.shieldRemaining(winner),SkillEffects.shieldRemaining(later),SkillEffects.shieldRemaining(closer),SkillEffects.shieldRemaining(idle))+" distances "+caster.distanceToSqr(winner)+"/"+caster.distanceToSqr(later));
-            f.done();
-        });
+            h.assertTrue(f.peer.actor.isSpectator(),"bound RTS commander still has authority in top-down mode");
+            wounded.setHealth(1);f.focus(wounded,enemy);f.focus(enemy,recipient);gel.setNoAi(false);before[0]=recipient.getHealth();
+        }).thenIdle(25).thenExecute(()->{
+            h.assertTrue(cd(gel,GEL_GUARD)==0&&SkillEffects.shieldRemaining(wounded)==0&&SkillEffects.shieldRemaining(recipient)==0,"low health, allied combat focus, and enemy aim alone do not predict a hit");
+            enemy.setNoAi(false);
+        }).thenWaitUntil(()->h.assertTrue(recipient.getHealth()<before[0]&&cd(gel,GEL_GUARD)>0,
+                "real projectile reduced allied health and triggered shield; hp="+recipient.getHealth()+" cd="+cd(gel,GEL_GUARD)))
+          .thenExecute(()->{
+              h.assertTrue(SkillEffects.shieldRemaining(recipient)==SkillEffects.GEL_AMOUNT&&SkillEffects.shieldRemaining(wounded)==0,
+                      "shield covers actual struck ally, not lower-HP candidate; first hit wasn't retroactively absorbed");
+              f.done();
+          });
     }
 
     @GameTest(template=ARENA,batch=BATCH,timeoutTicks=210)
@@ -171,7 +169,7 @@ public final class AutocastGameTests {
         }).thenWaitUntil(()->h.assertTrue(cd(fox,FOX_BLESSING)>0,"battle support triggers real Blessing")).thenExecute(()->{
             h.assertTrue(SkillEffects.hasNamedBuff(engaged,SkillEffects.FOX_BLESSING_KEY,BuffKind.ATTACK_SPEED)
                 &&!SkillEffects.hasNamedBuff(idle,SkillEffects.FOX_BLESSING_KEY,BuffKind.ATTACK_SPEED),"auto recipients respect their own eligible focus");
-            h.assertTrue(cd(fox,FOX_DREAM_SEED)==0,"second ground/summon skill on same caster remains manual");
+            h.assertTrue(cd(fox,FOX_DREAM_SEED)==0,"no debuff means no automatic Seed, even in the same battle");
             f.done();
         });
     }
@@ -282,15 +280,23 @@ public final class AutocastGameTests {
     public static void canceledPhysicalLaunchesAreStaggeredAndCooldownStartsOnlyOnceAfterSuccess(GameTestHelper h) {
         var f=new F(h,"Pace");var caster=f.spawn(SHADOW_SQUEAL_GHOST_UNIT.get(),f.own,7,8);
         var target=f.durable(f.spawn(PINK_SLIME_UNIT.get(),f.foe,12,8));List<Long> attempts=new ArrayList<>();
-        boolean[] cancel={true};long[] startRevision={-1},expiry={-1};
+        boolean[] cancel={true};int[] ordinary={0};long[] startRevision={-1},expiry={-1};
         Consumer<EntityJoinLevelEvent> probe=event->{
+            if(event.getEntity() instanceof com.dreamseekers.shadow.SquealWaveBolt bolt&&bolt.getOwner()==caster)ordinary[0]++;
             if(event.getEntity() instanceof com.dreamseekers.shadow.SuppressionWaveProjectile p&&p.getOwner()==caster){
                 attempts.add(f.level.getGameTime());
                 if(cancel[0]){event.setCanceled(true);caster.rts().skills().tick();} // real callback re-entry, same time
             }
         };
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL,probe);f.cleanups.add(()->MinecraftForge.EVENT_BUS.unregister(probe));
-        f.ready().thenExecute(()->{f.focus(caster,target);startRevision[0]=rev(caster);caster.setNoAi(false);})
+        f.ready().thenExecute(()->{
+            // Real target is inside the skill's 10-block reach, outside the ordinary 2-block fixture range.
+            // Preserve the real AI, ATTACK, and skill projectile; a simultaneous ordinary bolt cannot mask its damage.
+            f.shortReach(caster);f.stationary(caster);
+            h.assertTrue(caster.distanceTo(target)>caster.getAttackRange()&&caster.distanceTo(target)<=SQUEAL_SUPPRESSION_WAVE.range(),
+                    "controlled separated native and skill ranges");
+            f.focus(caster,target);startRevision[0]=rev(caster);caster.setNoAi(false);
+        })
           .thenIdle(43).thenExecute(()->{
               h.assertTrue(attempts.size()>=3&&attempts.size()<=5,"productive but bounded failed physical launch attempts over 43 ticks: "+attempts);
               for(int i=1;i<attempts.size();i++)h.assertTrue(attempts.get(i)-attempts.get(i-1)>=10,"no duplicate/reentrant/repeated below ten ticks: "+attempts);
@@ -301,52 +307,59 @@ public final class AutocastGameTests {
               h.assertTrue(expiry[0]==attempts.get(attempts.size()-1)+SQUEAL_SUPPRESSION_WAVE.cooldownTicks()&&rev(caster)==startRevision[0]+1,"first successful launch starts exact cooldown once");
           }).thenIdle(25).thenExecute(()->{
               h.assertTrue(expiry[0]==f.level.getGameTime()+cd(caster,SQUEAL_SUPPRESSION_WAVE)&&rev(caster)==startRevision[0]+1,"ongoing native ticks do not repeat or restart cooldown");
-              h.assertTrue(SquealSuppressionWave.hasDebuff(target),"real published skill projectile struck and applied named suppression");
+              h.assertTrue(ordinary[0]==0&&caster.distanceTo(target)>caster.getAttackRange()&&SquealSuppressionWave.hasDebuff(target)&&target.getHealth()<target.getMaxHealth(),"real published skill projectile struck and applied named suppression; ordinary="+ordinary[0]+" hp="+target.getHealth()+" positions="+caster.position()+"/"+target.position()+" target="+(caster.getTarget()==target));
               f.done();
           });
     }
 
     @GameTest(template=ARENA,batch=BATCH,timeoutTicks=200)
-    public static void holdOnlyShellRespondsToObservedRangedThreatAndNewStopEndsLease(GameTestHelper h) {
-        var f=new F(h,"Shell");var snail=f.spawn(BASALT_SNAIL.get(),f.own,8,8);
-        var threat=f.spawn(BONE_WING_UNIT.get(),f.foe,21,8);double[] beforeShoveZ={0};
-        f.ready().thenExecute(()->{f.order(snail,UnitAction.HOLD,null);snail.setNoAi(false);})
-          .thenIdle(22).thenExecute(()->{
-              h.assertTrue(snail.getHoldPosition()&&!SnailShellFormation.active(snail)&&cd(snail,SNAIL_SHELL_FORMATION)==0,"HOLD without an aimed ranged threat does not spend");
-              f.place(threat,13,8);f.focus(threat,snail);threat.setNoAi(false); // native ranged combat, not just a held test selection
-          }).thenWaitUntil(()->h.assertTrue(SnailShellFormation.active(snail)&&cd(snail,SNAIL_SHELL_FORMATION)>0,"native HOLD plus real enemy ranged focus starts defensive lease")).thenExecute(()->{
+    public static void holdOnlyShellRespondsAfterRangedDamageAndNewStopEndsLease(GameTestHelper h) {
+        var f=new F(h,"Shell");var snail=f.durable(f.spawn(BASALT_SNAIL.get(),f.own,8,8));
+        var threat=f.spawn(BONE_WING_UNIT.get(),f.foe,13,8);double[] beforeShoveZ={0};float[] baseHp={0};
+        f.ready().thenExecute(()->{f.order(snail,UnitAction.HOLD,null);snail.setNoAi(false);f.focus(threat,snail);baseHp[0]=snail.getHealth();})
+          .thenIdle(23).thenExecute(()->{
+              h.assertTrue(snail.getHoldPosition()&&threat.getTarget()==snail&&!SnailShellFormation.active(snail)
+                      &&cd(snail,SNAIL_SHELL_FORMATION)==0&&snail.getHealth()==baseHp[0],"HOLD plus a visible genuine enemy focus never spends before an incoming hit");
+              threat.setNoAi(false);
+          }).thenWaitUntil(()->h.assertTrue(snail.getHealth()<baseHp[0]&&SnailShellFormation.active(snail)&&cd(snail,SNAIL_SHELL_FORMATION)>0,
+                  "first real ranged hit damages still-HOLDing snail before formation starts; hp="+snail.getHealth()+" cd="+cd(snail,SNAIL_SHELL_FORMATION))).thenExecute(()->{
               h.assertTrue(snail.getHoldPosition(),"automatic formation retained explicit HOLD");
-              beforeShoveZ[0]=snail.getZ();snail.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);
-              snail.knockback(.55,0,-1);
-              h.assertTrue(snail.getDeltaMovement().z>.3,"a native horizontal impulse enters the automatic HOLD overlay");
+              beforeShoveZ[0]=snail.getZ();snail.getAttribute(Attributes.KNOCKBACK_RESISTANCE).setBaseValue(0);snail.knockback(.55,0,-1);
+              h.assertTrue(snail.getDeltaMovement().z>.3,"native horizontal impulse enters HOLD overlay");
           }).thenIdle(2).thenExecute(()->{
-              h.assertTrue(snail.getZ()>beforeShoveZ[0]+.12&&snail.getHoldPosition()&&SnailShellFormation.active(snail),"automatic deployment never pins native external motion or replaces the standing order");
+              h.assertTrue(snail.getZ()>beforeShoveZ[0]+.12&&snail.getHoldPosition()&&SnailShellFormation.active(snail),"formation never pins external motion");
               f.order(snail,UnitAction.STOP,null);
-              h.assertTrue(!SnailShellFormation.active(snail)&&!snail.getHoldPosition()&&cd(snail,SNAIL_SHELL_FORMATION)>0,"newer STOP immediately ends formation without refund");
+              h.assertTrue(!SnailShellFormation.active(snail)&&!snail.getHoldPosition()&&cd(snail,SNAIL_SHELL_FORMATION)>0,"newer STOP ends formation without refund");
               f.done();
           });
     }
 
     @GameTest(template=ARENA,batch=BATCH,timeoutTicks=200)
-    public static void boundedSupportSkipsCrowdedScanThenSelectsAfterOverflowClears(GameTestHelper h) {
-        var f=new F(h,"Crowd");var gel=f.spawn(PINK_SLIME_UNIT.get(),f.own,10,10);
-        var enemy=f.durable(f.spawn(PINK_SLIME_UNIT.get(),f.foe,13,13));
-        List<BoneWingUnit> crowd=new ArrayList<>();
-        // 65 valid role matches inside six blocks; no base/other unit receives a skill grant.
-        for(int i=0;i<65;i++){
-            int x=7+i%7,z=7+(i/7)%7;
-            var u=f.spawn(BONE_WING_UNIT.get(),f.own,x,z);u.noPhysics=true;
-            // Prevent ordinary crowd collisions or entity-cramming deaths from reducing the sample.
-            u.setInvulnerable(true);crowd.add(u);
+    public static void competingShieldCastersFailClosedAt65ThenOneWinsOnNewHit(GameTestHelper h) {
+        var f=new F(h,"Crowd");var target=f.durable(f.spawn(JELLYFISH_UNIT.get(),f.own,10,10));
+        var bow=f.spawn(BONE_WING_UNIT.get(),f.foe,16,10);
+        List<PinkSlimeUnit> gels=new ArrayList<>();
+        for(int x=5;x<=15&&gels.size()<65;x++)for(int z=5;z<=15&&gels.size()<65;z++) {
+            int d=(x-10)*(x-10)+(z-10)*(z-10);
+            if(d<4||d>31||x>=9&&Math.abs(z-10)<=1)continue;
+            // Each occupies its own real cell. Keep the native projectile lane empty and the units on the floor.
+            var gel=f.spawn(PINK_SLIME_UNIT.get(),f.own,x,z);gel.setInvulnerable(true);f.stationary(gel);gels.add(gel);
         }
-        f.ready().thenExecute(()->{
-            for(var u:crowd){f.focus(u,enemy);u.setHealth(u.getMaxHealth()/2);}
-            gel.setNoAi(false);
-        }).thenIdle(22).thenExecute(()->{
-            long within=crowd.stream().filter(u->u.isAlive()&&gel.distanceToSqr(u)<=36&&u.getTarget()==enemy).count();
-            h.assertTrue(within==65&&cd(gel,GEL_GUARD)==0&&crowd.stream().noneMatch(u->SkillEffects.shieldRemaining(u)>0),"65 local matches must fail closed, not cast on arbitrary iteration slice; live matches="+within);
-            for(int i=1;i<crowd.size();i++)crowd.get(i).discard();
-        }).thenWaitUntil(()->h.assertTrue(cd(gel,GEL_GUARD)>0&&SkillEffects.shieldRemaining(crowd.get(0))>0,"normal dispatch resumes when overflow clears")).thenExecute(f::done);
+        float[] hp={0};f.ready().thenExecute(()->{
+            for(var gel:gels){gel.setDeltaMovement(Vec3.ZERO);gel.setNoAi(false);}
+            hp[0]=target.getHealth();f.focus(bow,target);bow.setNoAi(false);
+        }).thenWaitUntil(()->h.assertTrue(target.getHealth()<hp[0],"actual ordinary shot hit inside crowded observer radius"))
+          .thenExecute(()->{
+              h.assertTrue(gels.stream().filter(g->g.isAlive()&&g.distanceToSqr(target)<=36).count()==65&&
+                  gels.stream().allMatch(g->cd(g,GEL_GUARD)==0)&&SkillEffects.shieldRemaining(target)==0,
+                  "65 plausible shield casters fail closed rather than using the first 64; liveNearby="+gels.stream().filter(g->g.isAlive()&&g.distanceToSqr(target)<=36).count()+" shieldsSpent="+gels.stream().filter(g->cd(g,GEL_GUARD)>0).count()+" remaining="+SkillEffects.shieldRemaining(target));
+              for(int i=2;i<gels.size();i++)gels.get(i).discard();
+              hp[0]=target.getHealth();
+          }).thenWaitUntil(()->h.assertTrue(target.getHealth()<hp[0]&&SkillEffects.shieldRemaining(target)>0,"another actual hit gets one shield after overflow clears"))
+          .thenExecute(()->{
+              h.assertTrue((cd(gels.get(0),GEL_GUARD)>0)!=(cd(gels.get(1),GEL_GUARD)>0),"two candidates cannot both pay for one receipt");
+              f.done();
+          });
     }
 
     @GameTest(template=ARENA,batch=BATCH,timeoutTicks=200)
@@ -456,4 +469,53 @@ public final class AutocastGameTests {
               f.done();
           });
     }
+    @GameTest(template=ARENA,batch=BATCH,timeoutTicks=220)
+    public static void realBoltRejectedAtFinalHealthWriteCannotDeployShellOrShield(GameTestHelper h) {
+        var f=new F(h,"Receipt");var snail=f.durable(f.spawn(BASALT_SNAIL.get(),f.own,10,10));
+        var gel=f.spawn(PINK_SLIME_UNIT.get(),f.own,10,12);var bow=f.spawn(BONE_WING_UNIT.get(),f.foe,15,10);
+        int[] canceled={0};boolean[] veto={true};float[] before={0};
+        Consumer<net.minecraftforge.event.entity.living.LivingDamageEvent> probe=e->{
+            if(veto[0]&&e.getEntity()==snail&&e.getSource().getEntity()==bow
+                    &&e.getSource().getDirectEntity() instanceof com.dreamseekers.bonewing.BoneWingBolt){
+                canceled[0]++;e.setCanceled(true);
+            }
+        };
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST,probe);f.cleanups.add(()->MinecraftForge.EVENT_BUS.unregister(probe));
+        f.ready().thenExecute(()->{
+            before[0]=snail.getHealth();f.order(snail,UnitAction.HOLD,null);f.focus(bow,snail);
+            for(var body:List.of(snail,gel,bow))body.setNoAi(false);
+        }).thenWaitUntil(()->h.assertTrue(canceled[0]>0,"a genuine hostile projectile reached the exact final-damage callback on HOLD snail"))
+          .thenExecute(()->{
+              h.assertTrue(snail.getHealth()==before[0]&&cd(gel,GEL_GUARD)==0&&cd(snail,SNAIL_SHELL_FORMATION)==0
+                      &&!SnailShellFormation.active(snail)&&SkillEffects.shieldRemaining(snail)==0,
+                      "an actual impact with canceled health write grants neither defense");veto[0]=false;
+          }).thenWaitUntil(()->h.assertTrue(snail.getHealth()<before[0]&&SnailShellFormation.active(snail)&&SkillEffects.shieldRemaining(snail)>0,
+                  "subsequent uncanceled native bolt causes HP loss then both defensive effects"))
+          .thenExecute(()->{
+              h.assertTrue(snail.getHoldPosition()&&cd(gel,GEL_GUARD)>0&&cd(snail,SNAIL_SHELL_FORMATION)>0
+                      &&SkillEffects.shieldRemaining(snail)==SkillEffects.GEL_AMOUNT,"same accepted hit never consumes its new shield");
+              f.done();
+          });
+    }
+
+    @GameTest(template=ARENA,batch=BATCH,timeoutTicks=200)
+    public static void queuedShiftOrderWinsWhileGolemCanStillLandOrdinaryHits(GameTestHelper h) {
+        var f=new F(h,"GolemQueue");var golem=f.spawn(SHADOW_GOLEM_UNIT.get(),f.own,7,9);
+        var enemy=f.durable(f.spawn(JELLYFISH_UNIT.get(),f.foe,9,9));
+        var near=f.durable(f.spawn(JELLYFISH_UNIT.get(),f.foe,9,10));
+        var next=h.absolutePos(new BlockPos(19,0,19));long[] generation={0};float[] hp={0};
+        f.ready().thenExecute(()->{
+            f.focus(golem,enemy);golem.setNoAi(false);
+            UnitServerEvents.addActionItem(f.own,UnitAction.MOVE,-1,new int[]{golem.getId()},next,BlockPos.ZERO,true);
+            generation[0]=golem.rts().commandRevision;hp[0]=near.getHealth();
+            h.assertTrue(queued(golem,next),"native Shift-MOVE queued behind still-alive ATTACK");
+        }).thenWaitUntil(()->h.assertTrue(enemy.getHealth()<800,"unchanged ordinary melee actually landed with command waiting"))
+          .thenExecute(()->{
+              h.assertTrue(golem.getTarget()==enemy&&queued(golem,next)&&golem.rts().commandRevision==generation[0]
+                      &&cd(golem,SHADOW_GOLEM_STRIKE)==0&&!ShadowGolemStrike.active(golem)&&near.getHealth()==hp[0],
+                      "passive yields to queue without preventing normal attacks, resetting it, or applying collateral");
+              f.done();
+          });
+    }
+
 }

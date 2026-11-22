@@ -23,6 +23,7 @@ public abstract class WindDashHurtEntryMixin {
             return; // do not bind this skill DS to an outer ordinary melee receipt
         }
         com.dreamseekers.skill.SnailShellFormation.observeHurt((LivingEntity)(Object)this,source);
+        com.dreamseekers.skill.DamageTriggeredDefense.observeHurt((LivingEntity)(Object)this,source);
         com.dreamseekers.skill.OrdinarySkillHit.observeHurt((LivingEntity)(Object)this,source);
         com.dreamseekers.skill.FriendlyDebtContract.observeHurt((LivingEntity)(Object)this,source);
         com.dreamseekers.skill.ShadowHandGrip.observeHurt((LivingEntity)(Object)this,source);

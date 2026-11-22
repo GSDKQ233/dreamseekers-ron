@@ -2,6 +2,7 @@
 package com.dreamseekers.spore;
 
 import com.dreamseekers.DreamseekersMod;
+import com.dreamseekers.skill.FoxDreamSeedAutocast;
 import com.dreamseekers.skill.SkillIdentity;
 import com.dreamseekers.skill.SkillResult;
 import com.dreamseekers.unit.GoldenFoxUnit;
@@ -44,8 +45,10 @@ public final class SporeLease {
         final UUID carrierId;
         final SkillIdentity.Stamp caster;
         final long expiresAt;
+        @Nullable final ServerPlayer autoViewer; // manual leases keep the original aura rules
         boolean committed,retired,activated;
-        Lease(JungleSporeCarrier carrier,SkillIdentity.Stamp caster) {
+        Lease(JungleSporeCarrier carrier,SkillIdentity.Stamp caster,@Nullable ServerPlayer autoViewer) {
+            this.autoViewer=autoViewer;
             this.carrier=carrier;carrierId=carrier.getUUID();this.caster=caster;
             expiresAt=this.caster.level().getGameTime()+LIFETIME_TICKS;
         }
@@ -77,22 +80,50 @@ public final class SporeLease {
     private static void prune() {
         for(Lease lease:List.copyOf(LEASES.values()))if(!lease.validReservation())retire(lease);
     }
-    private static SkillResult ground(ServerPlayer viewer,GoldenFoxUnit source,BlockPos pos,JungleSporeCarrier carrier) {
+    /** Only auto-discovery previews a box without constructing a mob. In particular, a legal
+     * selection does not fire EntityConstructing or take either slot. The actual, possibly
+     * Forge-adjusted carrier is checked independently under the native reservation below. */
+    public static boolean previewGround(ServerPlayer viewer,GoldenFoxUnit source,BlockPos pos) {
+        return viewer!=null&&source!=null&&server(source.level())&&source.level()==viewer.serverLevel()
+                &&ground(viewer,source,pos,null,true)==SkillResult.SUCCESS;
+    }
+    private static boolean loadedContact(ServerLevel level,BlockPos pos) {
+        if(!level.isInWorldBounds(pos.below()))return false;
+        // A block-collision iterator/adjacent shapes may read one cell outside the birth box.
+        // Missing sections are not air and must not be promoted just to make a passive decision.
+        for(int x=(pos.getX()-1)>>4;x<=(pos.getX()+1)>>4;x++)
+            for(int z=(pos.getZ()-1)>>4;z<=(pos.getZ()+1)>>4;z++)
+                if(level.getChunkSource().getChunkNow(x,z)==null)return false;
+        return true;
+    }
+    private static SkillResult ground(ServerPlayer viewer,GoldenFoxUnit source,BlockPos pos,
+                                      @Nullable JungleSporeCarrier carrier,boolean automatic) {
         ServerLevel level=viewer.serverLevel();
+        var feet=Vec3.atBottomCenterOf(pos);
+        var box=carrier==null?DreamseekersMod.JUNGLE_SPORE_CARRIER.get().getDimensions().makeBoundingBox(feet):carrier.getBoundingBox();
         if(!level.isInWorldBounds(pos)||!level.hasChunkAt(pos)||!level.hasChunkAt(pos.below())
-                ||!level.getWorldBorder().isWithinBounds(pos)||!level.getWorldBorder().isWithinBounds(carrier.getBoundingBox()))return SkillResult.GROUND_INVALID;
-        if(source.position().distanceToSqr(Vec3.atBottomCenterOf(pos))>(double)CAST_RANGE*CAST_RANGE)return SkillResult.RANGE;
+                ||!level.getWorldBorder().isWithinBounds(pos)||!level.getWorldBorder().isWithinBounds(box)
+                ||automatic&&!loadedContact(level,pos))return SkillResult.GROUND_INVALID;
+        if(source.position().distanceToSqr(feet)>(double)CAST_RANGE*CAST_RANGE)return SkillResult.RANGE;
         if(FogOfWarServerEvents.isFogActiveFor(viewer)&&level.dimension()!=Level.OVERWORLD
                 ||!FogOfWarServerEvents.isBlockVisibleFor(viewer,pos.getX(),pos.getZ()))return SkillResult.HIDDEN;
         if(!level.getBlockState(pos.below()).isFaceSturdy(level,pos.below(),Direction.UP)
                 ||!level.getFluidState(pos).isEmpty()||!level.getFluidState(pos.below()).isEmpty()
                 ||!level.getBlockState(pos).getCollisionShape(level,pos).isEmpty()
-                ||!level.noCollision(carrier,carrier.getBoundingBox())
+                ||!level.noCollision(carrier,box)
                 ||BuildingServerEvents.getBuildings().stream().anyMatch(building->building.level==level&&building.isPosInsideBuilding(pos)))return SkillResult.GROUND_INVALID;
         return SkillResult.SUCCESS;
     }
     /** Only SkillService supplies the authenticated final revision/CD commit callback. */
     public static SkillResult spawn(ServerPlayer viewer,GoldenFoxUnit source,BlockPos position,BooleanSupplier commit) {
+        return spawn(viewer,source,position,commit,null);
+    }
+    public static SkillResult spawnAutomatic(ServerPlayer viewer,GoldenFoxUnit source,FoxDreamSeedAutocast.Plan plan,BooleanSupplier commit) {
+        if(plan==null||!plan.belongsTo(viewer,source))return SkillResult.INVALID_REQUEST;
+        return spawn(viewer,source,plan.point(),commit,plan);
+    }
+    private static SkillResult spawn(ServerPlayer viewer,GoldenFoxUnit source,BlockPos position,BooleanSupplier commit,
+                                     @Nullable FoxDreamSeedAutocast.Plan plan) {
         if(viewer==null||source==null||position==null||commit==null||!server(source.level())
                 ||viewer.serverLevel()!=source.level()||!viewer.isAlive()||viewer.isRemoved()
                 ||source.getOwnerName().isBlank()||!source.getOwnerName().equals(viewer.getGameProfile().getName()))return SkillResult.INVALID_REQUEST;
@@ -111,21 +142,25 @@ public final class SporeLease {
                     +LEASES.values().stream().filter(lease->lease.caster.owner().equals(construction.owner)
                             &&CONSTRUCTING.values().stream().noneMatch(reservation->reservation.lease==lease)).count();
             if(occupied>OWNER_CAP)return SkillResult.CAP_REACHED;
+            if(plan!=null&&!plan.current())return SkillResult.NO_TARGET;
             JungleSporeCarrier carrier=DreamseekersMod.JUNGLE_SPORE_CARRIER.get().create(level);
             if(carrier==null)return SkillResult.SPAWN_FAILED;
             if(!construction.caster.valid()) { carrier.discard();return SkillResult.INVALID_SOURCE; }
             carrier.setPos(Vec3.atBottomCenterOf(position));
-            SkillResult permitted=ground(viewer,source,position,carrier);
+            SkillResult permitted=ground(viewer,source,position,carrier,plan!=null);
             if(permitted!=SkillResult.SUCCESS) { carrier.discard();return permitted; }
-            Lease lease=new Lease(carrier,construction.caster);construction.lease=lease;
+            if(plan!=null&&!plan.reaches(carrier)) { carrier.discard();return SkillResult.NO_TARGET; }
+            Lease lease=new Lease(carrier,construction.caster,plan==null?null:viewer);construction.lease=lease;
             // Same reservation acquires its actual carrier; cap still counts it exactly once.
             LEASES.put(lease.carrierId,lease);
             try {
                 if(!carrier.initializeBirthHealth())return SkillResult.SPAWN_FAILED;
                 if(!level.addFreshEntity(carrier)||!lease.validReservation()||!lease.published())return SkillResult.SPAWN_FAILED;
                 if(carrier.getHealth()!=HEALTH||carrier.getMaxHealth()!=HEALTH||!carrier.position().equals(Vec3.atBottomCenterOf(position)))return SkillResult.SPAWN_FAILED;
-                permitted=ground(viewer,source,position,carrier);
+                permitted=ground(viewer,source,position,carrier,plan!=null);
                 if(permitted!=SkillResult.SUCCESS)return permitted;
+                // Join may move/hide/cleanse the patient, change the threat or alter the geometry.
+                if(plan!=null&&!plan.reaches(carrier))return SkillResult.NO_TARGET;
                 if(!commit.getAsBoolean())return SkillResult.REPLAY;
                 lease.committed=true;carrier.setLeaseDisplay(true,lease.caster.owner());
                 SporeEffects.activate(lease);

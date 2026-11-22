@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.EnumSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -49,6 +50,15 @@ class AutocastTooltipTest {
     @Test void everySupportedSkillHasOneTriggerInEachLanguageWithMatchingNumbers() throws Exception {
         var en = language("en_us");
         var zh = language("zh_cn");
+        var manual = EnumSet.of(UnitSkill.MOTHER_NEST, UnitSkill.MOTHER_BROOD, UnitSkill.WEEPING_ECHOES,
+                UnitSkill.AARONCOS_LEFT_PRESS, UnitSkill.AARONCOS_RIGHT_SHOCK, UnitSkill.AARONCOS_RIGHT_VORTEX);
+        assertEquals(23, UnitSkill.values().length, "adding a skill requires an explicit control-mode decision");
+        var automatic = EnumSet.complementOf(manual);
+        assertEquals(17, automatic.size());
+        for (var skill : UnitSkill.values()) {
+            assertEquals(automatic.contains(skill), skill.supportsAutocast(), skill.name());
+            assertEquals(automatic.contains(skill), skill.defaultAutocast(), skill.name());
+        }
         Set<String> triggers = Arrays.stream(UnitSkill.values()).filter(UnitSkill::supportsAutocast)
                 .map(s -> SKILL + s.id() + ".autocast_trigger").collect(Collectors.toSet());
         for (var lang : List.of(en, zh))

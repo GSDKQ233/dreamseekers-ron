@@ -33,13 +33,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 
-/** A paid short windup and bounded exact physical skill writes. No native area procedure,
- * ordinary attack provenance, free research or transient save/load replay. */
+/** Ordinary confirmed melee may sweep nearby enemies without winding up again. Manual strikes,
+ * including targeted siege, keep their paid windup. The secondary writes have no ordinary role. */
 public final class ShadowGolemStrike {
     public static final int WINDUP_TICKS=20, RANGE=3, MAX_TARGETS=3;
+    public static final double PASSIVE_RADIUS=2.0;
     public static final float UNIT_MULTIPLIER=1.5f;
     public static final double BUILDING_MULTIPLIER=2.0;
     private static final Map<ShadowGolemUnit,Charge> CHARGES=new IdentityHashMap<>();
+    // Never consulted by isCasting/goal/navigation. Lives only for this one ordinary hit's aftermath.
+    private static final Map<ShadowGolemUnit,Sweep> SWEEPS=new IdentityHashMap<>();
     private static final ArrayDeque<Impact> HITS=new ArrayDeque<>();
     private ShadowGolemStrike() { }
     private static boolean server(Entity e) {
@@ -74,6 +77,69 @@ public final class ShadowGolemStrike {
         return p!=null&&p.isAlive()&&!p.isRemoved()&&p.serverLevel()==s.level()
                 &&p.getGameProfile().getName().equals(s.owner())
                 &&s.level().getServer().getPlayerList().getPlayer(p.getUUID())==p;
+    }
+    private static final class Sweep {
+        final ShadowGolemUnit source;
+        final SkillIdentity.Stamp caster,primary;
+        final ServerPlayer viewer;
+        final Vec3 origin;
+        final long command,revision;
+        boolean paid;
+        Sweep(ShadowGolemUnit source,LivingEntity primary,ServerPlayer viewer) {
+            this.source=source;this.viewer=viewer;caster=SkillIdentity.capture(source);this.primary=SkillIdentity.capture(primary);
+            origin=primary.getBoundingBox().getCenter();
+            command=source.rts().commandRevision;revision=source.rts().skills().revision();
+        }
+        boolean current() {
+            if(SWEEPS.get(source)!=this||!loaded(caster)||source.rts().commandRevision!=command
+                    ||source.rts().skills().revision()!=(paid?revision+1:revision)
+                    ||source.isNoAi()||source.ignoreNonStopCommands()||UnitServerEvents.hasPendingImmediateAction(source.getId())
+                    ||source.getFollowTarget()!=null||source.getMoveGoal().getMoveTarget()!=null
+                    ||com.solegendary.reignofnether.unit.interfaces.AttackerUnit.isAttackingBuilding(source)
+                    ||disabled(source)||source.hasEffect(MobEffectRegistrar.DISARM.get())||TerrorbeakDreadRoar.hasDisarm(source)
+                    ||(paid?!SkillService.currentCommander(source,viewer):SkillService.passiveCommander(source,UnitSkill.SHADOW_GOLEM_STRIKE)!=viewer)
+                    ||!loaded(primary)||source.getTarget()!=primary.entity()
+                    ||!source.canHarmOwner(primary.owner())||!SkillAutocastPolicy.observable(viewer,primary.entity())
+                    ||distanceSquared(source.position(),primary.entity().getBoundingBox())>RANGE*RANGE
+                    ||!SkillAutocastPolicy.sees(source,primary.entity()))return false;
+            return true;
+        }
+        boolean nearby(LivingEntity target) {
+            return target!=primary.entity()&&enemy(source,target)&&SkillAutocastPolicy.observable(viewer,target)
+                    &&inRangeAndSight(target);
+        }
+        boolean inRangeAndSight(LivingEntity target) {
+            return distanceSquared(source.position(),target.getBoundingBox())<=RANGE*RANGE
+                    &&target.getBoundingBox().getCenter().distanceToSqr(origin)<=PASSIVE_RADIUS*PASSIVE_RADIUS
+                    &&SkillAutocastPolicy.sees(source,target);
+        }
+        void applied(SkillIdentity.Stamp secondary,float health,float gel) {
+            if(!paid&&(health>0||gel>0)&&current()
+                    &&(secondary.entity().isAlive()||health>0&&secondary.entity().getHealth()<=0)
+                    &&source.canHarmOwner(secondary.owner())&&PassiveSplashTargets.observableAfterHit(viewer,secondary)
+                    &&inRangeAndSight(secondary.entity()))
+                paid=SkillService.commitPassive(source,UnitSkill.SHADOW_GOLEM_STRIKE,viewer,false);
+        }
+    }
+    /** Package-only continuation of an exact ordinary melee HP/Gel receipt. No primary rewrite,
+     * no new order, no native area procedure and no resource/building write on this path. */
+    static void passiveReceipt(ShadowGolemUnit source,LivingEntity primary,ServerPlayer owner) {
+        if(!server(source)||owner==null||SWEEPS.containsKey(source)||!(primary instanceof Unit)
+                ||primary instanceof com.dreamseekers.spore.JungleSporeCarrier||primary.level()!=source.level()
+                ||!source.canHarmOwner(((Unit)primary).getOwnerName())
+                ||SkillService.passiveCommander(source,UnitSkill.SHADOW_GOLEM_STRIKE)!=owner)return;
+        Sweep sweep=new Sweep(source,primary,owner);SWEEPS.put(source,sweep);
+        try {
+            if(!sweep.current())return;
+            float amount=source.getUnitAttackDamage()*UNIT_MULTIPLIER;
+            if(!Float.isFinite(amount)||amount<=0||amount>150000)return;
+            var targets=PassiveSplashTargets.nearest(sweep.caster.level(),new AABB(sweep.origin,sweep.origin).inflate(PASSIVE_RADIUS),
+                    sweep::nearby,t->t.getBoundingBox().getCenter().distanceToSqr(sweep.origin),MAX_TARGETS-1);
+            for(SkillIdentity.Stamp target:targets) {
+                if(!sweep.current())break;
+                if(loaded(target)&&sweep.nearby(target.entity()))hurt(source,new Impact(sweep,target,amount));
+            }
+        } finally { SWEEPS.remove(source,sweep); }
     }
     private static boolean buildingLegal(ShadowGolemUnit s,ServerPlayer viewer,BuildingPlacement b,BlockPos contact) {
         if(b==null||contact==null||b.getLevel()!=s.level()||!BuildingServerEvents.getBuildings().contains(b)
@@ -157,7 +223,7 @@ public final class ShadowGolemStrike {
         String owner=building==null?null:building.ownerName;
         long capture=building==null?0:building.getCaptureRevision();
         if(!server(source)||!source.isAlive()||source.isRemoved()||!source.isAddedToWorld()||source.getOwnerName().isBlank())return SkillResult.INVALID_SOURCE;
-        if(active(source))return SkillResult.ALREADY_ACTIVE;
+        if(active(source)||SWEEPS.containsKey(source))return SkillResult.ALREADY_ACTIVE;
         if(disabled(source)||UnitServerEvents.hasPendingImmediateAction(source.getId()))return SkillResult.DISABLED;
         if(target!=null?!legalUnit(source,sender,target):(!buildingLegal(source,sender,building,contact)
                 ||expectedOrigin==null||!expectedOrigin.equals(building.originPos)
@@ -229,11 +295,14 @@ public final class ShadowGolemStrike {
             for(SkillIdentity.Stamp target:targets) {
                 if(!c.releaseAuthorized())break;
                 if(!loaded(target)||!legalUnit(s,c.viewer,target.entity()))continue;
-                Impact hit=new Impact(c,target,ad*UNIT_MULTIPLIER);HITS.push(hit);
-                try { com.solegendary.reignofnether.resources.kill.EconomicExactDamageHooks.wrap(s,target.entity(),target.entity()::hurt).hurt(hit.damage,hit.amount); }
-                finally { HITS.removeFirstOccurrence(hit); }
+                hurt(s,new Impact(c,target,ad*UNIT_MULTIPLIER));
             }
         } finally { CHARGES.remove(s,c); }
+    }
+    private static void hurt(ShadowGolemUnit source,Impact hit) {
+        HITS.push(hit);
+        try { com.solegendary.reignofnether.resources.kill.EconomicExactDamageHooks.wrap(source,hit.target.entity(),hit.target.entity()::hurt).hurt(hit.damage,hit.amount); }
+        finally { HITS.removeFirstOccurrence(hit); }
     }
     /** Exact private marker carries normal melee classification but is never an ordinary goal hit. */
     private static final class StrikeDamage extends DamageSource {
@@ -243,12 +312,20 @@ public final class ShadowGolemStrike {
     }
     static final class Impact {
         final Charge charge;
+        final Sweep sweep;
         final SkillIdentity.Stamp target;
         final DamageSource damage;
         final float amount;
         boolean entered,claimed,revoked,finalizedPositive,committedLethal;
-        Impact(Charge c,SkillIdentity.Stamp target,float amount) { charge=c;this.target=target;this.amount=amount;damage=new StrikeDamage(c.source); }
-        boolean legal() { return entered&&!revoked&&charge.releaseAuthorized()&&loaded(target)&&legalUnit(charge.source,charge.viewer,target.entity()); }
+        Impact(Charge c,SkillIdentity.Stamp target,float amount) { charge=c;sweep=null;this.target=target;this.amount=amount;damage=new StrikeDamage(c.source); }
+        Impact(Sweep s,SkillIdentity.Stamp target,float amount) { charge=null;sweep=s;this.target=target;this.amount=amount;damage=new StrikeDamage(s.source); }
+        boolean legal() {
+            return entered&&!revoked&&loaded(target)&&(sweep!=null?sweep.current()&&sweep.nearby(target.entity())
+                    :charge.releaseAuthorized()&&legalUnit(charge.source,charge.viewer,target.entity()));
+        }
+        void applied(float health,float gel) {
+            if(sweep!=null&&!revoked)sweep.applied(target,health,gel);
+        }
     }
     public static boolean isStrike(DamageSource d) { return d instanceof StrikeDamage; }
     private static Impact matching(LivingEntity t,DamageSource d) {
@@ -276,20 +353,21 @@ public final class ShadowGolemStrike {
             @Override public FinalUnitDamageHooks.Finalizer prepareFinal() { return SkillEffects.prepareGolemFinal(t,d,h); }
         };
     }
-    public static void commandChanged(ShadowGolemUnit s) { if(server(s))CHARGES.remove(s); }
+    public static void commandChanged(ShadowGolemUnit s) { if(server(s)){CHARGES.remove(s);SWEEPS.remove(s);} }
     static void tick(ServerLevel level) { CHARGES.entrySet().removeIf(e->e.getKey().level()==level&&!e.getValue().valid()); }
     static void clear(LivingEntity e) { clear(e,null); }
     /** Only this exact already-finalized primary strike may retain its fixed collateral list.
      * Ordinary death/owner/leave clears never receive this exception. */
     static void clear(LivingEntity e,DamageSource deathSource) {
         Impact hit=deathSource==null?null:matching(e,deathSource);
-        Charge keep=hit!=null&&hit.entered&&hit.claimed&&hit.finalizedPositive&&hit.committedLethal&&!hit.revoked
+        Charge keep=hit!=null&&hit.charge!=null&&hit.entered&&hit.claimed&&hit.finalizedPositive&&hit.committedLethal&&!hit.revoked
                 &&hit.charge.releasing&&hit.charge.primary==hit.target&&e.getHealth()<=0
                 &&hit.charge.authorized()&&hit.target.identityValid()?hit.charge:null;
         if(keep!=null)keep.primaryKilledByOwnStrike=true;
         Charge retained=keep;
         CHARGES.entrySet().removeIf(x->x.getKey()==e||x.getValue()!=retained
                 &&x.getValue().primary!=null&&x.getValue().primary.entity()==e);
+        SWEEPS.entrySet().removeIf(x->x.getKey()==e||x.getValue().primary.entity()==e);
     }
-    static void stop() { CHARGES.clear();HITS.clear(); }
+    static void stop() { CHARGES.clear();SWEEPS.clear();HITS.clear(); }
 }

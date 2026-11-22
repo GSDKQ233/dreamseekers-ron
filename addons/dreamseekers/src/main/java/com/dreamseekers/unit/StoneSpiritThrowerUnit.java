@@ -138,12 +138,20 @@ public final class StoneSpiritThrowerUnit extends SmallStoneSpiritEntity impleme
     /** Original stone spirit has no ranged attack: this is an explicit addon physical stone throw. */
     @Override public void performRangedAttack(LivingEntity target,float factor) { performUnitRangedAttack(target,factor); }
     @Override public void performUnitRangedAttack(LivingEntity target,float ignoredVelocity) {
+        shoot(target,false);
+    }
+    /** The native goal has finished its one windup. A ready heavy shot can replace this release only. */
+    public void releaseGoalShot(LivingEntity target,float ignoredVelocity) {
+        shoot(target,true);
+    }
+    private void shoot(LivingEntity target,boolean fromInstalledGoal) {
         if(!StoneHeavyShot.allowOrdinaryShot(this)
                 ||!(level() instanceof net.minecraft.server.level.ServerLevel server)||!server.getServer().isSameThread()
                 ||hasEffect(com.solegendary.reignofnether.registrars.MobEffectRegistrar.STUN.get())
                 ||hasEffect(com.solegendary.reignofnether.registrars.MobEffectRegistrar.FREEZE.get())
                 ||!canHarm(target)||server.getEntity(getUUID())!=this||server.getEntity(target.getUUID())!=target
                 ||distanceTo(target)>ordinaryShotRange(target)||!hasLineOfSight(target))return;
+        if(fromInstalledGoal&&StoneHeavyShot.replaceNaturalShot(this,target))return;
         com.dreamseekers.stone.StoneProjectile bolt=com.dreamseekers.skill.OrdinarySkillHit.constructSporeShot(this,target,()->new com.dreamseekers.stone.StoneProjectile(
                 DreamseekersMod.STONE_SPIRIT_THROWER_BOLT.get(),server));
         bolt.arm(this,target);

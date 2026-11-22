@@ -215,6 +215,7 @@ public final class SkillEffects {
         if(FriendlyDebtContract.isSettlement(damage))return amount->0; // An unrecognized dedicated skill never becomes vanilla/base damage.
         Shield shield=validShield(target);
         FriendlyDebtContract.Receipt debt=FriendlyDebtContract.captureReceipt(target,damage);
+        var reactive=DamageTriggeredDefense.capture(target,damage);
         ShadowHandGrip.Passive grip=ShadowHandGrip.capturePassive(target,damage);
         OrdinarySkillHit.Frame ordinary=OrdinarySkillHit.matching(target,damage);
         WindFangDamage.Impact fang=WindFangDamage.matching(target,damage);
@@ -222,7 +223,7 @@ public final class SkillEffects {
         BeetleGuard.Plan guard=BeetleGuard.matching(target,damage);
         SnailShellFormation.Plan formation=SnailShellFormation.matching(target,damage);
         ShadowCorrosionTouch.Receipt corrosion=ShadowCorrosionTouch.captureReceipt(target,damage);
-        if(ordinary!=null||fang!=null||spore!=null||guard!=null||formation!=null||corrosion!=null||debt!=null||grip!=null||ward!=null)return new FinalUnitDamageHooks.Finalizer() {
+        if(ordinary!=null||fang!=null||spore!=null||guard!=null||formation!=null||corrosion!=null||debt!=null||grip!=null||ward!=null||reactive!=null)return new FinalUnitDamageHooks.Finalizer() {
             private float shieldLoss;
             @Override public float resolve(float amount) {
                 // Existing Wind/Spore authority and Bone/defensive arithmetic remain unchanged.
@@ -236,6 +237,7 @@ public final class SkillEffects {
             @Override public void afterHealthDamage(float actualHealthLoss) {
                 if(corrosion!=null)corrosion.applied(actualHealthLoss,shieldLoss);
                 if(debt!=null)debt.applied(actualHealthLoss,shieldLoss);
+                if(reactive!=null)reactive.applied(actualHealthLoss,shieldLoss);
             }
         };
         return shield==null?null:amount->finalDamage(target,damage,amount,shield);
@@ -282,10 +284,11 @@ public final class SkillEffects {
         var ward=com.dreamseekers.buildingability.DaisWardEffects.matching(target,damage);
         Shield shield=validShield(target);BeetleGuard.Plan guard=BeetleGuard.matching(target,damage);
         return new FinalUnitDamageHooks.Finalizer() {
+            private float shieldLoss;
             @Override public float resolve(float amount) {
                 if(!hit.legal()||!Float.isFinite(amount)||amount<=0)return 0;
                 float guarded=defensiveDamage(guard,null,ward,damage,amount);
-                float result=shield==null?guarded:finalDamage(target,damage,guarded,shield);
+                float result=shield==null?guarded:finalDamage(target,damage,guarded,shield,used->shieldLoss=(float)used);
                 hit.finalizedPositive=Float.isFinite(result)&&result>0&&hit.legal();
                 return hit.finalizedPositive?result:0;
             }
@@ -294,6 +297,7 @@ public final class SkillEffects {
                 // A Forge callback's unrelated nested death cannot manufacture this receipt.
                 hit.committedLethal=hit.finalizedPositive&&Float.isFinite(actual)&&actual>0
                         &&target.getHealth()<=0&&hit.target.identityValid();
+                hit.applied(actual,shieldLoss); // Only the passive sweep uses the exact HP/Gel receipt.
             }
         };
     }
@@ -354,7 +358,8 @@ public final class SkillEffects {
                 if(!impact.legal()||!Float.isFinite(amount)||amount<=0)return 0;
                 accepted=true;
                 float guarded=defensiveDamage(guard,formation,ward,damage,amount);
-                return captured==null?guarded:finalDamage(target,damage,guarded,captured,used->shieldLoss=(float)used);
+                float result=captured==null?guarded:finalDamage(target,damage,guarded,captured,used->shieldLoss=(float)used);
+                return impact.legal()?result:0; // Shield rebound can run callbacks before the HP write.
             }
             @Override public void afterHealthDamage(float actualHealthLoss) {
                 if(accepted)impact.applied(actualHealthLoss,shieldLoss);

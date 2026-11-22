@@ -13,7 +13,7 @@ public abstract class WindDashMeleeScopeMixin {
     @Redirect(method="doHurtTarget",at=@At(value="INVOKE",
             target="Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z"),require=1)
     private boolean dreamseekers$actualMeleeHit(Entity target,DamageSource source,float amount) {
-        return com.dreamseekers.skill.OrdinaryAttackGate.finalMelee((Mob)(Object)this,target,()->com.dreamseekers.skill.ShadowCorrosionTouch.hurtFromMob((Mob)(Object)this,target,source,amount,
+        return com.dreamseekers.skill.OrdinaryAttackGate.finalMelee((Mob)(Object)this,target,source,()->com.dreamseekers.skill.ShadowCorrosionTouch.hurtFromMob((Mob)(Object)this,target,source,amount,
                 ()->com.dreamseekers.skill.BeetleAdvance.hurtFromMob((Mob)(Object)this,target,source,amount,
                 ()->WindDash.hurtFromMob((Mob)(Object)this,target,source,amount))));
     }

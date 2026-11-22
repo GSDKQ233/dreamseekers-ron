@@ -31,18 +31,20 @@ public final class OrdinaryAttackGate {
         finally { MELEE.removeFirstOccurrence(frame); }
     }
     /** Exact native Mob/Rabbit final hurt call, never a blanket LivingAttack/final-damage gate. */
-    public static boolean finalMelee(Mob source,Entity target,BooleanSupplier original) {
-        return finalMelee(source,target,null,original);
+    public static boolean finalMelee(Mob source,Entity target,net.minecraft.world.damagesource.DamageSource exact,BooleanSupplier original) {
+        return finalMelee(source,target,exact,null,original);
     }
     static boolean finalNativeMelee(Mob source,Entity target,net.minecraft.world.damagesource.DamageSource damage,BooleanSupplier original) {
-        return finalMelee(source,target,damage,original);
+        return finalMelee(source,target,damage,damage,original);
     }
-    private static boolean finalMelee(Mob source,Entity target,net.minecraft.world.damagesource.DamageSource exact,BooleanSupplier original) {
+    private static boolean finalMelee(Mob source,Entity target,net.minecraft.world.damagesource.DamageSource exact,
+            net.minecraft.world.damagesource.DamageSource debtExact,BooleanSupplier original) {
         Melee frame=MELEE.peek();
         if(server(source)&&frame!=null&&frame.source==source&&frame.target==target&&!frame.claimed&&frame.suspended==0) {
             frame.claimed=true;
             if(TerrorbeakDreadRoar.hasDisarm(source))return false;
-            return ShadowHandGrip.commitMelee(source,target,()->FriendlyDebtContract.commitMelee(source,target,exact,original));
+            return DamageTriggeredDefense.melee(source,target,exact,()->ShadowHandGrip.commitMelee(source,target,
+                    ()->FriendlyDebtContract.commitMelee(source,target,debtExact,original)));
         }
         return original.getAsBoolean();
     }

@@ -17,27 +17,26 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import java.util.ArrayDeque;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** One paid windup, one physical skill shot, then at most one bounded secondary burst.
- * None of these short-lived authorization objects is saved. Ordinary stones are unchanged.
+/** A natural goal release can upgrade its one stone; deliberate manual aim still uses a windup.
+ * Both paths share the physical projectile and exact direct-hit receipt. No authority is saved.
  */
 public final class StoneHeavyShot {
     public static final int WINDUP_TICKS=20, RANGE=10, SECONDARY_LIMIT=3;
     public static final double SPLASH_RADIUS=1.5;
     public static final float PRIMARY_MULTIPLIER=1.5f, SECONDARY_MULTIPLIER=.3f;
     private static final Map<StoneSpiritThrowerUnit,Charge> CHARGES=new IdentityHashMap<>();
+    // A short reentry reservation, deliberately separate from manual casting/navigation state.
+    private static final Map<StoneSpiritThrowerUnit,Charge> NATURAL=new IdentityHashMap<>();
     private static final Map<HeavyStoneProjectile,Launch> FLIGHTS=new IdentityHashMap<>();
     private static final ArrayDeque<Impact> HITS=new ArrayDeque<>();
     private StoneHeavyShot() { }
@@ -72,38 +71,54 @@ public final class StoneHeavyShot {
         final StoneSpiritThrowerUnit source;
         final SkillIdentity.Stamp caster,aim;
         final ServerPlayer viewer;
-        final long commandRevision,releaseAt;
+        final long commandRevision,skillRevision,releaseAt;
         final int range;
+        final boolean automatic;
         boolean releasing;
-        Charge(StoneSpiritThrowerUnit source,LivingEntity target,ServerPlayer viewer) {
+        Charge(StoneSpiritThrowerUnit source,LivingEntity target,ServerPlayer viewer,boolean automatic) {
             this.source=source;range=range(source);caster=SkillIdentity.capture(source);aim=SkillIdentity.capture(target);this.viewer=viewer;
+            this.automatic=automatic;skillRevision=source.rts().skills().revision();
             commandRevision=source.rts().commandRevision;releaseAt=source.level().getGameTime()+WINDUP_TICKS;
         }
         boolean valid() {
-            return CHARGES.get(source)==this&&loaded(caster)&&loaded(aim)&&viewer(viewer,caster)
+            return (automatic?NATURAL:CHARGES).get(source)==this&&loaded(caster)&&loaded(aim)&&viewer(viewer,caster)
                     &&source.rts().commandRevision==commandRevision&&!disabled(source)
                     &&!UnitServerEvents.hasPendingImmediateAction(source.getId())&&enemy(source,aim.entity())
-                    &&source.distanceToSqr(aim.entity())<=(double)range*range&&source.hasLineOfSight(aim.entity())
-                    &&CoordinatedMark.visible(viewer,aim.entity());
+                    &&source.distanceToSqr(aim.entity())<=(double)range*range
+                    &&(automatic?source.rts().skills().revision()==skillRevision
+                        &&SkillService.passiveCommander(source,UnitSkill.STONE_HEAVY_SHOT)==viewer
+                        &&source.getTarget()==aim.entity()&&source.getFollowTarget()==null
+                        &&source.getMoveGoal().getMoveTarget()==null
+                        &&!com.solegendary.reignofnether.unit.interfaces.AttackerUnit.isAttackingBuilding(source)
+                        &&!TerrorbeakDreadRoar.hasDisarm(source)&&SkillAutocastPolicy.observable(viewer,aim.entity())
+                        &&SkillAutocastPolicy.sees(source,aim.entity())
+                        :source.hasLineOfSight(aim.entity())&&CoordinatedMark.visible(viewer,aim.entity()));
         }
     }
     private static final class Launch {
         final HeavyStoneProjectile projectile;
         final StoneSpiritThrowerUnit source;
         final SkillIdentity.Stamp caster;
+        final ServerPlayer viewer;
+        final boolean automatic;
         final UUID projectileId;
         final float baseDamage;
         boolean published,spent,revoked;
         Launch(HeavyStoneProjectile projectile,Charge charge,float damage) {
             this.projectile=projectile;source=charge.source;caster=charge.caster;
+            viewer=charge.viewer;automatic=charge.automatic;
             projectileId=projectile.getUUID();baseDamage=damage;
         }
-        boolean valid() {
-            return !revoked&&published&&FLIGHTS.get(projectile)==this&&loaded(caster)
+        boolean attached() {
+            return !revoked&&FLIGHTS.get(projectile)==this&&loaded(caster)
                     &&projectile.level()==caster.level()&&!projectile.isRemoved()&&projectile.isAddedToWorld()
                     &&projectile.getUUID().equals(projectileId)&&projectile.getOwner()==source
                     &&caster.level().getEntity(projectileId)==projectile
                     &&caster.level().getEntity(projectile.getId())==projectile;
+        }
+        boolean valid() { return published&&attached()&&(!automatic||SkillService.currentCommander(source,viewer)); }
+        boolean legalVictim(LivingEntity target) {
+            return enemy(source,target)&&(automatic?SkillAutocastPolicy.observable(viewer,target):CoordinatedMark.visible(viewer,target));
         }
     }
     public static boolean active(StoneSpiritThrowerUnit source) {
@@ -116,7 +131,7 @@ public final class StoneHeavyShot {
     static SkillResult start(ServerPlayer sender,StoneSpiritThrowerUnit source,LivingEntity target) {
         if(!server(source)||!source.isAlive()||!source.isAddedToWorld()||source.isRemoved()
                 ||source.getOwnerName().isBlank())return SkillResult.INVALID_SOURCE;
-        if(active(source))return SkillResult.ALREADY_ACTIVE;
+        if(active(source)||NATURAL.containsKey(source))return SkillResult.ALREADY_ACTIVE;
         if(disabled(source)||UnitServerEvents.hasPendingImmediateAction(source.getId()))return SkillResult.DISABLED;
         if(!enemy(source,target))return SkillResult.INVALID_TARGET;
         if(source.distanceToSqr(target)>(double)range(source)*range(source))return SkillResult.RANGE;
@@ -133,8 +148,22 @@ public final class StoneHeavyShot {
         if(!loaded(aim)||disabled(source)||!enemy(source,target)||!viewer(sender,caster)
                 ||source.distanceToSqr(target)>(double)range(source)*range(source)||!source.hasLineOfSight(target)
                 ||!CoordinatedMark.visible(sender,target))return SkillResult.INVALID_TARGET;
-        Charge charge=new Charge(source,target,sender);CHARGES.put(source,charge);stopMovement(source);
+        Charge charge=new Charge(source,target,sender,false);CHARGES.put(source,charge);stopMovement(source);
         return SkillResult.SUCCESS; // SkillService commits CD exactly once, before any future release callback
+    }
+    /** True only when this release was claimed for one heavy attempt. A failed/canceled Join
+     * is not a second opportunity to spawn an ordinary stone after a callback replaced the order. */
+    public static boolean replaceNaturalShot(StoneSpiritThrowerUnit source,LivingEntity target) {
+        if(!server(source)||!enemy(source,target)||source.getTarget()!=target)return false;
+        if(NATURAL.containsKey(source))return true;
+        ServerPlayer owner=SkillService.passiveCommander(source,UnitSkill.STONE_HEAVY_SHOT);
+        if(owner==null)return false;
+        Charge shot=new Charge(source,target,owner,true);NATURAL.put(source,shot);
+        try {
+            if(!shot.valid())return false;
+            release(shot);
+            return true;
+        } finally { NATURAL.remove(source,shot); }
     }
     private static void stopMovement(StoneSpiritThrowerUnit source) {
         source.getNavigation().stop();
@@ -167,6 +196,10 @@ public final class StoneHeavyShot {
         Charge charge=CHARGES.get(source);if(charge==null||charge.releasing)return;
         if(!charge.valid()) { CHARGES.remove(source,charge);return; }
         if(source.level().getGameTime()<charge.releaseAt)return;
+        release(charge);
+    }
+    private static void release(Charge charge) {
+        StoneSpiritThrowerUnit source=charge.source;
         // Keep the exact charge installed through constructor callbacks. Its private reservation
         // prevents nested ticks from firing; new explicit commands still revoke the original lease.
         charge.releasing=true;
@@ -175,7 +208,7 @@ public final class StoneHeavyShot {
             HeavyStoneProjectile projectile=new HeavyStoneProjectile(DreamseekersMod.STONE_HEAVY_PROJECTILE.get(),level);
             if(!charge.valid()) { projectile.discard();return; }
             float snapshot=source.getUnitAttackDamage(); // one read after actual constructor callbacks
-            if(!Float.isFinite(snapshot)||snapshot<=0||!charge.valid()) { projectile.discard();return; }
+            if(!Float.isFinite(snapshot)||snapshot<=0||!Float.isFinite(snapshot*PRIMARY_MULTIPLIER)||!charge.valid()) { projectile.discard();return; }
             Launch launch=new Launch(projectile,charge,snapshot);FLIGHTS.put(projectile,launch);
             boolean accepted=false;
             try {
@@ -183,10 +216,17 @@ public final class StoneHeavyShot {
                 Vec3 delta=charge.aim.entity().getBoundingBox().getCenter().subtract(projectile.position());
                 projectile.shoot(delta.x,delta.y,delta.z,StoneThrowerBalance.PROJECTILE_SPEED,0);
                 if(launch.revoked||!charge.valid()||projectile.isRemoved()||projectile.getOwner()!=source)return;
-                // Launch commit: all original aim/command/view checks passed, immediately before
-                // the actual publication call. Ordinary commands during/after Join do not recall it.
-                CHARGES.remove(source,charge);
-                accepted=level.addFreshEntity(projectile);
+                if(charge.automatic) {
+                    // A Join subscriber can cancel, toggle, kill, retarget or enqueue a STOP.
+                    // The new projectile is inert until both publication and its one paid commit succeed.
+                    accepted=OrdinaryAttackGate.publish(source,projectile,()->level.addFreshEntity(projectile));
+                    if(!accepted||!launch.attached()||!charge.valid()
+                            ||!SkillService.commitPassive(source,UnitSkill.STONE_HEAVY_SHOT,charge.viewer,false))return;
+                } else {
+                    // The explicit manual cast was already charged. Commands during/after Join don't recall it.
+                    CHARGES.remove(source,charge);
+                    accepted=level.addFreshEntity(projectile);
+                }
                 launch.published=accepted;
                 if(!launch.valid())return; // death/leave/owner ABA during Join still revoke the shot
                 com.solegendary.reignofnether.fogofwar.FogOfWarClientboundPacket.revealRangedUnit(charge.aim.owner(),source.getId());
@@ -194,20 +234,25 @@ public final class StoneHeavyShot {
             } finally {
                 if(!accepted||!launch.valid()) { launch.revoked=true;FLIGHTS.remove(projectile,launch);projectile.discard(); }
             }
-        } finally { CHARGES.remove(source,charge); }
+        } finally { (charge.automatic?NATURAL:CHARGES).remove(source,charge); }
     }
     /** Explicit replacement only; never a Shift intent. It cannot retract an already released shot. */
     public static void commandChanged(StoneSpiritThrowerUnit source) {
-        if(server(source)&&CHARGES.remove(source)!=null)source.rts().commandRevision++;
+        if(server(source)) {
+            NATURAL.remove(source);
+            if(CHARGES.remove(source)!=null)source.rts().commandRevision++;
+        }
     }
-    public static boolean allowOrdinaryShot(StoneSpiritThrowerUnit source) { return !active(source); }
+    public static boolean allowOrdinaryShot(StoneSpiritThrowerUnit source) {
+        return !active(source)&&(!server(source)||!NATURAL.containsKey(source));
+    }
     public static boolean flightValid(HeavyStoneProjectile projectile) {
         if(!server(projectile))return false;
         Launch launch=FLIGHTS.get(projectile);return launch!=null&&!launch.spent&&launch.valid();
     }
     public static boolean canHit(HeavyStoneProjectile projectile,Entity victim) {
         Launch launch=FLIGHTS.get(projectile);
-        return flightValid(projectile)&&victim instanceof LivingEntity target&&enemy(launch.source,target);
+        return flightValid(projectile)&&victim instanceof LivingEntity target&&launch.legalVictim(target);
     }
     /** Dedicated subtype observes owner mutation before Join too; A->B->A never restores authority. */
     public static void ownerChanged(HeavyStoneProjectile projectile) {
@@ -219,8 +264,8 @@ public final class StoneHeavyShot {
         Launch launch=FLIGHTS.remove(projectile);if(launch!=null)launch.revoked=true;
     }
     private static boolean impactLos(Launch launch,Vec3 origin,LivingEntity target) {
-        return launch.caster.level().clip(new ClipContext(origin,target.getBoundingBox().getCenter(),
-                ClipContext.Block.COLLIDER,ClipContext.Fluid.NONE,launch.source)).getType()==HitResult.Type.MISS;
+        return BeetleMotherCommandAura.hasLoadedLineOfSight(launch.caster.level(),launch.source,
+                origin,target.getBoundingBox().getCenter());
     }
     static final class Impact {
         final Launch launch;
@@ -228,15 +273,18 @@ public final class StoneHeavyShot {
         final DamageSource damage;
         final Vec3 origin;
         final boolean primary;
-        boolean entered,claimed,revoked,reported,receipt;
-        Impact(Launch launch,LivingEntity target,Vec3 origin,boolean primary) {
-            this.launch=launch;this.target=SkillIdentity.capture(target);this.origin=origin;this.primary=primary;
+        final Impact directHit;
+        boolean entered,claimed,revoked,reported,receipt,lethal;
+        Impact(Launch launch,LivingEntity target,Vec3 origin,Impact directHit) {
+            this.launch=launch;this.target=SkillIdentity.capture(target);this.origin=origin;
+            this.directHit=directHit;primary=directHit==null;
             damage=target.damageSources().thrown(launch.projectile,launch.source);
         }
         boolean legal() {
             return !revoked&&!reported&&entered&&launch.valid()&&loaded(target)
-                    &&enemy(launch.source,target.entity())&&impactLos(launch,origin,target.entity())
-                    &&(primary||target.entity().getBoundingBox().getCenter().distanceToSqr(origin)<=SPLASH_RADIUS*SPLASH_RADIUS);
+                    &&launch.legalVictim(target.entity())&&impactLos(launch,origin,target.entity())
+                    &&(primary||directHit.permitsBurst()
+                        &&target.entity().getBoundingBox().getCenter().distanceToSqr(origin)<=SPLASH_RADIUS*SPLASH_RADIUS);
         }
         void applied(float healthLoss,float shieldLoss) {
             if(reported)return;reported=true;
@@ -245,6 +293,12 @@ public final class StoneHeavyShot {
                     &&target.identityValid()&&target.entity().isAddedToWorld()
                     &&target.level().getEntity(target.entity().getId())==target.entity()
                     &&launch.source.canHarmOwner(target.owner());
+            lethal=receipt&&healthLoss>0&&target.entity().getHealth()<=0;
+        }
+        boolean permitsBurst() {
+            return receipt&&!revoked&&launch.valid()&&target.identityValid()
+                    &&(target.entity().isAlive()||lethal)&&launch.source.canHarmOwner(target.owner())
+                    &&(!launch.automatic||PassiveSplashTargets.observableAfterHit(launch.viewer,target));
         }
     }
     private static Impact matching(LivingEntity target,DamageSource source) {
@@ -292,27 +346,24 @@ public final class StoneHeavyShot {
         if(launch==null||launch.spent||!launch.valid())return;
         launch.spent=true; // reserve before capture or ANY hurt callback; no physical/reentrant second impact
         try {
-            if(!(hit.getEntity() instanceof LivingEntity target)||!enemy(launch.source,target))return;
+            if(!(hit.getEntity() instanceof LivingEntity target)||!launch.legalVictim(target))return;
             Vec3 origin=hit.getLocation();
             if(!Double.isFinite(origin.x)||!Double.isFinite(origin.y)||!Double.isFinite(origin.z))return;
-            Impact primary=new Impact(launch,target,origin,true);
+            Impact primary=new Impact(launch,target,origin,null);
             PrimaryUnitHitHooks.Impact actual=PrimaryUnitHitHooks.capture(projectile,target);
             hurt(primary,actual); // this returns only after existing Snail/ordinary primary wrappers have popped
-            if(!primary.receipt||!launch.valid()||!primary.target.identityValid()
-                    ||!launch.source.canHarmOwner(primary.target.owner()))return;
-            List<SkillIdentity.Stamp> candidates=launch.caster.level().getEntitiesOfClass(LivingEntity.class,
-                    new AABB(origin,origin).inflate(SPLASH_RADIUS),candidate->candidate!=target&&enemy(launch.source,candidate)
+            if(!primary.permitsBurst())return;
+            List<SkillIdentity.Stamp> candidates=PassiveSplashTargets.nearest(launch.caster.level(),
+                    new AABB(origin,origin).inflate(SPLASH_RADIUS),candidate->candidate!=target&&launch.legalVictim(candidate)
                             &&candidate.getBoundingBox().getCenter().distanceToSqr(origin)<=SPLASH_RADIUS*SPLASH_RADIUS
-                            &&impactLos(launch,origin,candidate)).stream()
-                    .sorted(Comparator.comparingDouble((LivingEntity candidate)->candidate.getBoundingBox().getCenter().distanceToSqr(origin))
-                            .thenComparing(candidate->candidate.getUUID().toString()))
-                    .limit(SECONDARY_LIMIT).map(SkillIdentity::capture).toList();
+                            &&impactLos(launch,origin,candidate),
+                    candidate->candidate.getBoundingBox().getCenter().distanceToSqr(origin),SECONDARY_LIMIT);
             for(SkillIdentity.Stamp candidate:candidates) {
-                if(!launch.valid())break;
-                if(!loaded(candidate)||!enemy(launch.source,candidate.entity())
+                if(!primary.permitsBurst())break;
+                if(!loaded(candidate)||!launch.legalVictim(candidate.entity())
                         ||candidate.entity().getBoundingBox().getCenter().distanceToSqr(origin)>SPLASH_RADIUS*SPLASH_RADIUS
                         ||!impactLos(launch,origin,candidate.entity()))continue;
-                hurt(new Impact(launch,candidate.entity(),origin,false),null);
+                hurt(new Impact(launch,candidate.entity(),origin,primary),null);
             }
         } finally { launch.revoked=true;FLIGHTS.remove(projectile,launch);projectile.discard(); }
     }
@@ -324,10 +375,11 @@ public final class StoneHeavyShot {
     }
     static void clear(LivingEntity entity) {
         CHARGES.entrySet().removeIf(entry->entry.getKey()==entity||entry.getValue().aim.entity()==entity);
+        NATURAL.entrySet().removeIf(entry->entry.getKey()==entity||entry.getValue().aim.entity()==entity);
         for(Launch launch:List.copyOf(FLIGHTS.values()))if(launch.source==entity)launch.revoked=true;
     }
     static void stop() {
-        CHARGES.clear();for(Launch launch:FLIGHTS.values())launch.revoked=true;
+        CHARGES.clear();NATURAL.clear();for(Launch launch:FLIGHTS.values())launch.revoked=true;
         FLIGHTS.clear();HITS.clear();
     }
 }

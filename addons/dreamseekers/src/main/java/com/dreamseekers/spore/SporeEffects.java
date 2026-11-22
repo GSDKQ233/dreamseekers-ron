@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.spore;
 
+import com.dreamseekers.skill.FoxDreamSeedAutocast;
 import com.dreamseekers.skill.SkillEffects;
 import com.dreamseekers.skill.SkillIdentity;
 import com.dreamseekers.unit.mixin.SporeEffectAccess;
@@ -14,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.MobEffectEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import javax.annotation.Nullable;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -46,6 +48,49 @@ public final class SporeEffects {
             return effect!=null?target.entity().getEffect(effect.getEffect())==effect&&eligible(effect):managed!=null&&managed.current();
         }
     }
+    /** Ephemeral proof for the original recipient and actual removable instance. A replacement of the
+     * same potion, ownership ABA, an already-started cleanse or protection invalidates this selection.
+     * A manual cast is still allowed on open ground with no such proof. */
+    public static final class Need {
+        private final Candidate candidate;
+        private Need(Candidate candidate) { this.candidate=candidate; }
+        public LivingEntity ally() { return candidate.target().entity(); }
+        public boolean current() {
+            return candidate.target().valid()&&!CLEANSES.containsKey(ally())
+                    &&cleanseProtectionTicks(ally())==0&&candidate.current();
+        }
+    }
+    /** Only the fox's actually observed foe is consulted for multi-owner debt. All other managed
+     * providers are keyed by this exact target. Do not enumerate the world's open contracts to
+     * decide whether a fox should spend its cooldown. Actual activation retains full native order. */
+    @Nullable public static Need need(LivingEntity target,String enemyOwner) {
+        if(!(target instanceof Unit)||!server(target)||CLEANSES.containsKey(target)
+                ||cleanseProtectionTicks(target)!=0)return null;
+        Candidate choice=choice(target,enemyOwner);
+        return choice!=null?new Need(choice):null;
+    }
+    @Nullable private static Candidate choice(LivingEntity target,@Nullable String observedOwner) {
+        var choices=new ArrayList<Candidate>();
+        SkillIdentity.Stamp stamp=SkillIdentity.capture(target);
+        for(MobEffectInstance effect:target.getActiveEffects())if(eligible(effect))
+            choices.add(new Candidate(stamp,ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect()),effect,null));
+        addManaged(choices,stamp,com.dreamseekers.skill.ShadowCorrosionTouch.negative(target));
+        addManaged(choices,stamp,com.dreamseekers.skill.SquealSuppressionWave.negative(target));
+        addManaged(choices,stamp,com.dreamseekers.skill.AaroncosVortex.negative(target));
+        addManaged(choices,stamp,com.dreamseekers.skill.AaroncosShockSuppression.negative(target));
+        addManaged(choices,stamp,com.dreamseekers.skill.TerrorbeakDreadRoar.negative(target));
+        addManaged(choices,stamp,com.dreamseekers.skill.ShadowHandGrip.negative(target));
+        if(observedOwner==null) {
+            for(var debt:com.dreamseekers.skill.FriendlyDebtContract.negatives(target))addManaged(choices,stamp,debt);
+        } else {
+            addManaged(choices,stamp,com.dreamseekers.skill.FriendlyDebtContract.negative(target,observedOwner));
+        }
+        return choices.stream().min(Comparator.comparing((Candidate c)->c.id().toString())
+                .thenComparing(c->c.managed()==null?"":c.managed().tieBreakKey())).orElse(null);
+    }
+    private static void addManaged(List<Candidate> choices,SkillIdentity.Stamp stamp,@Nullable ManagedNegative effect) {
+        if(effect!=null)choices.add(new Candidate(stamp,effect.id(),null,effect));
+    }
     private static final class Cleanse {
         final SporeLease.Lease lease;
         final Candidate candidate;
@@ -68,7 +113,8 @@ public final class SporeEffects {
                 &&lease.caster.level().getEntity(target.getUUID())==target
                 &&SkillEffects.friendly(lease.caster.entity(),target)
                 &&lease.carrier.distanceToSqr(target)<=SporeLease.RADIUS*SporeLease.RADIUS
-                &&lease.carrier.hasLineOfSight(target);
+                &&(lease.autoViewer==null?lease.carrier.hasLineOfSight(target)
+                :FoxDreamSeedAutocast.observableRecipient(lease.autoViewer,lease.carrier,lease.caster,target));
     }
     /** Called exactly once only after published birth + cooldown/revision commit. */
     static void activate(SporeLease.Lease lease) {
@@ -78,28 +124,9 @@ public final class SporeEffects {
         for(LivingEntity target:lease.caster.level().getEntitiesOfClass(LivingEntity.class,
                 lease.carrier.getBoundingBox().inflate(SporeLease.RADIUS),entity->inRange(lease,entity))) {
             if(cleanseProtectionTicks(target)>0)continue;
-            SkillIdentity.Stamp stamp=SkillIdentity.capture(target);
-            List<Candidate> choices=new ArrayList<>();
-            for(MobEffectInstance effect:target.getActiveEffects())if(eligible(effect))
-                choices.add(new Candidate(stamp,ForgeRegistries.MOB_EFFECTS.getKey(effect.getEffect()),effect,null));
-            // Explicit managed providers share the same deterministic ID order. This is not
-            // a second cleanse pass, and a failed/stale selected candidate never chooses another.
-            ManagedNegative managed=com.dreamseekers.skill.ShadowCorrosionTouch.negative(target);
-            if(managed!=null)choices.add(new Candidate(stamp,managed.id(),null,managed));
-            ManagedNegative suppression=com.dreamseekers.skill.SquealSuppressionWave.negative(target);
-            if(suppression!=null)choices.add(new Candidate(stamp,suppression.id(),null,suppression));
-            ManagedNegative vortex=com.dreamseekers.skill.AaroncosVortex.negative(target);
-            if(vortex!=null)choices.add(new Candidate(stamp,vortex.id(),null,vortex));
-            ManagedNegative shock=com.dreamseekers.skill.AaroncosShockSuppression.negative(target);
-            if(shock!=null)choices.add(new Candidate(stamp,shock.id(),null,shock));
-            ManagedNegative dread=com.dreamseekers.skill.TerrorbeakDreadRoar.negative(target);
-            if(dread!=null)choices.add(new Candidate(stamp,dread.id(),null,dread));
-            ManagedNegative grip=com.dreamseekers.skill.ShadowHandGrip.negative(target);
-            if(grip!=null)choices.add(new Candidate(stamp,grip.id(),null,grip));
-            for(ManagedNegative debt:com.dreamseekers.skill.FriendlyDebtContract.negatives(target))
-                choices.add(new Candidate(stamp,debt.id(),null,debt));
-            choices.stream().min(Comparator.comparing((Candidate candidate)->candidate.id().toString())
-                    .thenComparing(candidate->candidate.managed()==null?"":candidate.managed().tieBreakKey())).ifPresent(candidates::add);
+            // One deterministic candidate across potions and all native managed providers.
+            Candidate choice=choice(target,null);
+            if(choice!=null)candidates.add(choice);
         }
         candidates.sort(Comparator.comparing(candidate->candidate.target().uuid().toString()));
         for(Candidate candidate:candidates)cleanse(lease,candidate);

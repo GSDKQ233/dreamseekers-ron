@@ -29,10 +29,12 @@ public abstract class SkillFinalDamageMixin {
         var ticket=FinalUnitDamageHooks.begin(victim,source);
         var write=com.dreamseekers.skill.FriendlyDebtContract.captureVanillaTicket(victim,source,ticket);
         var vortexWrite=com.dreamseekers.skill.AaroncosVortex.captureVanillaTicket(victim,source,ticket);
+        var reactiveWrite=com.dreamseekers.skill.DamageTriggeredDefense.captureVanillaTicket(victim,source,ticket);
         float finalAmount=ForgeHooks.onLivingDamage(victim,source,amount);
         float result=ticket.resolve(finalAmount,finalAmount);
         com.dreamseekers.skill.FriendlyDebtContract.resolvedVanillaTicket(write,result);
         com.dreamseekers.skill.AaroncosVortex.resolvedVanillaTicket(vortexWrite,result);
+        com.dreamseekers.skill.DamageTriggeredDefense.resolvedVanillaTicket(reactiveWrite,result);
         return result;
     }
     @Redirect(method="actuallyHurt",at=@At(value="INVOKE",target="Lnet/minecraft/world/entity/LivingEntity;setHealth(F)V"),require=1)
@@ -40,7 +42,8 @@ public abstract class SkillFinalDamageMixin {
         com.solegendary.reignofnether.api.HealthDamageWriters.withReceipt(victim,source,()->
         com.dreamseekers.skill.FriendlyDebtContract.vanillaHealthWrite(victim,source,()->
                 com.dreamseekers.skill.AaroncosVortex.vanillaHealthWrite(victim,source,()->
+                com.dreamseekers.skill.DamageTriggeredDefense.vanillaHealthWrite(victim,source,()->
                 com.solegendary.reignofnether.api.HealthWriteObservers.write(victim,source,health,
-                        ()->com.solegendary.reignofnether.api.HealthDamageWriters.write(victim,source,health)))));
+                        ()->com.solegendary.reignofnether.api.HealthDamageWriters.write(victim,source,health))))));
     }
 }

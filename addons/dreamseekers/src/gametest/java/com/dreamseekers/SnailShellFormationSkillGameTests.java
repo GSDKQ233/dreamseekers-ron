@@ -254,7 +254,7 @@ public final class SnailShellFormationSkillGameTests {
               for(var source:sources) {
                   var packets=positiveSync(owner,source);h.assertTrue(packets.size()==1,"one initial encoded Sync before first heartbeat, source="+source.mob().getUUID()+" packets="+packets);
                   var observation=packets.get(0);var packet=observation.packet();
-                  h.assertTrue(packet.skill()==SkillService.skillFor(source)&&packet.sourceId()==source.mob().getId()&&packet.sourceUuid().equals(source.mob().getUUID())&&packet.revision()==source.rts().skills().revision()&&packet.cooldownTicks()==0&&packet.autocastEnabled()==(source==snail||source==beetle),"actual encoded initial payload has exact skill, original ID/UUID, revision, zero cooldown, and correct default (Snail/Beetle on, worker manual)");
+                  h.assertTrue(packet.skill()==SkillService.skillFor(source)&&packet.sourceId()==source.mob().getId()&&packet.sourceUuid().equals(source.mob().getUUID())&&packet.revision()==source.rts().skills().revision()&&packet.cooldownTicks()==0&&packet.autocastEnabled(),"actual encoded initial payload has exact skill, original ID/UUID, revision, zero cooldown, and correct independent defaults (Snail/Beetle/Firefly on)");
                   int count=syncWire(owner).syncs.size();long revision=source.rts().skills().revision();
                   source.rts().skills().tick();source.rts().skills().tick();
                   h.assertTrue(syncWire(owner).syncs.size()==count&&source.rts().skills().revision()==revision&&source.rts().skills().cooldownTicks(SkillService.skillFor(source))==0&&effectTicks(source)==0,"same-game-tick repeated state ticks cannot duplicate initial sync, mutate revision or create effect");

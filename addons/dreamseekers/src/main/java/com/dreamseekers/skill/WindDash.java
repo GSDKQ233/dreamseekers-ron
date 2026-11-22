@@ -7,6 +7,7 @@ import com.solegendary.reignofnether.api.FinalUnitDamageHooks;
 import com.solegendary.reignofnether.fogofwar.FogOfWarServerEvents;
 import com.solegendary.reignofnether.unit.UnitServerEvents;
 import com.solegendary.reignofnether.registrars.MobEffectRegistrar;
+import com.solegendary.reignofnether.unit.interfaces.AttackerUnit;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
 import com.solegendary.reignofnether.unit.interfaces.WorkerUnit;
 import net.minecraft.server.level.ServerLevel;
@@ -25,9 +26,11 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -338,11 +341,47 @@ public final class WindDash {
                 .thenComparing(target->target.getUUID().toString()));
         int added=0;
         for(LivingEntity target:candidates) {
-            boolean applied=SkillEffects.addBuff(source,target,COMMAND_KEY,BuffKind.MOVEMENT_SPEED,COMMAND_MOVEMENT,COMMAND_TICKS);
-            if(SkillService.blessingCombatUnit(target))applied|=SkillEffects.addBuff(source,target,COMMAND_KEY,
-                    BuffKind.ATTACK_DAMAGE,COMMAND_DAMAGE,COMMAND_TICKS);
-            if(applied&&++added>=COMMAND_TARGETS)break;
+            if(rallyOne(source,target)&&++added>=COMMAND_TARGETS)break;
         }
+    }
+    private static boolean rallyOne(WindKnightUnit source,LivingEntity target) {
+        boolean applied=SkillEffects.addBuff(source,target,COMMAND_KEY,BuffKind.MOVEMENT_SPEED,COMMAND_MOVEMENT,COMMAND_TICKS);
+        if(SkillService.blessingCombatUnit(target))applied|=SkillEffects.addBuff(source,target,COMMAND_KEY,
+                BuffKind.ATTACK_DAMAGE,COMMAND_DAMAGE,COMMAND_TICKS);
+        return applied;
+    }
+    /** Called ONLY by the exact native ordinary melee receipt after verified positive HP/Gel loss.
+     * The enemy must still be the same living focus. No new attack, movement, or attack interval. */
+    static void passiveReceipt(WindKnightUnit source,LivingEntity victim,ServerPlayer owner) {
+        if(owner==null || !(source.level() instanceof ServerLevel level) || !level.getServer().isSameThread()
+                || source.getTarget()!=victim || !source.canHarm(victim)
+                || !SkillAutocastPolicy.observable(owner,victim) || !SkillAutocastPolicy.sees(source,victim)
+                || !SkillAutocastPolicy.attackReach(source,source,victim)
+                || source.getFollowTarget()!=null || source.getMoveGoal().getMoveTarget()!=null
+                || AttackerUnit.isAttackingBuilding(source) || SkillAutocastPolicy.disabledFighter(source)
+                || DASHES.containsKey(source) || STRIKES.containsKey(source)
+                || SkillService.passiveCommander(source,UnitSkill.WIND_DASH)!=owner)return;
+        // A lone knight never burns the manual positioning skill for an empty rally.
+        // Drop an overloaded local query rather than picking an arbitrary iteration-order prefix.
+        List<LivingEntity> candidates=new ArrayList<>();
+        level.getEntities(EntityTypeTest.forClass(LivingEntity.class),source.getBoundingBox().inflate(COMMAND_RANGE),
+                t->t!=source && t instanceof Unit && !(t instanceof WorkerUnit) && SkillEffects.friendly(source,t)
+                        && source.distanceToSqr(t)<=(double)COMMAND_RANGE*COMMAND_RANGE,candidates,65);
+        if(candidates.size()>64)return;
+        candidates.removeIf(t->!canReceiveRally(source,owner,t));
+        if(candidates.isEmpty())return;
+        candidates.sort(Comparator.comparingDouble((LivingEntity t)->source.distanceToSqr(t))
+                .thenComparing(t->t.getUUID().toString()));
+        if(!SkillService.commitPassive(source,UnitSkill.WIND_DASH,owner,false))return;
+        int added=0;
+        for(LivingEntity t:candidates)
+            if(canReceiveRally(source,owner,t)&&rallyOne(source,t)&&++added>=COMMAND_TARGETS)break;
+    }
+    private static boolean canReceiveRally(WindKnightUnit source,ServerPlayer owner,LivingEntity t) {
+        return source.distanceToSqr(t)<=(double)COMMAND_RANGE*COMMAND_RANGE
+                && SkillEffects.friendly(source,t) && SkillAutocastPolicy.observable(owner,t)
+                && SkillAutocastPolicy.sees(source,t) && t.getAttribute(Attributes.MOVEMENT_SPEED)!=null
+                && !SkillEffects.hasNamedBuff(t,COMMAND_KEY,BuffKind.MOVEMENT_SPEED);
     }
     private static void addKnockback(Dash dash) {
         if(!dash.caster.valid()||!dash.target.valid()||!dash.source.canHarm(dash.target.entity())

@@ -193,6 +193,8 @@ public final class SkillService {
                 ?AaroncosVortex.cast(sender,(com.dreamseekers.unit.AaroncosRightHandUnit)source,request.position(),commit)
                 :request.skill()==UnitSkill.ASH_EMBER_LANDING
                 ?AshEmberLanding.cast(sender,(com.dreamseekers.unit.AshBoneWingUnit)source,request.position(),commit,auto!=null)
+                :auto!=null&&auto.seedPlan()!=null
+                ?com.dreamseekers.spore.SporeLease.spawnAutomatic(sender,(GoldenFoxUnit)source,auto.seedPlan(),commit)
                 :com.dreamseekers.spore.SporeLease.spawn(sender,(GoldenFoxUnit)source,request.position(),commit);
         if(result==SkillResult.SUCCESS&&auto==null)state.sync(sender);
         return result;
@@ -318,7 +320,7 @@ public final class SkillService {
     }
     /** Top-down commanders themselves use spectator game mode. Authority is a live bound seat,
      * not camera mode, an owner string copied from a unit, or a fabricated server player. */
-    private static boolean currentCommander(SkillUnit source,@Nullable ServerPlayer owner) {
+    static boolean currentCommander(SkillUnit source,@Nullable ServerPlayer owner) {
         if(owner==null||owner.connection==null||!owner.isAlive()||owner.serverLevel()!=source.mob().level()
                 ||!source.getOwnerName().equals(owner.getGameProfile().getName())
                 ||!ServerPlayerRequest.isCurrent(owner,owner.connection.connection)||SurvivalResult.isAfterMatch())return false;
@@ -340,11 +342,50 @@ public final class SkillService {
         }
         return false;
     }
+    /** Readiness for exact native hit/impact/return callbacks. Never creates a command. */
+    @Nullable static ServerPlayer passiveCommander(SkillUnit source, UnitSkill skill) {
+        if(source==null||!canDecide(source))return null;
+        var body=source.mob();var state=source.rts().skills();
+        if(body.isPassenger()||source.ignoreNonStopCommands()||source.isCasting()||!state.canAdvance()
+                ||!state.autocastEnabled(skill)||state.cooldownTicks(skill)>0||!state.passiveOrderStable()
+                ||pendingOrder(source))return null;
+        var owner=((ServerLevel)body.level()).getServer().getPlayerList().getPlayerByName(source.getOwnerName());
+        return currentCommander(source,owner)&&SkillAutocastPolicy.observable(owner,body)?owner:null;
+    }
+
+    static boolean commitPassive(SkillUnit source, UnitSkill skill, ServerPlayer owner, boolean animate) {
+        if(owner==null||passiveCommander(source,skill)!=owner)return false;
+        var state=source.rts().skills();
+        state.commitPassive(skill,animate);
+        if(currentCommander(source,owner))state.sync(owner);
+        return true;
+    }
+
+    /** Shared amplified shield and explicit-HOLD lease; never invokes the manual halt path. */
+    static boolean castReactive(SkillUnit source, UnitSkill skill, LivingEntity target, ServerPlayer owner) {
+        if(owner==null||passiveCommander(source,skill)!=owner)return false;
+        var body=source.mob(); var state=source.rts().skills();
+        if(!SkillAutocastPolicy.observable(owner,target))return false;
+        if(skill==UnitSkill.GEL_GUARD) {
+            if(target==body||!SkillEffects.friendly(body,target)||body.distanceToSqr(target)>skill.range()*skill.range()
+                    ||!SkillAutocastPolicy.sees(body,target)||SkillEffects.shieldRemaining(target)>0)return false;
+            var amplification=SkillAmplification.capture(source,skill);
+            if(!SkillEffects.addShield(source,target,amplification))return false;
+            state.commit(skill,amplification);
+        } else if(skill==UnitSkill.SNAIL_SHELL_FORMATION && target==body && source instanceof com.dreamseekers.unit.BasaltSnailUnit snail) {
+            if(SnailShellFormation.startHolding(snail)!=SkillResult.SUCCESS)return false;
+            state.commit(skill);
+        } else return false;
+        if(currentCommander(source,owner))state.sync(owner);
+        return true;
+    }
+
     /** Ephemeral, stack-local proof. A Forge projectile Join/other callback can change the owner,
      * toggle off, supersede a target, or queue STOP between selection and the skill's paid commit.
      * Never replay, chase, move the unit, or save this object for a subsequent tick. */
     private record AutoIntent(SkillUnit source,UnitSkill skill,ServerPlayer owner,LivingEntity token,
-                              LivingEntity selected,@Nullable SkillIdentity.Stamp selfFocus,long command,long revision,@Nullable BlockPos ground) {
+                              LivingEntity selected,@Nullable SkillIdentity.Stamp selfFocus,long command,long revision,@Nullable BlockPos ground,
+                              @Nullable FoxDreamSeedAutocast.Plan seedPlan) {
         boolean current() {
             var body=source.mob();var state=source.rts().skills();
             if(!canDecide(source)||body.isPassenger()||source.ignoreNonStopCommands()||source.isCasting()||!currentCommander(source,owner)
@@ -359,7 +400,8 @@ public final class SkillService {
                     ||!SkillAutocastPolicy.observable(owner,selected)||!SkillAutocastPolicy.sees(body,selected)
                     ||(skill==UnitSkill.TERRORBEAK_DREAD_ROAR||skill==UnitSkill.BEETLE_ADVANCE)
                     &&body.distanceToSqr(selected)>9))return false;
-            return ground==null||SkillAutocastPolicy.matchesGroundFocus(source,owner,token,ground);
+            return seedPlan!=null?seedPlan.current()
+                    :ground==null||SkillAutocastPolicy.matchesGroundFocus(source,owner,token,ground);
         }
     }
     /** Called by the native SkillState tick only. One concrete action at most, no retry queue or UI traffic on misses. */
@@ -367,8 +409,9 @@ public final class SkillService {
         SkillState state=source.rts().skills();
         if(!state.canAdvance()||!canDecide(source))return false;
         var body=source.mob();
-        for(UnitSkill skill:skillsFor(source)) {
-            if(!state.autocastEnabled(skill)||state.cooldownTicks(skill)>0)continue;
+        var ordered=source instanceof GoldenFoxUnit?List.of(UnitSkill.FOX_DREAM_SEED,UnitSkill.FOX_BLESSING):skillsFor(source);
+        for(UnitSkill skill:ordered) {
+            if(SkillAutocastPolicy.nativeTriggerOnly(skill)||!state.autocastEnabled(skill)||state.cooldownTicks(skill)>0)continue;
             // Jelly's offline triage is an existing unit ability, not owner-issued offensive authority.
             if(skill==UnitSkill.JELLY_FLOW) {
                 LivingEntity patient=SkillAutocastPolicy.select(source,skill,owner);
@@ -377,6 +420,15 @@ public final class SkillService {
             if(body.isPassenger()||source.ignoreNonStopCommands()||!currentCommander(source,owner))return false;
             long command=source.rts().commandRevision,revision=state.revision();
             var selected=source.getTargetGoal().getTarget();
+            if(skill==UnitSkill.FOX_DREAM_SEED&&source instanceof GoldenFoxUnit fox) {
+                var plan=FoxDreamSeedAutocast.select(fox,owner);
+                if(plan==null)continue;
+                var auto=new AutoIntent(source,skill,owner,plan.ally(),selected,null,command,revision,plan.point(),plan);
+                if(requestGround(owner,new SkillGroundRequest(skill,body.getId(),body.getUUID(),revision,plan.point()),auto)==SkillResult.SUCCESS)
+                    return true;
+                if(state.revision()!=revision||source.rts().commandRevision!=command||!currentCommander(source,owner))return false;
+                continue;
+            }
             LivingEntity token=SkillAutocastPolicy.select(source,skill,owner);
             if(token==null)continue;
             BlockPos point=skill==UnitSkill.ASH_EMBER_LANDING?token.blockPosition().immutable():null;
@@ -385,7 +437,7 @@ public final class SkillService {
                 if(!(selected instanceof Unit))return false;
                 selfFocus=SkillIdentity.capture(selected);
             }
-            var auto=new AutoIntent(source,skill,owner,token,selected,selfFocus,command,revision,point);
+            var auto=new AutoIntent(source,skill,owner,token,selected,selfFocus,command,revision,point,null);
             if(point!=null)
                 return requestGround(owner,new SkillGroundRequest(skill,body.getId(),body.getUUID(),revision,point),auto)==SkillResult.SUCCESS;
             return requestEntity(owner,new SkillRequest(skill,body.getId(),body.getUUID(),revision,token.getId(),token.getUUID()),auto)==SkillResult.SUCCESS;

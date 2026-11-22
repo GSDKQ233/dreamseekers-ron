@@ -2,7 +2,6 @@
 package com.dreamseekers.skill;
 
 import com.dreamseekers.spore.JungleSporeCarrier;
-import com.dreamseekers.unit.BasaltSnailUnit;
 import com.dreamseekers.unit.ShadowHandUnit;
 import com.solegendary.reignofnether.player.PlayerServerEvents;
 import com.solegendary.reignofnether.registrars.MobEffectRegistrar;
@@ -26,7 +25,7 @@ import java.util.function.Predicate;
 /** Selects a target for the normal server cast. Never issues attack, movement or resource orders. */
 final class SkillAutocastPolicy {
     private SkillAutocastPolicy() { }
-    private static final int SUPPORT_CANDIDATES = 64, RECENT_HIT_TICKS = 60, THREAT_RANGE = 10;
+    private static final int SUPPORT_CANDIDATES = 64, RECENT_HIT_TICKS = 60;
     private static final int MAX_OBSERVED_COMBAT_RANGE = 12;
     private static final EntityTypeTest<Entity, LivingEntity> LIVING = EntityTypeTest.forClass(LivingEntity.class);
     private static final EntityTypeTest<Entity, ShadowHandUnit> SHADOW_HANDS = EntityTypeTest.forClass(ShadowHandUnit.class);
@@ -35,12 +34,20 @@ final class SkillAutocastPolicy {
         return skill != null && switch (skill) {
             case JELLY_FLOW, GEL_GUARD, FOX_BLESSING, BEETLE_ADVANCE, SNAIL_SHELL_FORMATION,
                  COORDINATED_MARK, SHADOW_CORROSION_TOUCH, SQUEAL_SUPPRESSION_WAVE,
-                 TERRORBEAK_DREAD_ROAR, FRIENDLY_DEBT_CONTRACT, SHADOW_HAND_GRIP, ASH_EMBER_LANDING -> true;
+                 TERRORBEAK_DREAD_ROAR, FRIENDLY_DEBT_CONTRACT, SHADOW_HAND_GRIP, ASH_EMBER_LANDING,
+                 FOX_DREAM_SEED, STONE_HEAVY_SHOT, SHADOW_GOLEM_STRIKE, WIND_DASH, FIREFLY_RUSH -> true;
             default -> false;
         };
     }
 
     static boolean defaultEnabled(UnitSkill skill) { return supports(skill); }
+
+    static boolean nativeTriggerOnly(UnitSkill skill) {
+        return switch(skill) {
+            case GEL_GUARD, SNAIL_SHELL_FORMATION, STONE_HEAVY_SHOT, SHADOW_GOLEM_STRIKE, WIND_DASH, FIREFLY_RUSH -> true;
+            default -> false;
+        };
+    }
 
     @Nullable static LivingEntity select(SkillUnit source, UnitSkill skill, @Nullable ServerPlayer owner) {
         if (!supports(skill) || !(source.mob().level() instanceof ServerLevel level)) return null;
@@ -53,18 +60,8 @@ final class SkillAutocastPolicy {
                             && !SkillEffects.hasHeal(t)).stream().min(triage(body)).orElse(null);
         }
         if (owner == null || !observable(owner, body) || source.isCasting()) return null;
-        if (skill == UnitSkill.GEL_GUARD) {
-            return local(source, skill.range(), t -> t != body && SkillEffects.friendly(body, t)
-                    && (focus(t) != null || recentAttacker(t) != null)).stream()
-                    .filter(t -> observable(owner, t) && sees(body, t) && SkillEffects.shieldRemaining(t) <= 0
-                            && (engaged(source, owner, t) || underAttack(source, owner, t)))
-                    .min(triage(body)).orElse(null);
-        }
         // The common blessing cast asks blessingRecipients once, then rechecks every selected unit.
         if (skill == UnitSkill.FOX_BLESSING) return body;
-        if (skill == UnitSkill.SNAIL_SHELL_FORMATION)
-            return source instanceof BasaltSnailUnit snail && snail.isHoldingExplicitOrder()
-                    && shellThreat(snail, owner) ? body : null;
 
         // Do not cast from a stale attack target during retreat/follow or a direct building order.
         if (!combatIntent(source) || !(source instanceof AttackerUnit attacker)) return null;
@@ -135,7 +132,7 @@ final class SkillAutocastPolicy {
                 && !(source instanceof AttackerUnit attacker && AttackerUnit.isAttackingBuilding(attacker));
     }
 
-    @Nullable private static LivingEntity focus(LivingEntity body) {
+    @Nullable static LivingEntity focus(LivingEntity body) {
         if (!(body instanceof Unit unit) || unit.getTargetGoal() == null) return null;
         return unit.getTargetGoal().getTarget();
     }
@@ -149,21 +146,9 @@ final class SkillAutocastPolicy {
                 && (fighter == source.mob() || sees(fighter, enemy));
     }
 
-    @Nullable private static LivingEntity recentAttacker(LivingEntity body) {
+    @Nullable static LivingEntity recentAttacker(LivingEntity body) {
         int age = body.tickCount - body.getLastHurtByMobTimestamp();
         return age >= 0 && age <= RECENT_HIT_TICKS ? body.getLastHurtByMob() : null;
-    }
-
-    private static boolean underAttack(SkillUnit source, ServerPlayer owner, LivingEntity recipient) {
-        LivingEntity enemy = recentAttacker(recipient);
-        return enemy != null && inRange(recipient, enemy, THREAT_RANGE) && CoordinatedMark.enemy(recipient, enemy)
-                && visibleEnemy(source, owner, enemy, UnitSkill.GEL_GUARD.range() + THREAT_RANGE) && sees(recipient, enemy);
-    }
-
-    private static boolean shellThreat(BasaltSnailUnit snail, ServerPlayer owner) {
-        return local(snail, THREAT_RANGE, t -> t instanceof AttackerUnit attacker && focus(t) == snail && ranged(attacker)
-                && CoordinatedMark.enemy(snail, t)).stream().anyMatch(t -> visibleEnemy(snail, owner, t, THREAT_RANGE)
-                        && !disabledFighter(t) && SkillService.blessingCombatUnit(t) && attackReach(t, (AttackerUnit)t, snail));
     }
 
     private static boolean debtSquad(SkillUnit source, ServerPlayer owner, LivingEntity target) {
@@ -179,7 +164,7 @@ final class SkillAutocastPolicy {
         return false;
     }
 
-    private static boolean attackReach(LivingEntity fighter, AttackerUnit attacker, LivingEntity target) {
+    static boolean attackReach(LivingEntity fighter, AttackerUnit attacker, LivingEntity target) {
         if (!ranged(attacker)) return meleeReach(fighter, attacker, target);
         double r = attacker.getAttackRange();
         return Double.isFinite(r) && r > 0 && inRange(fighter, target, Math.min(r, MAX_OBSERVED_COMBAT_RANGE));
@@ -196,7 +181,7 @@ final class SkillAutocastPolicy {
         return goal instanceof UnitRangedAttackGoal<?> || goal instanceof UnitBowAttackGoal<?> || goal instanceof UnitCrossbowAttackGoal<?>;
     }
 
-    private static boolean disabledFighter(LivingEntity t) {
+    static boolean disabledFighter(LivingEntity t) {
         return t.hasEffect(MobEffectRegistrar.STUN.get()) || t.hasEffect(MobEffectRegistrar.FREEZE.get())
                 || t.hasEffect(MobEffectRegistrar.UNCONTROLLABLE.get()) || t.hasEffect(MobEffectRegistrar.DISARM.get())
                 || TerrorbeakDreadRoar.hasDisarm(t);
@@ -234,7 +219,7 @@ final class SkillAutocastPolicy {
 
     /** A spatial index query, not a world scan. Check cheap role/range filters before expensive rays.
      * At 65 local matches, skip this decision rather than biasing it toward entity iteration order. */
-    private static List<LivingEntity> local(SkillUnit source, int radius, Predicate<LivingEntity> likely) {
+    static List<LivingEntity> local(SkillUnit source, int radius, Predicate<LivingEntity> likely) {
         var body = source.mob(); var level = (ServerLevel)body.level();
         var list = new ArrayList<LivingEntity>();
         level.getEntities(LIVING, body.getBoundingBox().inflate(radius), t -> t instanceof Unit && !(t instanceof JungleSporeCarrier)

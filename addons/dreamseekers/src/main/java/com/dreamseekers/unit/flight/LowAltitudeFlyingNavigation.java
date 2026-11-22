@@ -120,6 +120,12 @@ public class LowAltitudeFlyingNavigation extends FlyingPathNavigation {
         com.dreamseekers.skill.FireflyRush.afterRecompute(mob,work);
     }
 
+    @Override public void tick() {
+        // A just-replaced order must not inherit the previous native return leg's flight bonus.
+        com.dreamseekers.skill.FireflyRush.beforeNavigation(mob);
+        super.tick();
+    }
+
     @Override
     public void stop() {
         super.stop();

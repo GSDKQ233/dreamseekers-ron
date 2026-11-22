@@ -253,10 +253,12 @@ public final class OrdinarySkillHit {
         Shot shot=SHOTS.get(projectile);
         if(shot==null||shot.left||!shot.launchValid(projectile))return original;
         boolean consumed=consumedProjectile(projectile);
-        return FriendlyDebtContract.wrapOrdinary(shot.caster,target,()->shot.launchValid(projectile)
+        BooleanSupplier origin=()->shot.launchValid(projectile)
                 &&(consumed&&projectile.getRemovalReason()==Entity.RemovalReason.DISCARDED
                    ||!shot.left&&!projectile.isRemoved()&&level.getEntity(projectile.getUUID())==projectile
-                     &&level.getEntity(projectile.getId())==projectile),false,original);
+                     &&level.getEntity(projectile.getId())==projectile);
+        return FriendlyDebtContract.wrapOrdinary(shot.caster,target,origin,false,
+                DamageTriggeredDefense.projectile(shot.caster,target,origin,original));
     }
     private static PrimaryUnitHitHooks.Impact captureProjectile(Projectile projectile,Entity victim) {
         if(server(projectile)&&victim instanceof com.dreamseekers.spore.JungleSporeCarrier carrier)

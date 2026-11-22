@@ -80,8 +80,14 @@ public final class WindDashSkillGameTests {
         floor(h);var f=fixture(h,"Codec");ready(h,f.source,f.target,f.friend).thenExecute(()->{
             var original=new SkillNetwork.Cast(request(f.source,f.target));FriendlyByteBuf wire=new FriendlyByteBuf(Unpooled.buffer());SkillNetwork.Cast decoded;try{original.encode(wire);decoded=SkillNetwork.Cast.decode(wire);h.assertTrue(decoded.equals(original)&&wire.readableBytes()==0,"cast codec exact IDs/UUIDs/revision without amount or owner");}finally{wire.release();}
             require(h,decoded.execute(player(h,"CodecForeign")),SkillResult.NOT_OWNER,"decoded route authenticates actual sender");f.source.setNoAi(false);require(h,decoded.execute(playerNamed(h,f.source.getOwnerName())),SkillResult.SUCCESS,"decoded route begins real dash");denied(h,decoded.execute(playerNamed(h,f.source.getOwnerName())),"packet replay");
-            var state=new SkillNetwork.Sync(UnitSkill.WIND_DASH,f.source.getId(),f.source.getUUID(),f.source.rts().skills().revision(),440,false);FriendlyByteBuf buffer=new FriendlyByteBuf(Unpooled.buffer());try{state.encode(buffer);h.assertTrue(state.equals(SkillNetwork.Sync.decode(buffer))&&buffer.readableBytes()==0,"owner state roundtrip has no target-position or damage output");}finally{buffer.release();}
-            require(h,SkillService.setAutocast(playerNamed(h,f.source.getOwnerName()),UnitSkill.WIND_DASH,f.source.getId(),f.source.getUUID(),f.source.rts().skills().revision(),true),SkillResult.DISABLED,"dash has no automatic mode");command(h,f.source,UnitAction.STOP,-1,BlockPos.ZERO,false);pass("CODEC_AUTHORITATIVE_ENEMY_INPUT_NO_AUTO");
+            var state=new SkillNetwork.Sync(UnitSkill.WIND_DASH,f.source.getId(),f.source.getUUID(),f.source.rts().skills().revision(),440,f.source.rts().skills().autocastEnabled(UnitSkill.WIND_DASH));FriendlyByteBuf buffer=new FriendlyByteBuf(Unpooled.buffer());try{state.encode(buffer);h.assertTrue(state.equals(SkillNetwork.Sync.decode(buffer))&&buffer.readableBytes()==0,"owner state roundtrip has no target-position or damage output");}finally{buffer.release();}
+            h.assertTrue(state.autocastEnabled(),"qualified-hit rally is default on but real manual Dash remains distinct");
+            long r=f.source.rts().skills().revision();
+            require(h,SkillService.setAutocast(playerNamed(h,f.source.getOwnerName()),UnitSkill.WIND_DASH,f.source.getId(),f.source.getUUID(),r,false),
+                    SkillResult.SUCCESS,"authenticated owner disables future on-hit rally");
+            h.assertTrue(!f.source.rts().skills().autocastEnabled(UnitSkill.WIND_DASH)&&f.source.rts().skills().revision()==r+1&&cd(f.source)==440&&WindDash.isActive(f.source),
+                    "toggling its alternative does not refund or cancel this manual dash");
+            command(h,f.source,UnitAction.STOP,-1,BlockPos.ZERO,false);pass("CODEC_AUTHORITATIVE_ENEMY_INPUT_PASSIVE_INDEPENDENT");
         }).thenSucceed();
     }
 

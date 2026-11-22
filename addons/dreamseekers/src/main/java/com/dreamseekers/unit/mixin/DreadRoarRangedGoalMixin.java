@@ -13,6 +13,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class DreadRoarRangedGoalMixin {
     @Redirect(method="tick",remap=true,at=@At(value="INVOKE",target="Lcom/solegendary/reignofnether/unit/interfaces/RangedAttackerUnit;performUnitRangedAttack(Lnet/minecraft/world/entity/LivingEntity;F)V",remap=false),require=1)
     private void dreamseekers$ordinaryRelease(RangedAttackerUnit source,LivingEntity target,float velocity) {
-        OrdinaryAttackGate.ranged((LivingEntity)source,()->source.performUnitRangedAttack(target,velocity));
+        OrdinaryAttackGate.ranged((LivingEntity)source,()->{
+            // Only this unit's installed goal, at the actual release of its ordinary windup.
+            // A direct performUnitRangedAttack, building shot or skill factory is not a trigger.
+            if(source instanceof com.dreamseekers.unit.StoneSpiritThrowerUnit stone
+                    &&stone.getAttackGoal()==(Object)this)
+                stone.releaseGoalShot(target,velocity);
+            else source.performUnitRangedAttack(target,velocity);
+        });
     }
 }

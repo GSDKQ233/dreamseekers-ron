@@ -86,6 +86,8 @@ public final class FriendlyDebtContract {
         Mark mark=world.get(new Key(owner,target.getUUID()));
         return mark!=null&&mark.target.entity()==target&&mark.current()?mark:null;
     }
+    /** Exact, read-only owner/target lookup for an observed combatant; never scans other contracts. */
+    public static SporeEffects.ManagedNegative negative(LivingEntity target,String owner) { return find(target,owner); }
     public static int remainingTicks(LivingEntity target,String owner) {
         Mark mark=find(target,owner);return mark==null?0:(int)(mark.expiresAt-target.level().getGameTime());
     }

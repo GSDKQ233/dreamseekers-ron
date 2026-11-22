@@ -30,9 +30,14 @@ public final class SkillState {
     }
     void changeAutocast(UnitSkill skill,boolean enabled) { autocast.put(skill,enabled);revision++; }
     public boolean canAdvance() { return revision<Long.MAX_VALUE; }
-    void commit(UnitSkill skill) {
+    void commit(UnitSkill skill) { commitPassive(skill, true); }
+    void commitPassive(UnitSkill skill, boolean animate) {
         cooldowns.put(skill,now()+skill.cooldownTicks());revision++;
-        SkillCastAnimation.play(source.mob(),skill);
+        if(animate)SkillCastAnimation.play(source.mob(),skill);
+    }
+    boolean passiveOrderStable() {
+        return observedCommand!=Long.MIN_VALUE && observedCommand==source.rts().commandRevision
+                && commandChangedAt!=now();
     }
     /** Only a matching server-created successful-cast profile can shorten this new cooldown. */
     void commit(UnitSkill skill,SkillAmplification.Profile profile) {

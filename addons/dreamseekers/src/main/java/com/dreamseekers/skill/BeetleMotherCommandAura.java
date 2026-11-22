@@ -63,7 +63,12 @@ public final class BeetleMotherCommandAura {
         if(source.level()!=level||target.level()!=level)return false;
         var from=new net.minecraft.world.phys.Vec3(source.getX(),source.getEyeY(),source.getZ());
         var to=new net.minecraft.world.phys.Vec3(target.getX(),target.getEyeY(),target.getZ());
-        if(from.distanceTo(to)>128)return false; // native LivingEntity.hasLineOfSight bound
+        return hasLoadedLineOfSight(level,source,from,to);
+    }
+    /** The same no-ticket ray for previewing a small ground placement before constructing an entity. */
+    static boolean hasLoadedLineOfSight(ServerLevel level,LivingEntity source,net.minecraft.world.phys.Vec3 from,
+                                        net.minecraft.world.phys.Vec3 to) {
+        if(source.level()!=level||from.distanceTo(to)>128)return false; // native LivingEntity.hasLineOfSight bound
         LoadedBlocks blocks=new LoadedBlocks(level);
         var hit=blocks.clip(new net.minecraft.world.level.ClipContext(from,to,
                 net.minecraft.world.level.ClipContext.Block.COLLIDER,
