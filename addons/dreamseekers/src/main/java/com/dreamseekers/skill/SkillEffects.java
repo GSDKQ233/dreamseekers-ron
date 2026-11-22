@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.skill;
 
+import com.dreamseekers.resonance.ResonanceNetwork;
 import com.solegendary.reignofnether.alliance.AlliancesServerEvents;
 import com.solegendary.reignofnether.api.FinalUnitDamageHooks;
 import com.solegendary.reignofnether.unit.interfaces.Unit;
@@ -421,7 +422,7 @@ public final class SkillEffects {
         double reduction=Math.max(wardReduction,Math.max(guard!=null&&guard.valid(damage)?BeetleGuard.REDUCTION:0,
                 SnailShellFormation.reduction(formation,damage)));
         // Preserve native arithmetic. Only a live captured ward may bridge a smaller already-used
-        // native percentage to the category maximum; never multiply another 10% over Resistance.
+        // native percentage to the category maximum; never multiply the ward over Resistance.
         double nativeReduction=wardReduction>0?ward.nativeReduction(damage):0;
         if(nativeReduction>=reduction&&nativeReduction>0)return amount;
         double factor=nativeReduction>0&&nativeReduction<1?(1-reduction)/(1-nativeReduction):1-reduction;
@@ -488,23 +489,33 @@ public final class SkillEffects {
                 amplification.lateFox(source),null));
         apply(target,effects);return true;
     }
-    /** Fixed, trusted building pulse only. No packet accepts any of these effect parameters.
-     * The self stamp authenticates only this target; the source building/account/network is guarded
-     * separately on every contribution read. Existing max/category modifier semantics are shared.
-     */
-    public static boolean addGuardedBuildingBuff(LivingEntity target,String key,BuffKind kind,double amount,int ticks,
-            java.util.function.BooleanSupplier guard) {
-        if(!server(target)||!(target instanceof Unit)||!"resonance_pulse".equals(key)||kind!=BuffKind.ATTACK_SPEED
-                ||!Double.isFinite(amount)||amount<=0||amount>.15||ticks<=0||ticks>160||guard==null
-                ||target.getAttribute(kind.attribute())==null||!guard.getAsBoolean()||hasNamedBuff(target,key,kind))return false;
+    private static boolean pulseRecord(Buff buff,LivingEntity target) {
+        return buff.target.entity()==target&&buff.kind==BuffKind.ATTACK_SPEED&&ResonanceNetwork.EFFECT_KEY.equals(buff.key);
+    }
+    /** One live pulse slot. Only a strictly stronger local upgrade may replace its live occupant. */
+    public static boolean canReceiveResonancePulse(LivingEntity target,ResonanceNetwork.PulseProfile profile) {
+        if(target==null||profile==null||!server(target))return false;
+        Runtime world=WORLDS.get((ServerLevel)target.level());
+        if(world==null)return true;
+        return world.buffs.getOrDefault(target.getUUID(),List.of()).stream()
+                .noneMatch(b->pulseRecord(b,target)&&b.valid()&&(!profile.upgraded()||b.amount>=profile.speedBonus()));
+    }
+    /** A paid pulse lease carries its immutable tier, expiry, and exact building/link authority.
+     * It replaces a weaker pulse rather than stacking or renewing a category modifier. Other
+     * attack-speed abilities keep their separate contributions and the existing category cap. */
+    public static boolean addResonancePulse(ResonanceNetwork.PulseLease lease) {
+        if(lease==null||!lease.valid())return false;
+        LivingEntity target=lease.target();
+        BuffKind kind=BuffKind.ATTACK_SPEED;
+        if(target.getAttribute(kind.attribute())==null||!canReceiveResonancePulse(target,lease.profile()))return false;
         var identity=SkillIdentity.capture(target);if(!identity.valid())return false;
         var effects=runtime((ServerLevel)target.level()).buffs.computeIfAbsent(target.getUUID(),u->new ArrayList<>());
-        effects.removeIf(b->!b.valid());
-        effects.add(new Buff(identity,identity,key,kind,amount,target.level().getGameTime()+ticks,false,guard));
+        effects.removeIf(b->pulseRecord(b,target)||!b.valid());
+        effects.add(new Buff(identity,identity,ResonanceNetwork.EFFECT_KEY,kind,lease.profile().speedBonus(),lease.expiresAt(),false,lease::valid));
         apply(target,effects);return true;
     }
     /** Fixed building capability; its private constructor is owned by the paid building service.
-     * Does not widen resonance_pulse's legacy API or grant Fox/Firefly cap exceptions.
+     * Does not grant Fox/Firefly cap exceptions.
      */
     public static boolean addBuildingAbilityBuff(com.dreamseekers.buildingability.BuildingAbilityEffects.BuffLease lease) {
         if(lease==null||!server(lease.target())||!lease.valid())return false;

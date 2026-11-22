@@ -2,6 +2,7 @@
 package com.dreamseekers.buildingability;
 
 import com.dreamseekers.DreamseekersMod;
+import com.dreamseekers.economy.ResourceBuildingResearch;
 import com.dreamseekers.neutralcontract.NeutralContracts;
 import com.dreamseekers.resonance.ResonanceNetwork;
 import com.dreamseekers.resonance.ResonanceResearch;
@@ -23,14 +24,19 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import java.util.*;
 
-/** Fixed 10% defense, composed by the existing SkillEffects final consumer (never a second handler). */
+/** A single ward defense, composed by the existing SkillEffects final consumer (never a second handler). */
 @Mod.EventBusSubscriber(modid=DreamseekersMod.MOD_ID)
 public final class DaisWardEffects {
-    public static final double REDUCTION=.10;
+    private static final BuildingAbility ABILITY=BuildingAbility.DAIS_WARD;
+    private static final int BASE_REDUCTION_PERCENT=10,UPGRADED_REDUCTION_PERCENT=20;
+    public static final double REDUCTION=BASE_REDUCTION_PERCENT/100d;
     private static final Map<LivingEntity,Lease> ACTIVE=new IdentityHashMap<>();
     private static final ArrayDeque<Frame> HITS=new ArrayDeque<>();
     private record Frame(LivingEntity target,DamageSource damage,HitPlan plan) { }
     private DaisWardEffects() { }
+    public static int reductionPercent(boolean upgraded) {
+        return upgraded?UPGRADED_REDUCTION_PERCENT:BASE_REDUCTION_PERCENT;
+    }
     public static boolean ready(BuildingAbilitySource source) {
         return source.valid()&&ResonanceNetwork.isDais(source.host())&&ResonanceNetwork.live(source.host())
                 &&ResonanceResearch.unlocked(source.owner(),false)
@@ -60,31 +66,38 @@ public final class DaisWardEffects {
             return true;
         }
     }
-    private static boolean eligible(BuildingAbilitySource source,LivingEntity target) {
-        return BuildingAbilityEffects.eligible(source,target,12)&&!active(target);
+    private static boolean eligible(BuildingAbilitySource source,LivingEntity target,int reductionPercent) {
+        if(!BuildingAbilityEffects.eligible(source,target,ABILITY.range()))return false;
+        var current=ACTIVE.get(target);
+        return current==null||!current.valid()||reductionPercent>current.reductionPercent;
     }
     public static BuildingAbilityEffects.Prepared prepare(ServerPlayer actor,BuildingAbilitySource source) {
         if(!ready(source))return new BuildingAbilityEffects.Prepared("requires_dais_network_tuning",null);
         Path path=new Path(actor,source);if(!path.valid())return new BuildingAbilityEffects.Prepared("disconnected",null);
-        List<SkillIdentity.Stamp> chosen=BuildingAbilityEffects.ordered(source).stream().filter(target->eligible(source,target))
-                .limit(8).map(SkillIdentity::capture).toList();
+        int reduction=reductionPercent(ResourceBuildingResearch.isUpgraded(source.host()));
+        List<SkillIdentity.Stamp> chosen=BuildingAbilityEffects.ordered(source).stream().filter(target->eligible(source,target,reduction))
+                .limit(ABILITY.maxTargets()).map(SkillIdentity::capture).toList();
         if(chosen.isEmpty())return new BuildingAbilityEffects.Prepared("no_target",null);
         return new BuildingAbilityEffects.Prepared("ready",new BuildingAbilityEffects.Plan() {
-            @Override public boolean valid(){return path.valid()&&chosen.stream().anyMatch(t->t.valid()&&eligible(source,t.entity()));}
+            @Override public boolean valid(){return path.valid()&&chosen.stream().anyMatch(t->t.valid()&&eligible(source,t.entity(),reduction));}
             @Override public int targets(){return chosen.size();}
             @Override public void apply(){if(!path.valid())return;for(var target:chosen)
-                if(target.valid()&&eligible(source,target.entity()))ACTIVE.put(target.entity(),new Lease(path,target));}
+                if(target.valid()&&eligible(source,target.entity(),reduction))ACTIVE.put(target.entity(),new Lease(path,target,reduction));}
         });
     }
     private static final class Lease {
         final Path path;
         final SkillIdentity.Stamp target;
         final long expires;
+        final int reductionPercent;
         boolean revoked;
-        Lease(Path path,SkillIdentity.Stamp target){this.path=path;this.target=target;expires=path.source.level().getGameTime()+120;}
+        Lease(Path path,SkillIdentity.Stamp target,int reductionPercent){
+            this.path=path;this.target=target;this.reductionPercent=reductionPercent;
+            expires=path.source.level().getGameTime()+ABILITY.durationTicks();
+        }
         boolean valid(){if(revoked)return false;
             if(ACTIVE.get(target.entity())!=this||path.source.level().getGameTime()>=expires||!path.valid()||!target.valid()
-                    ||!BuildingAbilityEffects.eligible(path.source,target.entity(),12))revoked=true;
+                    ||!BuildingAbilityEffects.eligible(path.source,target.entity(),ABILITY.range()))revoked=true;
             return !revoked;
         }
     }
@@ -116,7 +129,7 @@ public final class DaisWardEffects {
                 &&source.getEntity()==actor.entity()&&hostile(actor.entity(),target.entity());}
         public void nativeResistanceUsed(double reduction){if(Double.isFinite(reduction)&&reduction>=0&&reduction<=1)
             nativeReduction=Math.max(nativeReduction,reduction);}
-        public double reduction(DamageSource source){return valid(source)?REDUCTION:0;}
+        public double reduction(DamageSource source){return valid(source)?ward.reductionPercent/100d:0;}
         public double nativeReduction(DamageSource source){return valid(source)?nativeReduction:0;}
     }
     /** Scope is the real actuallyHurt invocation. A finally owns cleanup even on cancellation/throw;
@@ -136,7 +149,7 @@ public final class DaisWardEffects {
     }
     public static int remaining(BuildingPlacement host){long until=host.level.getGameTime();
         for(Lease lease:ACTIVE.values())if(lease.path.source.host()==host&&lease.valid())until=Math.max(until,lease.expires);
-        return (int)Math.min(120,Math.max(0,until-host.level.getGameTime()));}
+        return (int)Math.min(ABILITY.durationTicks(),Math.max(0,until-host.level.getGameTime()));}
     public static void clear(LivingEntity entity){ACTIVE.remove(entity);}
     @SubscribeEvent public static void tick(TickEvent.LevelTickEvent event){if(event.phase==TickEvent.Phase.END&&event.level instanceof ServerLevel level)
         ACTIVE.entrySet().removeIf(entry->entry.getKey().level()==level&&!entry.getValue().valid());}

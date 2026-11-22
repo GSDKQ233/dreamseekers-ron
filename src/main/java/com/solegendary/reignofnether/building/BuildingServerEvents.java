@@ -728,7 +728,7 @@ public class BuildingServerEvents {
         int totalPopulationSupply = 0;
         for (BuildingPlacement building : buildings)
             if (building.ownerName.equals(ownerName) && building.isBuilt) {
-                totalPopulationSupply += building.getBuilding().cost.population;
+                totalPopulationSupply += building.getBuilding().getPopulationSupply(building);
             }
         return Math.min(UnitServerEvents.maxPopulation, totalPopulationSupply);
     }

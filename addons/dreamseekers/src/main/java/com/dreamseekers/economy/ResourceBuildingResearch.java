@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.economy;
 
+import com.dreamseekers.DreamseekersMod;
 import com.dreamseekers.building.DreamTemplateModel;
+import com.dreamseekers.building.DreamTemplateModel.LocalTechnology;
 import com.dreamseekers.function.DreamFunctionalPlacement;
 import com.solegendary.reignofnether.building.BuildingClientboundPacket;
 import com.solegendary.reignofnether.building.BuildingPlacement;
@@ -22,7 +24,7 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.*;
 
 /**
- * One paid local technology at an actual garden, mine, or furnace, not a player research.
+ * One paid local technology at an actual producer or Resonance Dais, not a player research.
  * These are farms and functional buildings, not RoN unit-production placements. Keep their original
  * types, workers, and lifecycle; use RoN's receipt and save projection rather than a parallel wallet.
  * Live work is not serialized (normal queue restart policy). Only the completed physical tier is.
@@ -31,14 +33,28 @@ import java.util.*;
 public final class ResourceBuildingResearch {
     public static final int WOOD=120, ORE=80, DURATION=600;
     public static final ResourceTransaction.Cost COST=new ResourceTransaction.Cost(0,WOOD,ORE);
-    private static final String PURPOSE="dreamseekers:production_methods/";
+    public static final int DAIS_BASE_SUPPLY=15, DAIS_UPGRADED_SUPPLY=30;
+    private static final String PRODUCTION_PURPOSE="dreamseekers:production_methods/";
+    private static final String DAIS_PURPOSE="dreamseekers:dais_resonance/";
+    private static String purpose(LocalTechnology kind) {
+        return switch(kind) {
+            case PRODUCTION_METHODS -> PRODUCTION_PURPOSE;
+            case DAIS_RESONANCE -> DAIS_PURPOSE;
+        };
+    }
     public record View(UUID instance, long capture, long revision, int remaining, boolean upgraded) {}
-    private record Claim(String payer, UUID epoch, UUID instance, long capture, long ownerGeneration, UUID receipt) {}
+    private record Claim(String payer, UUID epoch, UUID instance, long capture, long ownerGeneration,
+                         LocalTechnology technology, UUID receipt) {}
     /** Capability created only after successful server-side consumption; no packet, snapshot, or caller can mint it. */
     public static final class PaidCompletion {
         private final DreamTemplateModel.State target;
-        private PaidCompletion(DreamTemplateModel.State target) { this.target=target; }
-        public boolean authorizes(DreamTemplateModel.State model) { return target==model; }
+        private final LocalTechnology technology;
+        private PaidCompletion(DreamTemplateModel.State target, LocalTechnology technology) {
+            this.target=target;this.technology=technology;
+        }
+        public boolean authorizes(DreamTemplateModel.State model, LocalTechnology kind) {
+            return target==model && technology==kind;
+        }
     }
     private static final class Slot {
         long revision, lastTick=Long.MIN_VALUE;
@@ -53,18 +69,25 @@ public final class ResourceBuildingResearch {
     private ResourceBuildingResearch() {}
     private static long nextRevision() { return serial==Long.MAX_VALUE ? -1 : ++serial; }
 
+    public static boolean isDais(BuildingPlacement p) {
+        return p instanceof DreamFunctionalPlacement && p.getBuilding()==DreamseekersMod.RESONANCE_DAIS;
+    }
     public static boolean supports(BuildingPlacement p) { return model(p)!=null; }
     private static DreamTemplateModel.State model(BuildingPlacement p) {
-        if(p==null || DreamPassiveEconomy.interval(p.getBuilding())==0)return null;
-        return p instanceof DreamGardenPlacement garden ? garden.resourceResearchModel()
+        if(p==null)return null;
+        boolean dais=isDais(p);
+        if(!dais && DreamPassiveEconomy.legacyInterval(p.getBuilding())==0)return null;
+        var state=p instanceof DreamGardenPlacement garden ? garden.resourceResearchModel()
             : p instanceof DreamFunctionalPlacement functional ? functional.resourceResearchModel() : null;
+        return state!=null && state.localTechnology()==(dais ? LocalTechnology.DAIS_RESONANCE : LocalTechnology.PRODUCTION_METHODS)
+                ? state : null;
     }
     public static UUID instance(BuildingPlacement p) {
         var state=model(p); return state==null?null:state.instance();
     }
     /** Client knows only the completed form on a visible, already instance-bound structure snapshot. */
     public static boolean isUpgraded(BuildingPlacement p) {
-        var state=model(p); return state!=null && state.hasProductionMethods();
+        var state=model(p); return state!=null && state.hasLocalTechnology();
     }
     private static boolean live(ServerLevel level,BuildingPlacement p) {
         return p!=null && p.getLevel()==level && level.dimension()==Level.OVERWORLD
@@ -80,25 +103,34 @@ public final class ResourceBuildingResearch {
     }
     /** Separate eligibility from ownership: a paid job remains cancellable if its producer is temporarily unavailable. */
     private static boolean available(ServerLevel level,BuildingPlacement p) {
-        if(!p.isBuilt || !level.hasChunksAt(p.minCorner,p.maxCorner) || p.shouldBeDestroyed() || p.getHealth()<=0
-                || !p.getDataStorage().getData(DreamPassiveEconomy.CLOCK).supportsInterval(DreamPassiveEconomy.legacyInterval(p.getBuilding())))return false;
+        if(!p.isBuilt || !level.hasChunksAt(p.minCorner,p.maxCorner) || p.shouldBeDestroyed() || p.getHealth()<=0)
+            return false;
+        boolean dais=isDais(p);
+        if(!dais && !p.getDataStorage().getData(DreamPassiveEconomy.CLOCK).supportsInterval(DreamPassiveEconomy.legacyInterval(p.getBuilding())))
+            return false;
         if(p instanceof DreamGardenPlacement garden && !garden.migrationReady())return false;
         if(p instanceof DreamFunctionalPlacement functional) {
+            // The shared lifecycle attaches backed state on the server. The Dais has no passive clock
+            // that would otherwise have done this read before an owner query.
+            if(functional.functionalOwnerRevision()<0)return false;
             var backing=functional.stateSnapshot();
             if(!backing.supported() || !p.ownerName.equals(backing.owner()) || !backing.built())return false;
         }
         var player=PlayerServerEvents.getRTSPlayer(p.ownerName);
-        return DreamPassiveEconomy.supportsIncomeOwner(player) && DreamPassiveEconomy.factionPauseReason(p.getBuilding(),player)==null;
+        return dais ? DreamFactionAccess.allows(player)
+            : DreamPassiveEconomy.supportsIncomeOwner(player) && DreamPassiveEconomy.factionPauseReason(p.getBuilding(),player)==null;
     }
     private static boolean sameClaimant(BuildingPlacement p,Claim c) {
         var account=ExtendedResourcesSync.account(c.payer);
-        return Objects.equals(c.instance,instance(p)) && c.capture==p.getCaptureRevision()
+        var state=model(p);
+        return state!=null && c.technology==state.localTechnology() && c.instance.equals(state.instance())
+            && c.capture==p.getCaptureRevision()
             && c.payer.equals(p.ownerName) && c.ownerGeneration==generation(p)
             && account!=null && c.epoch.equals(account.accountEpoch);
     }
     private static boolean matchesReceipt(ResourcePaidReceipt receipt,Claim c) {
         return receipt!=null && receipt.id().equals(c.receipt) && receipt.payerEpoch().equals(c.epoch)
-            && receipt.purpose().equals(PURPOSE+c.instance);
+            && receipt.purpose().equals(purpose(c.technology)+c.instance);
     }
     private static Slot checkedSlot(BuildingPlacement p) {
         Slot slot=SLOTS.computeIfAbsent(p,b->{var s=new Slot();s.revision=nextRevision();return s;});
@@ -127,9 +159,10 @@ public final class ResourceBuildingResearch {
         if(account==null || generation<0)return "invalid_account";
         long token=nextRevision();
         if(token<0)return "stale_building";
-        var result=ResourceTransaction.pay(actor.getServer(),account,account.accountEpoch,account.revision,PURPOSE+id,COST);
+        var technology=model(p).localTechnology();
+        var result=ResourceTransaction.pay(actor.getServer(),account,account.accountEpoch,account.revision,purpose(technology)+id,COST);
         if(!result.applied())return result.status().name().toLowerCase(Locale.ROOT);
-        slot.claim=new Claim(p.ownerName,account.accountEpoch,id,capture,generation,result.receiptId());
+        slot.claim=new Claim(p.ownerName,account.accountEpoch,id,capture,generation,technology,result.receiptId());
         slot.lastTick=actor.serverLevel().getGameTime();slot.remaining=DURATION;slot.revision=token;
         return "started";
     }
@@ -157,7 +190,7 @@ public final class ResourceBuildingResearch {
         return refunded;
     }
 
-    static void tick(ServerLevel level,BuildingPlacement p) {
+    public static void tick(ServerLevel level,BuildingPlacement p) {
         var slot=SLOTS.get(p); // no new state allocation or building scan for idle producers
         if(slot==null || slot.claim==null || !live(level,p))return;
         Claim claim=slot.claim;
@@ -178,7 +211,7 @@ public final class ResourceBuildingResearch {
         // No callback or client input between consuming the exact paid receipt and the one-bit local commit.
         var state=model(p);
         if(!ResourceTransaction.consumeReceipt(level.getServer(),account,claim.epoch,account.revision,claim.receipt).applied())return;
-        state.commitProductionMethods(new PaidCompletion(state));close(slot);
+        state.commitLocalTechnology(new PaidCompletion(state,claim.technology));close(slot);
         BuildingClientboundPacket.syncBuilding(p); // physical UUID + existing visibility/level filtering
         sync(level.getServer(),claim.payer);
     }
@@ -189,9 +222,11 @@ public final class ResourceBuildingResearch {
         }
     }
     private static boolean recognized(ResourcePaidReceipt receipt) {
-        String purpose=receipt.purpose();
-        if(!purpose.startsWith(PURPOSE) || purpose.length()!=PURPOSE.length()+36)return false;
-        try {return UUID.fromString(purpose.substring(PURPOSE.length())).toString().equals(purpose.substring(PURPOSE.length()));}
+        String value=receipt.purpose();
+        String prefix=value.startsWith(DAIS_PURPOSE) ? DAIS_PURPOSE : PRODUCTION_PURPOSE;
+        if(!value.startsWith(prefix) || value.length()!=prefix.length()+36)return false;
+        String suffix=value.substring(prefix.length());
+        try {return UUID.fromString(suffix).toString().equals(suffix);}
         catch(IllegalArgumentException ignored){return false;}
     }
     @SubscribeEvent public static void projectSave(ResourceSaveProjectionEvent event) {

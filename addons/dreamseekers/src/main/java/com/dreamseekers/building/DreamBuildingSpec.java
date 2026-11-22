@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package com.dreamseekers.building;
 
+import com.dreamseekers.economy.ResourceBuildingResearch;
 import com.solegendary.reignofnether.resources.ResourceCost;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
@@ -83,7 +84,7 @@ public enum DreamBuildingSpec {
             case DREAM_HALL -> ResourceCost.Building(0,200,100,0);
             case RESONANCE_LABORATORY -> ResourceCost.Building(0,250,150,0);
             case CONTRACT_ECOLOGY -> ResourceCost.Building(0,150,75,0);
-            case RESONANCE_DAIS -> ResourceCost.Building(0,150,150,0);
+            case RESONANCE_DAIS -> ResourceCost.Building(0,150,150,ResourceBuildingResearch.DAIS_BASE_SUPPLY);
             case SHADOW_WATCHTOWER -> ResourceCost.Building(0,100,75,0);
         };
     }

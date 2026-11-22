@@ -2,6 +2,7 @@
 package com.dreamseekers.buildingability;
 
 import com.dreamseekers.DreamseekersMod;
+import com.dreamseekers.economy.ResourceBuildingResearch;
 import com.dreamseekers.ecologyworkposts.EcologyClient;
 import com.solegendary.reignofnether.api.BuildingUnitOrderHooks;
 import com.solegendary.reignofnether.building.BuildingClientEvents;
@@ -322,7 +323,12 @@ public final class BuildingAbilityClient {
         var ability = BuildingAbility.forBuilding(placement);
         var result = new ArrayList<FormattedCharSequence>();
         addTooltip(result, Component.translatable(titleKey(ability)));
-        addTooltip(result, Component.translatable(titleKey(ability) + ".rules"));
+        if (ability == BuildingAbility.DAIS_WARD) {
+            int reduction = DaisWardEffects.reductionPercent(ResourceBuildingResearch.isUpgraded(placement));
+            addTooltip(result, Component.translatable(titleKey(ability) + ".rules", reduction));
+        } else {
+            addTooltip(result, Component.translatable(titleKey(ability) + ".rules"));
+        }
         addTooltip(result, Component.translatable(titleKey(ability) + ".prerequisite"));
         if (ability != BuildingAbility.ECOLOGY_CODEX) {
             addTooltip(result, Component.translatable("building_ability.quote", ability.foodCost(), ability.shadowCost(),

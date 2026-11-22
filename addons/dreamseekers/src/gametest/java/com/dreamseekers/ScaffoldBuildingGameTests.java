@@ -128,8 +128,8 @@ public final class ScaffoldBuildingGameTests {
                             || building==DreamseekersMod.RESONANCE_LABORATORY) && building.requiresStrictPlacementOwnerCheck(),
                     "only explicit scaffold, Hall and laboratory classes retain strict sender policy");
             helper.assertTrue(building.canAcceptResources == (building==DreamseekersMod.DREAM_DEPOT)
-                            && !building.isCapitol && building.cost.population == 0,
-                    "only approved depot accepts dropoff; no original eight building grants capitol or population");
+                            && !building.isCapitol && building.cost.population == (building==DreamseekersMod.RESONANCE_DAIS ? 15 : 0),
+                    "only the depot accepts dropoff, only the dais grants base supply, and none are capitols");
             if (building==DreamseekersMod.DREAM_HALL) {
                 helper.assertTrue(((ProductionBuilding)building).productions.get().equals(List.of(
                         DreamseekersMod.BONE_WING_PRODUCTION,DreamseekersMod.WIND_KNIGHT_PRODUCTION,

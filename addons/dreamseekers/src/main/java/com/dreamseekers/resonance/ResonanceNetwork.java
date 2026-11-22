@@ -3,6 +3,7 @@ package com.dreamseekers.resonance;
 import com.dreamseekers.DreamseekersMod;
 import com.dreamseekers.building.*;
 import com.dreamseekers.economy.DreamPassiveEconomy;
+import com.dreamseekers.economy.ResourceBuildingResearch;
 import com.dreamseekers.function.*;
 import com.dreamseekers.skill.*;
 import com.dreamseekers.unitprogression.DreamSpecialistResearch;
@@ -44,6 +45,23 @@ public final class ResonanceNetwork {
     }
     public record Network(List<BuildingPlacement> active,int total,int limit,Map<BuildingPlacement,BuildingPlacement> parents){public Network{active=List.copyOf(active);parents=Map.copyOf(parents);}public int rank(BuildingPlacement p){return active.indexOf(p)+1;}}
     public record View(UUID instance,long ownerRevision,long capture,long generation,int rank,int active,int total,int limit,int cooldown,boolean supported,boolean tuned){}
+    public enum PulseProfile {
+        BASE(10,100,false), TUNED(15,160,false), UPGRADED(20,140,true), UPGRADED_TUNED(25,200,true);
+
+        private final int speedPercent,durationTicks;
+        private final boolean upgraded;
+        PulseProfile(int speedPercent,int durationTicks,boolean upgraded) {
+            this.speedPercent=speedPercent;this.durationTicks=durationTicks;this.upgraded=upgraded;
+        }
+        public int speedPercent(){return speedPercent;}
+        public double speedBonus(){return speedPercent/100d;}
+        public int durationTicks(){return durationTicks;}
+        public boolean upgraded(){return upgraded;}
+    }
+    public static PulseProfile pulseProfile(boolean tuned,boolean upgraded) {
+        if(upgraded)return tuned?PulseProfile.UPGRADED_TUNED:PulseProfile.UPGRADED;
+        return tuned?PulseProfile.TUNED:PulseProfile.BASE;
+    }
     public static boolean isDais(BuildingPlacement p){return p!=null&&p.getBuilding() instanceof DreamScaffoldBuilding b&&b.spec()==DreamBuildingSpec.RESONANCE_DAIS;}
     private static boolean physical(BuildingPlacement p){return p!=null&&p.level instanceof ServerLevel level&&level.getServer().isSameThread()
         &&p.isBuilt&&!p.isDestroyedServerside&&!p.shouldBeDestroyed()&&p.getHealth()>0&&!p.ownerName.isBlank()
@@ -108,6 +126,21 @@ public final class ResonanceNetwork {
                 &&host.getDataStorage().getData(ResonanceState.TYPE)==state&&!path.isEmpty()&&path.get(path.size()-1).building instanceof DreamAnchorPlacement
                 &&path.stream().allMatch(LinkStamp::valid)&&network(level,owner).rank(host)>0;}
     }
+    /** Minted only by the authoritative cast after its debit and cooldown have both committed. */
+    public static final class PulseLease {
+        private final Source source;
+        private final SkillIdentity.Stamp target;
+        private final PulseProfile profile;
+        private final long expiresAt;
+        private PulseLease(Source source,SkillIdentity.Stamp target,PulseProfile profile,long now) {
+            this.source=source;this.target=target;this.profile=profile;expiresAt=now+profile.durationTicks();
+        }
+        public LivingEntity target(){return target.entity();}
+        public PulseProfile profile(){return profile;}
+        public long expiresAt(){return expiresAt;}
+        public boolean valid(){return source.level.getGameTime()<expiresAt&&target.valid()&&source.valid()
+            &&target.entity() instanceof Unit unit&&source.owner.equals(unit.getOwnerName());}
+    }
     public static int pulseRange(String owner,boolean client) {
         return ResonanceResearch.unlocked(owner,client) && com.dreamseekers.unitprogression.AdvancedUnitResearch.unlocked(owner,
                 com.dreamseekers.unitprogression.AdvancedUnitResearch.PULSE_RANGE_ID,client)?14:PULSE_RANGE;
@@ -133,21 +166,21 @@ public final class ResonanceNetwork {
         try{
             Source source=new Source(p);
             final int range=pulseRange(p.ownerName,false); // immutable selection radius for this paid pulse; movement does not revoke an existing buff
+            var profile=pulseProfile(ResonanceResearch.unlocked(p.ownerName,false),ResourceBuildingResearch.isUpgraded(p));
             List<SkillIdentity.Stamp> targets=actor.serverLevel().getEntitiesOfClass(LivingEntity.class,new AABB(p.minCorner,p.maxCorner).minmax(new AABB(p.originPos)).inflate(range+1),e->eligible(actor,p,e,range))
-                .stream().filter(e->!SkillEffects.hasNamedBuff(e,EFFECT_KEY,BuffKind.ATTACK_SPEED))
+                .stream().filter(e->SkillEffects.canReceiveResonancePulse(e,profile))
                 .sorted(Comparator.comparingDouble((LivingEntity e)->e.distanceToSqr(p.originPos.getX()+.5,p.originPos.getY()+.5,p.originPos.getZ()+.5)).thenComparing(LivingEntity::getUUID))
                 .limit(MAX_TARGETS).map(SkillIdentity::capture).toList();
             if(targets.isEmpty())return "no_target";
-            if(!source.valid()||targets.stream().noneMatch(t->t.valid()&&eligible(actor,p,t.entity(),range)))return "stale_building";
-            boolean tuned=ResonanceResearch.unlocked(p.ownerName,false);int duration=tuned?160:100;double amount=tuned?.15:.10;
+            if(!source.valid()||targets.stream().noneMatch(t->t.valid()&&eligible(actor,p,t.entity(),range)
+                    &&SkillEffects.canReceiveResonancePulse(t.entity(),profile)))return "stale_building";
             var result=ResourceTransaction.exchange(actor.serverLevel().getServer(),source.account,source.accountEpoch,source.account.revision,
                 new ResourceTransaction.Cost(0,0,0,Map.of(DreamPassiveEconomy.SHADOW,COST)),ResourceTransaction.Cost.ZERO);
             if(!result.applied())return result.status()==ResourceTransaction.Status.INSUFFICIENT_RESOURCES?"insufficient_resources":"unavailable";
             // Exchange has no external callback. Spend cooldown before any modifier publication/reentry.
             if(!state.spend(now))throw new IllegalStateException("Resonance cooldown changed during atomic debit");
             for(var target:targets)if(source.valid()&&target.valid()&&eligible(actor,p,target.entity(),range))
-                SkillEffects.addGuardedBuildingBuff(target.entity(),EFFECT_KEY,BuffKind.ATTACK_SPEED,amount,duration,
-                    ()->source.valid()&&target.valid()&&source.owner.equals(((Unit)target.entity()).getOwnerName()));
+                SkillEffects.addResonancePulse(new PulseLease(source,target,profile,now));
             return "success";
         }finally{CASTING.remove(p);}
     }

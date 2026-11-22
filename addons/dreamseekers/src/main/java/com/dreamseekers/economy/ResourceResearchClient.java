@@ -3,9 +3,13 @@ package com.dreamseekers.economy;
 
 import com.dreamseekers.DreamseekersMod;
 import com.dreamseekers.building.DreamBuildingSpec;
+import com.dreamseekers.building.DreamResonanceAura;
 import com.dreamseekers.building.DreamScaffoldBuilding;
 import com.dreamseekers.building.ReverieGarden;
+import com.dreamseekers.buildingability.DaisWardEffects;
 import com.dreamseekers.client.DreamTooltipText;
+import com.dreamseekers.resonance.ResonanceNetwork;
+import com.dreamseekers.resonance.ResonanceResearch;
 import com.solegendary.reignofnether.api.BuildingUnitOrderHooks;
 import com.solegendary.reignofnether.building.BuildingClientEvents;
 import com.solegendary.reignofnether.building.BuildingPlacement;
@@ -37,6 +41,7 @@ import java.util.UUID;
 @Mod.EventBusSubscriber(modid = DreamseekersMod.MOD_ID, value = Dist.CLIENT)
 public final class ResourceResearchClient {
     private static final String KEY = "research.dreamseekers.production_methods.";
+    private static final String DAIS_KEY = "research.dreamseekers.resonance_amplification.";
     private static final ResourceLocation RESEARCH_ICON = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/item/knowledge_book.png");
     private static final ResourceLocation CANCEL_ICON = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/item/barrier.png");
     private static final ActiveClientTickClock CLOCK = new ActiveClientTickClock();
@@ -49,11 +54,13 @@ public final class ResourceResearchClient {
     private static final class Panel {
         final BuildingPlacement host;
         final String owner;
+        final boolean dais;
         final UUID instance, nonce = UUID.randomUUID();
         ResourceResearchPackets.Snapshot snapshot;
         long received, pending;
         Panel(BuildingPlacement host, UUID instance) {
             this.host = host; this.instance = instance; owner = host.ownerName;
+            dais = ResourceBuildingResearch.isDais(host);
         }
     }
     private ResourceResearchClient() {}
@@ -155,15 +162,17 @@ public final class ResourceResearchClient {
     private static boolean complete(Panel open, ResourceResearchPackets.Snapshot s) {
         return ResourceBuildingResearch.isUpgraded(open.host) || s != null && s.progress().upgraded();
     }
-    private static String pauseReason(BuildingPlacement host) {
-        return DreamPassiveEconomy.factionPauseReason(host.getBuilding(), PlayerClientEvents.getRTSPlayer(host.ownerName));
+    private static String pauseReason(Panel open) {
+        var owner = PlayerClientEvents.getRTSPlayer(open.owner);
+        if (open.dais && !DreamFactionAccess.allows(owner)) return "dreamseekers.error.wrong_faction";
+        return DreamPassiveEconomy.factionPauseReason(open.host.getBuilding(), owner);
     }
     private static boolean allowed(Panel open, ResourceResearchPackets.Snapshot seen, ResourceResearchPackets.Action action) {
         var now = current(open);
         if (now == null || seen == null || complete(open, now) || !seen.target().equals(now.target())
                 || !now.session().equals(seen.session()) || !now.epoch().equals(seen.epoch())) return false;
         if (action == ResourceResearchPackets.Action.CANCEL) return now.progress().remaining() > 0;
-        return action == ResourceResearchPackets.Action.START && now.progress().remaining() == 0 && pauseReason(open.host) == null;
+        return action == ResourceResearchPackets.Action.START && now.progress().remaining() == 0 && pauseReason(open) == null;
     }
     private static void act(Panel open, ResourceResearchPackets.Snapshot seen, ResourceResearchPackets.Action action) {
         context();
@@ -177,6 +186,26 @@ public final class ResourceResearchClient {
     }
 
     private static Component text(String key, Object... args) { return Component.translatable(KEY + key, args); }
+    private static Component tierText(Panel open, String key, Object... args) {
+        return Component.translatable((open.dais ? DAIS_KEY : KEY) + key, args);
+    }
+
+    private static void addDaisEffects(List<Component> lines, Panel open, boolean finished) {
+        var tuned = ResonanceResearch.unlocked(open.owner, true);
+        var enhanced = ResonanceNetwork.pulseProfile(tuned, true);
+        if (finished) {
+            lines.add(tierText(open, "current", ResourceBuildingResearch.DAIS_UPGRADED_SUPPLY, DreamResonanceAura.UPGRADED_PERCENT));
+            lines.add(tierText(open, "pulse_current", enhanced.speedPercent(), enhanced.durationTicks() / 20));
+            lines.add(tierText(open, "ward_current", DaisWardEffects.reductionPercent(true)));
+        } else {
+            var base = ResonanceNetwork.pulseProfile(tuned, false);
+            lines.add(tierText(open, "effect", ResourceBuildingResearch.DAIS_BASE_SUPPLY,
+                    ResourceBuildingResearch.DAIS_UPGRADED_SUPPLY, DreamResonanceAura.BASE_PERCENT, DreamResonanceAura.UPGRADED_PERCENT));
+            lines.add(tierText(open, "pulse", base.speedPercent(), base.durationTicks() / 20,
+                    enhanced.speedPercent(), enhanced.durationTicks() / 20));
+            lines.add(tierText(open, "ward", DaisWardEffects.reductionPercent(false), DaisWardEffects.reductionPercent(true)));
+        }
+    }
     private static Component resource(BuildingPlacement host) {
         var b = host.getBuilding();
         if (b instanceof ReverieGarden) return Component.translatable("resources.reignofnether.food");
@@ -191,14 +220,18 @@ public final class ResourceResearchClient {
         if (open != panel) return List.of();
         var s = current(open);
         var lines = new ArrayList<Component>();
-        lines.add(text(cancel ? "cancel" : "title"));
-        if (!cancel) lines.add(text("effect", resource(open.host)));
-        if (complete(open, s)) {
-            lines.add(text("completed"));
+        boolean finished = complete(open, s);
+        lines.add(tierText(open, cancel ? "cancel" : "title"));
+        if (!cancel) {
+            if (open.dais) addDaisEffects(lines, open, finished);
+            else lines.add(text("effect", resource(open.host)));
+        }
+        if (finished) {
+            lines.add(tierText(open, "completed"));
         } else {
             lines.add(text("cost", ResourceBuildingResearch.WOOD, ResourceBuildingResearch.ORE));
-            if (!cancel) lines.add(text("duration", ResourceBuildingResearch.DURATION / 20, ResourceBuildingResearch.DURATION));
-            var reason = pauseReason(open.host);
+            if (!cancel) lines.add(tierText(open, "duration", ResourceBuildingResearch.DURATION / 20, ResourceBuildingResearch.DURATION));
+            var reason = pauseReason(open);
             if (reason != null) lines.add(Component.translatable(reason));
             if (s != null && s.progress().remaining() > 0) {
                 int remaining = s.progress().remaining();
@@ -220,7 +253,7 @@ public final class ResourceResearchClient {
 
     private static AbilityButton button(Panel open, boolean cancel, ResourceResearchPackets.Snapshot seen) {
         var action = cancel ? ResourceResearchPackets.Action.CANCEL : ResourceResearchPackets.Action.START;
-        var b = new AbilityButton(text(cancel ? "cancel" : "title").getString(), cancel ? CANCEL_ICON : RESEARCH_ICON,
+        var b = new AbilityButton(tierText(open, cancel ? "cancel" : "title").getString(), cancel ? CANCEL_ICON : RESEARCH_ICON,
                 null, () -> false, () -> false, () -> allowed(open, seen, action), () -> act(open, seen, action), null,
                 List.of(), null, open.host) {
             @Override public void renderTooltip(GuiGraphics gui, int x, int y) {

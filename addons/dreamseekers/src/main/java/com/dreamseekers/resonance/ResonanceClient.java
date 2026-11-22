@@ -2,6 +2,7 @@ package com.dreamseekers.resonance;
 
 import com.solegendary.reignofnether.client.ActiveClientTickClock;
 import com.dreamseekers.DreamseekersMod;
+import com.dreamseekers.economy.ResourceBuildingResearch;
 import com.solegendary.reignofnether.building.*;
 import com.solegendary.reignofnether.hud.buttons.AbilityButton;
 import com.solegendary.reignofnether.player.PlayerClientEvents;
@@ -58,7 +59,12 @@ public final class ResonanceClient {
         if(s==null)out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.waiting")));else{
             out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.summary",s.rank(),s.active(),s.limit(),s.total())));
             if(!s.supported())out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.unsupported")));else if(s.rank()==0)out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.disconnected")));
-            if(pulse){out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.actual_range",s.pulseRange())));out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.quote",ResonanceNetwork.COST,s.tuned()?15:10,s.tuned()?8:5)));if(cooldown(p)>0)out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.cooldown_seconds",(cooldown(p)+19)/20)));}
+            if(pulse){
+                var profile=ResonanceNetwork.pulseProfile(s.tuned(),ResourceBuildingResearch.isUpgraded(p));
+                out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.actual_range",s.pulseRange())));
+                out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.quote",ResonanceNetwork.COST,profile.speedPercent(),profile.durationTicks()/20)));
+                if(cooldown(p)>0)out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable("resonance.cooldown_seconds",(cooldown(p)+19)/20)));
+            }
         }
         out.addAll(com.dreamseekers.client.DreamTooltipText.wrap(Component.translatable(pulse?"resonance.pulse_rules":"resonance.network_rules")));return out;}
     public static List<AbilityButton> append(BuildingPlacement p,List<AbilityButton> original){context();if(!own(p))return original;query(p);var out=new ArrayList<>(original);

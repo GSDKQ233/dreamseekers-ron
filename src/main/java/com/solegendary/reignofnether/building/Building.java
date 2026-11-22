@@ -68,6 +68,10 @@ public abstract class Building {
 
     public final static double DEFAULT_HEALTH_PER_BLOCK = 2.0d;
 
+    /** Nominal placed supply; the caller still applies ownership, completion and the rule cap.
+     * Ordinary buildings have exactly their configured supply; a placed upgrade may override it. */
+    public int getPopulationSupply(BuildingPlacement placement) { return cost.population; }
+
     public double getMaxHealth(BuildingPlacement placement) {
         return maxHealth + (getUpgradeLevel(placement) * maxHealthBonusPerUpgradeLevel);
     }

@@ -210,7 +210,7 @@ public final class ScaffoldRestartGameTests {
     private static void verifyLoadedHallTraining(GameTestHelper h,CompoundTag expected) {
         ServerLevel level=h.getLevel();
         var hall=(com.dreamseekers.production.DreamHallPlacement)owned().stream().filter(p->p.getBuilding()==DreamseekersMod.DREAM_HALL&&p.rotation==Rotation.NONE).findFirst().orElseThrow();
-        h.assertTrue(!hall.startProductionItem(DreamseekersMod.BONE_WING_PRODUCTION),"loaded old Hall still cannot train for free with zero ledger/population");
+        h.assertTrue(!hall.startProductionItem(DreamseekersMod.BONE_WING_PRODUCTION),"loaded old Hall still cannot train for free with an unfunded ledger");
         BlockPos anchorPos=new BlockPos(X+8*SPACING,Y,Z);
         var definition=DreamseekersMod.DREAM_ANCHOR;
         var blocks=BuildingUtils.getAbsoluteBlockData(definition.getRelativeBlockData(level),level,anchorPos,Rotation.NONE);

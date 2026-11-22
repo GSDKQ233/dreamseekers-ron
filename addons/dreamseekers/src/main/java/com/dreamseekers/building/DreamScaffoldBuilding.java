@@ -3,6 +3,8 @@ package com.dreamseekers.building;
 import com.solegendary.reignofnether.building.data.DataStorage;
 import net.minecraft.nbt.CompoundTag;
 
+import com.dreamseekers.economy.DreamPassiveEconomy;
+import com.dreamseekers.economy.ResourceBuildingResearch;
 import com.dreamseekers.function.DreamFunctionalPlacement;
 import com.solegendary.reignofnether.building.Building;
 import com.solegendary.reignofnether.building.BuildingBlock;
@@ -10,6 +12,7 @@ import com.solegendary.reignofnether.building.BuildingPlaceButton;
 import com.solegendary.reignofnether.building.BuildingPlacement;
 import com.solegendary.reignofnether.keybinds.Keybinding;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
@@ -41,13 +44,24 @@ public class DreamScaffoldBuilding extends Building {
         startingBlockTypes.add(Blocks.STONE_BRICKS);
         // Explicitly approved logistics; no inherited stockpile research or free resource generation.
         canAcceptResources = spec == DreamBuildingSpec.DREAM_DEPOT;
-        // Defaults deliberately retained: no supply, abilities, self-build,
+        // Defaults deliberately retained: no native abilities or self-build,
         // capture, production, extra sight range, targeting or damage source.
     }
 
     public DreamBuildingSpec spec() { return spec; }
+    @Override public int getPopulationSupply(BuildingPlacement p) {
+        if (spec != DreamBuildingSpec.RESONANCE_DAIS) return super.getPopulationSupply(p);
+        if (p == null || p.getBuilding() != this || !p.isBuilt || p.ownerName.isBlank()
+                || p.isDestroyedServerside || p.shouldBeDestroyed() || p.getHealth() <= 0
+                || ResourceBuildingResearch.instance(p) == null) return 0;
+        // Capacity is physical, not an aura slot. Don't drop it when the client's camera unloads the footprint.
+        return ResourceBuildingResearch.isUpgraded(p) ? ResourceBuildingResearch.DAIS_UPGRADED_SUPPLY : cost.population;
+    }
+
     @Override public void tick(Level level, BuildingPlacement placement) {
-        com.dreamseekers.economy.DreamPassiveEconomy.tick(level, placement);
+        if (spec == DreamBuildingSpec.RESONANCE_DAIS) {
+            if (level instanceof ServerLevel server) ResourceBuildingResearch.tick(server, placement);
+        } else DreamPassiveEconomy.tick(level, placement);
     }
 
     @Override public BuildingPlacement createBuildingPlacement(Level level, BlockPos pos, Rotation rotation, String ownerName) {
